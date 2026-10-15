@@ -1,0 +1,153 @@
+/* Archivo fuente de estilos. NO se enlaza directo en el HTML:
+   se compila con "npm run css" y genera css/estilos.css */
+/* Fuentes guardadas en la carpeta fonts/ para que funcionen sin internet */
+@font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('../fonts/dm-sans-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('../fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('../fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; font-display: swap; src: url('../fonts/cormorant-garamond-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; font-style: italic; font-display: swap; src: url('../fonts/cormorant-garamond-latin-500-italic.woff2') format('woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; font-display: swap; src: url('../fonts/cormorant-garamond-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Cormorant Garamond'; font-weight: 700; font-display: swap; src: url('../fonts/cormorant-garamond-latin-700-normal.woff2') format('woff2'); }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-noche-950 font-sans text-white/90 antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-titulo;
+  }
+  input[type='date'], input[type='time'] {
+    color-scheme: dark;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .revelar { opacity: 1; transform: none; }
+  }
+  select option {
+    @apply bg-noche-800 text-white;
+  }
+}
+
+/* Componentes reutilizables: en vez de repetir 15 clases en cada botón,
+   se define una sola clase (.btn-primario) con @apply */
+@layer components {
+
+  /* ----- Login estilo cuaderno abierto ----- */
+  .cuaderno {
+    @apply relative mx-auto grid max-w-5xl overflow-visible rounded-3xl shadow-2xl shadow-black/60 lg:grid-cols-2;
+  }
+  /* Hoja izquierda: información del salón */
+  .hoja-info {
+    @apply relative overflow-hidden rounded-t-3xl bg-gradient-to-br from-bella-800 via-bella-900 to-noche-900 p-8 sm:p-10
+           lg:rounded-l-3xl lg:rounded-tr-none;
+    box-shadow: inset -24px 0 30px -24px rgba(0, 0, 0, .7);   /* sombra del lomo */
+  }
+  /* Hoja derecha: papel con renglones y margen rojo, como un cuaderno */
+  .hoja-papel {
+    @apply relative rounded-b-3xl p-8 pl-14 text-noche-900 sm:p-10 sm:pl-16 lg:rounded-r-3xl lg:rounded-bl-none;
+    background-color: #fdf8f2;
+    background-image:
+      linear-gradient(90deg, transparent 2.6rem, rgba(224, 66, 143, .35) 2.6rem, rgba(224, 66, 143, .35) calc(2.6rem + 2px), transparent calc(2.6rem + 2px)),
+      repeating-linear-gradient(transparent 0, transparent 31px, rgba(160, 31, 95, .12) 31px, rgba(160, 31, 95, .12) 32px);
+    box-shadow: inset 24px 0 30px -24px rgba(0, 0, 0, .25);
+    transform-origin: left center;
+  }
+  /* Anillos del espiral en el centro del cuaderno */
+  .espiral {
+    @apply pointer-events-none absolute inset-y-6 left-1/2 z-10 hidden w-8 -translate-x-1/2 lg:block;
+    background-image: radial-gradient(circle at 50% 50%, #0c060a 0 5px, #d9b36c 5px 8px, transparent 8px);
+    background-size: 100% 34px;
+  }
+  /* Campos sobre el papel */
+  .campo-papel {
+    @apply w-full rounded-xl border border-bella-200 bg-white/80 px-4 py-2.5 text-sm text-noche-900
+           placeholder:text-noche-900/30 transition
+           focus:border-bella-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-bella-500/25;
+  }
+  .etiqueta-papel {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-bella-800/70;
+  }
+  /* Pestañas de colores del cuaderno (una por rol) */
+  .pestana-cuaderno {
+    @apply rounded-t-xl px-4 pb-2 pt-2.5 text-sm font-semibold transition;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
+           transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-bella-400
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primario {
+    @apply btn bg-gradient-to-r from-bella-500 to-bella-700 text-white shadow-lg shadow-bella-900/40
+           hover:from-bella-400 hover:to-bella-600 active:scale-[.98];
+  }
+  .btn-secundario {
+    @apply btn border border-white/15 bg-white/5 text-white hover:border-bella-400/60 hover:bg-white/10;
+  }
+  .btn-mini {
+    @apply rounded-lg px-2.5 py-1 text-xs font-semibold transition;
+  }
+  .campo {
+    @apply w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white
+           placeholder:text-white/30 transition
+           focus:border-bella-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-bella-500/30;
+  }
+  .etiqueta {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/50;
+  }
+  .tarjeta {
+    @apply rounded-2xl border border-white/10 bg-white/[.04] backdrop-blur-sm;
+  }
+  .alerta {
+    @apply hidden rounded-xl border px-4 py-3 text-sm;
+  }
+  .alerta-error {
+    @apply border-red-400/30 bg-red-500/10 text-red-300;
+  }
+  .alerta-ok {
+    @apply border-emerald-400/30 bg-emerald-500/10 text-emerald-300;
+  }
+  /* Sobre la hoja de papel del login las alertas usan colores oscuros */
+  .hoja-papel .alerta-error { @apply border-red-300 bg-red-50 text-red-700; }
+  .hoja-papel .alerta-ok    { @apply border-emerald-300 bg-emerald-50 text-emerald-700; }
+  .estado {
+    @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .estado-Pendiente  { @apply bg-amber-400/15 text-amber-300; }
+  .estado-Confirmada { @apply bg-sky-400/15 text-sky-300; }
+  .estado-Finalizada { @apply bg-emerald-400/15 text-emerald-300; }
+  .estado-Cancelada  { @apply bg-red-400/15 text-red-300; }
+  .tabla {
+    @apply w-full text-left text-sm;
+  }
+  .tabla th {
+    @apply border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40;
+  }
+  .tabla td {
+    @apply border-b border-white/5 px-4 py-3 text-white/80;
+  }
+  .tabla tbody tr {
+    @apply transition hover:bg-white/[.03];
+  }
+  .pestana {
+    @apply whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium text-white/50 transition hover:text-white;
+  }
+  .pestana-activa {
+    @apply bg-bella-500/15 text-bella-300;
+  }
+  /* Elementos que aparecen al hacer scroll (js en welcome.html les agrega "visible") */
+  .revelar {
+    @apply translate-y-8 opacity-0 transition duration-700 ease-out;
+  }
+  .revelar.visible {
+    @apply translate-y-0 opacity-100;
+  }
+  .texto-brillo {
+    @apply bg-gradient-to-r from-bella-300 via-oro to-bella-300 bg-[length:200%_auto] bg-clip-text text-transparent motion-safe:animate-brillo;
+  }
+}

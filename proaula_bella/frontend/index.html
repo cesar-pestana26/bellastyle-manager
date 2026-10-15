@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión | BellaStyle</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body class="min-h-screen">
+
+  <!-- Fondo decorativo -->
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div class="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-bella-600/25 blur-3xl motion-safe:animate-flotar"></div>
+    <div class="absolute -bottom-40 right-0 h-[28rem] w-[28rem] rounded-full bg-bella-900/40 blur-3xl motion-safe:animate-flotar [animation-delay:-8s]"></div>
+  </div>
+
+  <main class="flex min-h-screen items-center px-4 py-10 sm:px-6 lg:py-16">
+
+    <!-- Cuaderno abierto: hoja izquierda (información) y hoja derecha (login) -->
+    <div class="cuaderno w-full animate-aparecer lg:mt-8">
+      <div class="espiral"></div>
+
+      <!-- ============ HOJA IZQUIERDA: información ============ -->
+      <section class="hoja-info">
+        <div class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-bella-500/20 blur-3xl"></div>
+
+        <div class="relative flex items-center justify-between">
+          <a href="welcome.html" class="font-titulo text-2xl font-bold">Bella<span class="text-bella-300">Style</span></a>
+          <a href="welcome.html" class="text-sm text-white/50 transition hover:text-white">&larr; Volver al inicio</a>
+        </div>
+
+        <div class="relative mt-8 flex flex-col items-center gap-8 sm:flex-row lg:flex-col lg:items-start xl:flex-row">
+          <!-- Foto tipo polaroid pegada con cinta -->
+          <figure class="relative w-44 shrink-0 -rotate-3 bg-white p-3 pb-9 shadow-xl shadow-black/40 transition duration-500 hover:rotate-0">
+            <span class="absolute -top-3 left-1/2 h-6 w-20 -translate-x-1/2 rotate-2 bg-oro/70"></span>
+            <img id="imagenRol" src="img/login_cliente.webp" alt="" class="aspect-square w-full object-cover">
+            <figcaption id="pieFoto" class="absolute inset-x-0 bottom-2 text-center font-titulo text-lg italic text-noche-900">Clienta</figcaption>
+          </figure>
+
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[.25em] text-bella-300">Portal de acceso</p>
+            <h1 class="mt-2 text-4xl font-bold leading-tight">Qué bueno<br>verte de nuevo</h1>
+            <p id="descripcionRol" class="mt-3 text-white/60">Agenda tus citas y revisa tu historial.</p>
+          </div>
+        </div>
+
+        <ul class="relative mt-10 space-y-4 text-sm">
+          <li class="flex gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-oro">&#9719;</span>
+            <span><b class="block text-white">Horario</b><span class="text-white/55">Lunes a sábado, de 8:00 a. m. a 7:00 p. m.</span></span>
+          </li>
+          <li class="flex gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-oro">&#10022;</span>
+            <span><b class="block text-white">Asignación automática</b><span class="text-white/55">El sistema escoge la estilista libre que domina tu servicio.</span></span>
+          </li>
+          <li class="flex gap-3">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-oro">&#128274;</span>
+            <span><b class="block text-white">Cuenta segura</b><span class="text-white/55">Tu contraseña se guarda cifrada. Nadie más puede verla.</span></span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- ============ HOJA DERECHA: papel con el formulario ============ -->
+      <section class="hoja-papel motion-safe:animate-abrir-hoja">
+        <!-- Pestañas del cuaderno: una por rol (se llenan desde js/login.js) -->
+        <div id="listaRoles" class="mb-6 flex flex-wrap gap-1 lg:absolute lg:-top-10 lg:right-8 lg:mb-0"></div>
+
+        <p class="text-xs font-semibold uppercase tracking-[.2em] text-bella-700/70">Iniciar sesión como</p>
+        <h2 id="tituloRol" class="text-5xl font-bold leading-[1.1] text-bella-800">Clienta</h2>
+
+        <div id="alerta" class="alerta mt-5"></div>
+
+        <form id="formLogin" class="mt-6 space-y-5">
+          <div>
+            <label for="usuario" class="etiqueta-papel">Usuario</label>
+            <input id="usuario" class="campo-papel" type="text" autocomplete="username" required>
+          </div>
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="password" class="etiqueta-papel">Contraseña</label>
+              <a href="recuperar.html" class="mb-1.5 text-xs font-semibold text-bella-600 hover:text-bella-800">¿La olvidaste?</a>
+            </div>
+            <div class="relative">
+              <input id="password" class="campo-papel pr-20" type="password" autocomplete="current-password" required>
+              <button type="button" id="verPassword" class="absolute inset-y-0 right-3 text-xs font-semibold text-bella-600 hover:text-bella-800">Mostrar</button>
+            </div>
+          </div>
+          <button id="btnEntrar" type="submit" class="btn-primario w-full py-3">Iniciar sesión</button>
+        </form>
+
+        <p class="mt-8 text-center text-sm text-noche-900/60">
+          ¿No tienes cuenta?
+          <a id="enlaceRegistro" href="register.html?rol=cliente" class="font-semibold text-bella-700 underline decoration-bella-300 underline-offset-4 hover:text-bella-900">Regístrate aquí</a>
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

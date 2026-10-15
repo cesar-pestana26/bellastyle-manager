@@ -1,0 +1,11 @@
+# Dependencias (se instalan con npm install)
+node_modules/
+
+# Archivos comprimidos para enviar por WhatsApp o correo
+*.zip
+
+# Archivos temporales de Office y del sistema
+~$*
+.DS_Store
+Thumbs.db
+desktop.ini
