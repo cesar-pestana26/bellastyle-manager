@@ -17,6 +17,30 @@ Si actualizaste el proyecto, vuelve a ejecutar `INSTALAR_BASE_DE_DATOS.bat`: el 
 
 Si la clave de MySQL no es `1234`, cambiarla en `backend/config/config.js`.
 
+## Ejecutarlo con Docker
+
+Requiere Docker Desktop abierto. Desde la carpeta `proaula_bella`:
+
+```
+docker compose up --build
+```
+
+Levanta dos contenedores: `db` (MySQL 8, carga `init_db.sql` la primera vez) y `app` (Node.js).
+Abrir `http://localhost:3000`. Para apagar: `Ctrl + C` y luego `docker compose down`.
+
+## Variables de entorno (nube)
+
+`config.js` lee estas variables; si no existen usa los valores de tu PC.
+
+| Variable | Ejemplo |
+|---|---|
+| `PORT` | 3000 (Render la pone sola) |
+| `DB_HOST`, `DB_PORT` | los da el proveedor de MySQL |
+| `DB_USER`, `DB_PASSWORD` | usuario y clave de MySQL |
+| `DB_NAME` | bellastylemanager |
+| `DB_SSL` | true (en la nube) |
+| `CODIGO_ADMIN` | código para registrar administradoras |
+
 ## Usuarios de prueba
 
 | Rol | Usuario | Contraseña |
