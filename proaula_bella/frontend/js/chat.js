@@ -1,7 +1,56 @@
-// Chat de la página de inicio (welcome.html).
+// Chat de la página de inicio (welcome.html) y del inicio de sesión (index.html).
 // El visitante escribe sin crear cuenta. El código de su conversación se guarda
 // en el navegador (localStorage) para que, si vuelve, siga viendo sus mensajes.
 // Cada pocos segundos se pregunta al servidor si hay mensajes nuevos (polling).
+
+// 1. Se dibuja la burbuja y la ventana del chat al final de la página.
+//    Así el mismo archivo sirve para cualquier página que lo incluya.
+document.body.insertAdjacentHTML('beforeend', `
+  <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+    <!-- Ventana del chat -->
+    <div id="chatVentana" class="hidden h-[32rem] max-h-[75vh] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-noche-900 shadow-2xl shadow-black/60">
+      <div class="flex items-center justify-between bg-gradient-to-r from-bella-600 to-bella-500 px-4 py-3">
+        <div>
+          <p class="font-semibold">Chat BellaStyle</p>
+          <p class="text-xs text-white/80">Asesoría y cotizaciones</p>
+        </div>
+        <button id="chatCerrar" class="rounded-lg px-2 text-2xl leading-none text-white/80 hover:bg-white/10" aria-label="Cerrar chat">&times;</button>
+      </div>
+
+      <!-- Paso 1: datos del visitante (no necesita cuenta) -->
+      <form id="chatDatos" class="flex flex-1 flex-col gap-3 p-4">
+        <p class="text-sm text-white/60">Escríbenos sin registrarte. Te respondemos por aquí.</p>
+        <div id="chatAlerta" class="alerta"></div>
+        <div>
+          <label for="chatNombre" class="etiqueta">Tu nombre</label>
+          <input id="chatNombre" class="campo" maxlength="60" required>
+        </div>
+        <div>
+          <label for="chatContacto" class="etiqueta">Teléfono o correo (opcional)</label>
+          <input id="chatContacto" class="campo" maxlength="120">
+        </div>
+        <button class="btn-primario mt-auto py-3">Empezar chat</button>
+      </form>
+
+      <!-- Paso 2: conversación -->
+      <div id="chatConversacion" class="hidden flex-1 flex-col overflow-hidden">
+        <div id="chatMensajes" class="flex-1 space-y-3 overflow-y-auto p-4"></div>
+        <div id="chatAlertaMensaje" class="alerta mx-4"></div>
+        <form id="chatFormMensaje" class="flex gap-2 border-t border-white/10 p-3">
+          <input id="chatTexto" class="campo py-2" maxlength="500" placeholder="Escribe tu mensaje..." autocomplete="off">
+          <button class="btn-primario px-4 py-2">Enviar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Burbuja -->
+    <button id="chatBurbuja" class="group relative flex items-center gap-3 rounded-full bg-gradient-to-r from-bella-600 to-bella-500 py-3 pl-4 pr-5 font-semibold shadow-xl shadow-bella-900/50 transition hover:-translate-y-0.5">
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6 3-3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v13Z"/></svg>
+      <span class="hidden text-sm sm:inline">¿Asesoría o cotización? Escríbenos</span>
+      <span id="chatContador" class="absolute -right-1 -top-1 hidden h-6 min-w-6 rounded-full bg-oro px-1.5 text-center text-xs font-bold leading-6 text-noche-950">0</span>
+    </button>
+  </div>
+`);
 
 const chat = {
     codigo: localStorage.getItem('bellaChat'),

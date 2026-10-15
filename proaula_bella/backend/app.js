@@ -10,8 +10,8 @@ const app = express();
 // Permite leer JSON en el cuerpo de las peticiones
 app.use(express.json());
 
-// La dirección principal (http://localhost:3000) abre la página de inicio
-app.get('/', (req, res) => res.redirect('/welcome.html'));
+// La dirección principal (http://localhost:3000) abre el inicio de sesión
+app.get('/', (req, res) => res.redirect('/index.html'));
 
 // Sirve las páginas del frontend (index.html, panel.html, etc.)
 app.use(express.static(path.join(__dirname, '../frontend')));

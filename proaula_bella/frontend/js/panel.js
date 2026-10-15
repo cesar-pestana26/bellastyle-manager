@@ -179,7 +179,10 @@ function prepararEncabezado() {
     document.getElementById('nombreUsuario').textContent = usuario.nombre;
     document.getElementById('rolUsuario').textContent = usuario.rol;
     document.getElementById('fotoUsuario').src = usuario.foto;
-    document.getElementById('saludo').textContent = 'Hola, ' + usuario.nombre.split(' ')[0];
+    // La administradora ve un saludo general; los demás roles ven su nombre
+    document.getElementById('saludo').textContent = usuario.rol === 'Administradora'
+        ? 'Bienvenida a tu salón de belleza'
+        : 'Hola, ' + usuario.nombre.split(' ')[0];
     document.getElementById('btnSalir').addEventListener('click', cerrarSesion);
 
     const subtitulos = {
