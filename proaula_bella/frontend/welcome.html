@@ -15,7 +15,7 @@
       <div class="flex items-center gap-2 sm:gap-6">
         <a href="#servicios" class="hidden text-sm text-white/60 transition hover:text-white sm:inline">Servicios</a>
         <a href="#como-funciona" class="hidden text-sm text-white/60 transition hover:text-white sm:inline">Cómo funciona</a>
-        <a href="#roles" class="btn-primario px-4 py-2">Ingresar</a>
+        <a href="index.html" class="btn-primario px-4 py-2">Ingresar</a>
       </div>
     </nav>
   </header>
@@ -39,7 +39,7 @@
           Agenda tu cita en línea. El sistema busca por ti la estilista disponible que domina el servicio que elegiste.
         </p>
         <div class="mt-8 flex animate-aparecer flex-wrap gap-3 [animation-delay:.3s]">
-          <a href="#roles" class="btn-primario px-6 py-3 text-base">Elegir mi perfil</a>
+          <a href="register.html?rol=cliente" class="btn-primario px-6 py-3 text-base">Crear cuenta</a>
           <a href="#servicios" class="btn-secundario px-6 py-3 text-base">Ver servicios</a>
         </div>
       </div>
@@ -94,9 +94,9 @@
   <!-- ===================== ROLES ===================== -->
   <section id="roles" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
     <div class="revelar text-center">
-      <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-400">Acceso al sistema</p>
-      <h2 class="mt-3 text-4xl font-bold sm:text-5xl">¿Cómo quieres entrar?</h2>
-      <p class="mx-auto mt-3 max-w-xl text-white/50">Elige tu perfil. Si todavía no tienes cuenta, regístrate en segundos.</p>
+      <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-400">Un sistema para todo el salón</p>
+      <h2 class="mt-3 text-4xl font-bold sm:text-5xl">¿Qué puede hacer cada perfil?</h2>
+      <p class="mx-auto mt-3 max-w-xl text-white/50">Todos entran por el mismo inicio de sesión y cada uno ve su propio panel.</p>
     </div>
 
     <div class="mt-12 grid gap-6 md:grid-cols-3">
@@ -104,48 +104,36 @@
       <article class="revelar tarjeta group relative overflow-hidden p-6 hover:-translate-y-2 hover:border-bella-400/50 hover:shadow-2xl hover:shadow-bella-900/40">
         <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-bella-500/20 blur-2xl transition duration-500 group-hover:scale-150"></div>
         <img src="img/login_cliente.webp" alt="" class="relative h-20 w-20 rounded-2xl object-cover ring-2 ring-bella-500/40 transition duration-500 group-hover:rotate-3 group-hover:scale-110">
-        <h3 class="relative mt-5 text-3xl font-bold">Soy clienta</h3>
+        <h3 class="relative mt-5 text-3xl font-bold">Clienta</h3>
         <ul class="relative mt-3 space-y-1.5 text-sm text-white/55">
           <li>· Agenda citas en línea</li>
           <li>· Reprograma o cancela</li>
           <li>· Revisa tu historial</li>
         </ul>
-        <div class="relative mt-6 flex gap-2">
-          <a href="index.html?rol=cliente" class="btn-primario flex-1 py-2">Iniciar sesión</a>
-          <a href="register.html?rol=cliente" class="btn-secundario flex-1 py-2">Registrarme</a>
-        </div>
       </article>
 
       <!-- Estilista -->
       <article class="revelar tarjeta group relative overflow-hidden p-6 [transition-delay:120ms] hover:-translate-y-2 hover:border-bella-400/50 hover:shadow-2xl hover:shadow-bella-900/40">
         <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-oro/20 blur-2xl transition duration-500 group-hover:scale-150"></div>
         <img src="img/login_estilicista.webp" alt="" class="relative h-20 w-20 rounded-2xl object-cover ring-2 ring-bella-500/40 transition duration-500 group-hover:rotate-3 group-hover:scale-110">
-        <h3 class="relative mt-5 text-3xl font-bold">Soy estilista</h3>
+        <h3 class="relative mt-5 text-3xl font-bold">Estilista</h3>
         <ul class="relative mt-3 space-y-1.5 text-sm text-white/55">
           <li>· Mira las citas que te asignan</li>
           <li>· Confirma y finaliza servicios</li>
           <li>· Consulta tu comisión</li>
         </ul>
-        <div class="relative mt-6 flex gap-2">
-          <a href="index.html?rol=estilista" class="btn-primario flex-1 py-2">Iniciar sesión</a>
-          <a href="register.html?rol=estilista" class="btn-secundario flex-1 py-2">Registrarme</a>
-        </div>
       </article>
 
       <!-- Administradora -->
       <article class="revelar tarjeta group relative overflow-hidden p-6 [transition-delay:240ms] hover:-translate-y-2 hover:border-bella-400/50 hover:shadow-2xl hover:shadow-bella-900/40">
         <div class="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-bella-700/30 blur-2xl transition duration-500 group-hover:scale-150"></div>
         <img src="img/login_admin.jpg" alt="" class="relative h-20 w-20 rounded-2xl object-cover ring-2 ring-bella-500/40 transition duration-500 group-hover:rotate-3 group-hover:scale-110">
-        <h3 class="relative mt-5 text-3xl font-bold">Soy administradora</h3>
+        <h3 class="relative mt-5 text-3xl font-bold">Administradora</h3>
         <ul class="relative mt-3 space-y-1.5 text-sm text-white/55">
           <li>· Controla citas e ingresos</li>
           <li>· Edita servicios y productos</li>
           <li>· Gestiona el equipo</li>
         </ul>
-        <div class="relative mt-6 flex gap-2">
-          <a href="index.html?rol=admin" class="btn-primario flex-1 py-2">Iniciar sesión</a>
-          <a href="register.html?rol=admin" class="btn-secundario flex-1 py-2">Registrarme</a>
-        </div>
       </article>
     </div>
   </section>
@@ -191,7 +179,6 @@
     <h2 class="revelar text-4xl font-bold sm:text-6xl">¿Lista para tu <em class="texto-brillo pr-2">cambio</em>?</h2>
     <div class="revelar mt-8 flex flex-wrap justify-center gap-3 [transition-delay:150ms]">
       <a href="register.html?rol=cliente" class="btn-primario px-6 py-3 text-base">Crear cuenta</a>
-      <a href="#roles" class="btn-secundario px-6 py-3 text-base">Ya tengo cuenta</a>
     </div>
   </section>
 
