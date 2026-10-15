@@ -9,30 +9,25 @@ if (ROLES[rolEnUrl]) rolActual = rolEnUrl;
 // Si ya hay sesión abierta, se va directo al panel
 if (obtenerSesion()) window.location.href = 'panel.html';
 
-// Dibuja las pestañas del cuaderno, una por rol
+// Dibuja el selector de rol: un botón por cada rol
 function dibujarRoles() {
     const lista = document.getElementById('listaRoles');
     lista.innerHTML = '';
 
     for (const clave in ROLES) {
-        const activo = clave === rolActual;
-        const pestana = document.createElement('button');
-        pestana.type = 'button';
-        pestana.dataset.rol = clave;
-        pestana.textContent = ROLES[clave].titulo;
-        pestana.className = 'pestana-cuaderno rounded-xl lg:rounded-b-none '
-            + (activo
-                ? 'bg-bella-600 text-white lg:bg-[#fdf8f2] lg:text-bella-700 lg:pb-3'
-                : 'bg-bella-100 text-bella-800 hover:bg-bella-200 lg:bg-bella-300 lg:hover:bg-bella-200');
-        pestana.addEventListener('click', () => seleccionarRol(clave));
-        lista.appendChild(pestana);
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.textContent = ROLES[clave].titulo;
+        boton.className = 'rounded-lg px-1 py-2 text-xs font-semibold transition '
+            + (clave === rolActual ? 'bg-bella-500 text-white shadow' : 'text-white/60 hover:bg-white/10 hover:text-white');
+        boton.addEventListener('click', () => seleccionarRol(clave));
+        lista.appendChild(boton);
     }
 }
 
 function seleccionarRol(clave) {
     rolActual = clave;
     document.getElementById('tituloRol').textContent = ROLES[clave].titulo;
-    document.getElementById('pieFoto').textContent = ROLES[clave].titulo;
     document.getElementById('descripcionRol').textContent = ROLES[clave].descripcion;
     document.getElementById('imagenRol').src = ROLES[clave].imagen;
     document.getElementById('enlaceRegistro').href = 'register.html?rol=' + clave;
@@ -75,4 +70,21 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
     }
 });
 
+// Tarjeta de precios: muestra cuatro servicios con su precio real
+async function cargarPrecios() {
+    const respuesta = await pedir('/servicios');
+    const lista = document.getElementById('listaPrecios');
+    if (!respuesta.success) {
+        lista.innerHTML = '<p class="col-span-2 text-sm text-white/40">Enciende el servidor para ver los precios.</p>';
+        return;
+    }
+    lista.innerHTML = respuesta.data.slice(0, 4).map((s) => `
+        <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+            <p class="text-sm font-semibold text-white">${escapar(s.nombre)}</p>
+            <p class="text-[11px] text-white/40">${s.duracion_min} minutos</p>
+            <p class="mt-1 font-bold text-oro">${pesos(s.precio)}</p>
+        </div>`).join('');
+}
+
 seleccionarRol(rolActual);
+cargarPrecios();

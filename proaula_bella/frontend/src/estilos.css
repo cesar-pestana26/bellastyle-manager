@@ -38,44 +38,10 @@
    se define una sola clase (.btn-primario) con @apply */
 @layer components {
 
-  /* ----- Login estilo cuaderno abierto ----- */
-  .cuaderno {
-    @apply relative mx-auto grid max-w-5xl overflow-visible rounded-3xl shadow-2xl shadow-black/60 lg:grid-cols-2;
-  }
-  /* Hoja izquierda: información del salón */
-  .hoja-info {
-    @apply relative overflow-hidden rounded-t-3xl bg-gradient-to-br from-bella-800 via-bella-900 to-noche-900 p-8 sm:p-10
-           lg:rounded-l-3xl lg:rounded-tr-none;
-    box-shadow: inset -24px 0 30px -24px rgba(0, 0, 0, .7);   /* sombra del lomo */
-  }
-  /* Hoja derecha: papel con renglones y margen rojo, como un cuaderno */
-  .hoja-papel {
-    @apply relative rounded-b-3xl p-8 pl-14 text-noche-900 sm:p-10 sm:pl-16 lg:rounded-r-3xl lg:rounded-bl-none;
-    background-color: #fdf8f2;
-    background-image:
-      linear-gradient(90deg, transparent 2.6rem, rgba(224, 66, 143, .35) 2.6rem, rgba(224, 66, 143, .35) calc(2.6rem + 2px), transparent calc(2.6rem + 2px)),
-      repeating-linear-gradient(transparent 0, transparent 31px, rgba(160, 31, 95, .12) 31px, rgba(160, 31, 95, .12) 32px);
-    box-shadow: inset 24px 0 30px -24px rgba(0, 0, 0, .25);
-    transform-origin: left center;
-  }
-  /* Anillos del espiral en el centro del cuaderno */
-  .espiral {
-    @apply pointer-events-none absolute inset-y-6 left-1/2 z-10 hidden w-8 -translate-x-1/2 lg:block;
-    background-image: radial-gradient(circle at 50% 50%, #0c060a 0 5px, #d9b36c 5px 8px, transparent 8px);
-    background-size: 100% 34px;
-  }
-  /* Campos sobre el papel */
-  .campo-papel {
-    @apply w-full rounded-xl border border-bella-200 bg-white/80 px-4 py-2.5 text-sm text-noche-900
-           placeholder:text-noche-900/30 transition
-           focus:border-bella-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-bella-500/25;
-  }
-  .etiqueta-papel {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-bella-800/70;
-  }
-  /* Pestañas de colores del cuaderno (una por rol) */
-  .pestana-cuaderno {
-    @apply rounded-t-xl px-4 pb-2 pt-2.5 text-sm font-semibold transition;
+  /* Tarjetas de colores de la galería del login */
+  .galeria {
+    @apply flex h-28 flex-col justify-between rounded-2xl sm:h-auto sm:aspect-[4/5] border border-white/10 bg-white/[.03] p-4 text-sm
+           font-semibold text-white/80 transition duration-300 hover:-translate-y-1 hover:border-bella-400/30;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
@@ -112,9 +78,6 @@
   .alerta-ok {
     @apply border-emerald-400/30 bg-emerald-500/10 text-emerald-300;
   }
-  /* Sobre la hoja de papel del login las alertas usan colores oscuros */
-  .hoja-papel .alerta-error { @apply border-red-300 bg-red-50 text-red-700; }
-  .hoja-papel .alerta-ok    { @apply border-emerald-300 bg-emerald-50 text-emerald-700; }
   .estado {
     @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }

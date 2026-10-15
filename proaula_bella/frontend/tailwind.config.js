@@ -54,11 +54,6 @@ module.exports = {
         girar: {
           to: { transform: 'rotate(360deg)' },
         },
-        // La hoja derecha del cuaderno se abre como una página
-        abrirHoja: {
-          '0%':   { transform: 'perspective(1600px) rotateY(-75deg)', opacity: '0' },
-          '100%': { transform: 'perspective(1600px) rotateY(0)', opacity: '1' },
-        },
         subirBajar: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%':      { transform: 'translateY(-10px)' },
@@ -70,7 +65,6 @@ module.exports = {
         brillo: 'brillo 6s linear infinite',
         girar: 'girar 40s linear infinite',
         'subir-bajar': 'subirBajar 4s ease-in-out infinite',
-        'abrir-hoja': 'abrirHoja .9s cubic-bezier(.2,.7,.2,1) both',
       },
     },
   },
