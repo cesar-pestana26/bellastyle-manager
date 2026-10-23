@@ -5,7 +5,7 @@ const config = require('../config/config');
 const usuarioModel = require('../models/usuarioModel');
 const clienteModel = require('../models/clienteModel');
 const estilistaModel = require('../models/estilistaModel');
-const { nombreValido, usuarioValido, passwordValida, separarNombre } = require('../utils/validators');
+const { nombreValido, usuarioValido, passwordValida, telefonoValido, emailValido, separarNombre } = require('../utils/validators');
 
 // Nombre del rol en el frontend -> nombre del rol en la base de datos
 const ROLES = {
@@ -77,6 +77,13 @@ async function registrar(req, res) {
     }
     if (!passwordValida(password)) {
         return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
+    }
+    // Teléfono y correo son opcionales, pero si se escriben deben tener formato válido
+    if (telefono && !telefonoValido(telefono)) {
+        return res.status(400).json({ success: false, message: 'El teléfono solo puede tener números y espacios (7 a 20).' });
+    }
+    if (email && !emailValido(email)) {
+        return res.status(400).json({ success: false, message: 'El correo no es válido.' });
     }
     if (rolBD === 'Administradora' && codigoAdmin !== config.codigoAdmin) {
         return res.status(403).json({ success: false, message: 'El código de administradora no es correcto.' });

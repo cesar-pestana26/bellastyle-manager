@@ -3,7 +3,7 @@
 const crypto = require('crypto');
 const chatModel = require('../models/chatModel');
 const asistente = require('../utils/asistente');
-const { nombreValido } = require('../utils/validators');
+const { nombreValido, telefonoValido, emailValido } = require('../utils/validators');
 
 const MAX_TEXTO = 500;
 const RE_CODIGO = /^[a-f0-9]{32}$/;
@@ -40,8 +40,12 @@ async function iniciar(req, res) {
     if (!nombreValido(nombre) || nombre.trim().length > 60) {
         return res.status(400).json({ success: false, message: 'Escribe tu nombre (solo letras).' });
     }
-    if (contacto && String(contacto).trim().length > 120) {
-        return res.status(400).json({ success: false, message: 'El teléfono o correo es muy largo.' });
+    // El contacto es opcional; si lo escribe, debe ser un teléfono o un correo válido
+    if (contacto && String(contacto).trim() !== '') {
+        const texto = String(contacto).trim();
+        if (texto.length > 120 || (!telefonoValido(texto) && !emailValido(texto))) {
+            return res.status(400).json({ success: false, message: 'Escribe un teléfono (solo números) o un correo válido.' });
+        }
     }
     try {
         // Código aleatorio que identifica al visitante sin pedirle cuenta

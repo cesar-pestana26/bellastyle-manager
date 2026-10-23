@@ -14,6 +14,16 @@ function passwordValida(valor) {
     return typeof valor === 'string' && valor.length >= 6;
 }
 
+// Teléfono: solo números, espacios y "+", de 7 a 20 caracteres. Ej: "300 111 2233"
+function telefonoValido(valor) {
+    return typeof valor === 'string' && /^[0-9 +]{7,20}$/.test(valor.trim());
+}
+
+// Correo con forma texto@dominio.ext
+function emailValido(valor) {
+    return typeof valor === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim());
+}
+
 // "Ana María López" -> { nombres: "Ana", apellidos: "María López" }
 function separarNombre(nombreCompleto) {
     const partes = nombreCompleto.trim().split(/\s+/);
@@ -22,4 +32,4 @@ function separarNombre(nombreCompleto) {
     return { nombres, apellidos };
 }
 
-module.exports = { nombreValido, usuarioValido, passwordValida, separarNombre };
+module.exports = { nombreValido, usuarioValido, passwordValida, telefonoValido, emailValido, separarNombre };
