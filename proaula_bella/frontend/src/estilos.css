@@ -16,7 +16,7 @@
 @layer base {
   /* Colores del modo claro (en números R G B para poder usar opacidad: text-tinta/60) */
   :root {
-    --tinta: 63 46 69;
+    --tinta: 43 29 49;
     --blanco: 255 255 255;
     --bella-50: 253 245 248;
     --bella-100: 251 232 240;
@@ -72,7 +72,7 @@
   body::before {
     content: '';
     @apply pointer-events-none fixed inset-0 -z-20 bg-cover bg-center;
-    background-image: linear-gradient(rgba(255,255,255,.35), rgba(255,255,255,.35)), url('../img/fondo.webp');
+    background-image: linear-gradient(rgba(255,255,255,.2), rgba(255,255,255,.2)), url('../img/fondo.webp');
   }
   /* Video de fondo del modo claro (lo crea js/tema.js). Va encima de la imagen;
      si el video no carga, se sigue viendo la imagen. */
@@ -87,7 +87,7 @@
   .fondo-video::after {
     content: '';
     @apply absolute inset-0;
-    background: rgba(255, 255, 255, .35);
+    background: rgba(255, 255, 255, .2);
   }
   .fondo-video-oscuro::after {
     background: rgba(18, 12, 26, .35);
@@ -345,3 +345,30 @@ dialog[open]::backdrop {
   .tabla td[data-label=""] { justify-content: flex-end; flex-wrap: wrap; }
   .tabla td[colspan] { display: block; text-align: center; }
 }
+
+/* ---------- Modo claro: lectura cómoda ----------
+   El video se ve con más color (velo suave) y los cuadros son casi blancos,
+   así el texto oscuro siempre tiene buen contraste. */
+html:not(.oscuro) .tarjeta {
+  background-color: rgb(255 255 255 / .74);
+  border-color: rgb(255 255 255 / .9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+html:not(.oscuro) .zona-trabajo .tarjeta { background-color: rgb(255 255 255 / .86); }
+html:not(.oscuro) .campo,
+html:not(.oscuro) .btn-secundario,
+html:not(.oscuro) .btn-mini-gris,
+html:not(.oscuro) .hora-libre:not(.hora-escogida) { background-color: rgb(255 255 255 / .85); }
+html:not(.oscuro) .tabla th { background-color: rgb(253 245 248 / .9); color: rgb(var(--tinta) / .8); }
+html:not(.oscuro) #pestanas { background-color: rgb(255 255 255 / .7); }
+/* Textos grises un poco más oscuros */
+html:not(.oscuro) .text-tinta\/45,
+html:not(.oscuro) .text-tinta\/60,
+html:not(.oscuro) .text-tinta\/65,
+html:not(.oscuro) .text-tinta\/70,
+html:not(.oscuro) .text-tinta\/75 { color: rgb(var(--tinta) / .82); }
+/* Texto que va directo sobre el video: un halo blanco suave detrás de las letras */
+html:not(.oscuro) .sobre-video { text-shadow: 0 0 18px rgb(255 255 255 / .95), 0 0 4px rgb(255 255 255 / .8); }
+html:not(.oscuro) .sobre-video .btn-primario,
+html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
