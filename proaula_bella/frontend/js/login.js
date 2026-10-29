@@ -19,7 +19,7 @@ function dibujarRoles() {
         boton.type = 'button';
         boton.textContent = ROLES[clave].titulo;
         boton.className = 'rounded-lg px-1 py-2 text-xs font-semibold transition '
-            + (clave === rolActual ? 'bg-bella-500 text-white shadow' : 'text-white/60 hover:bg-white/10 hover:text-white');
+            + (clave === rolActual ? 'bg-bella-700 text-white shadow' : 'text-tinta/75 hover:bg-tinta/10 hover:text-tinta');
         boton.addEventListener('click', () => seleccionarRol(clave));
         lista.appendChild(boton);
     }
@@ -75,12 +75,12 @@ async function cargarPrecios() {
     const respuesta = await pedir('/servicios');
     const lista = document.getElementById('listaPrecios');
     if (!respuesta.success) {
-        lista.innerHTML = '<li class="py-3 text-sm text-white/40">Enciende el servidor para ver los precios.</li>';
+        lista.innerHTML = '<li class="py-3 text-sm text-tinta/80">Enciende el servidor para ver los precios.</li>';
         return;
     }
     lista.innerHTML = respuesta.data.slice(0, 4).map((s) => `
         <li class="flex items-baseline justify-between gap-4 py-3">
-            <span class="text-white/80">${escapar(s.nombre)} <span class="text-xs text-white/30">· ${s.duracion_min} min</span></span>
+            <span class="text-tinta/80">${escapar(s.nombre)} <span class="text-xs text-tinta/45">· ${s.duracion_min} min</span></span>
             <span class="font-semibold text-oro">${pesos(s.precio)}</span>
         </li>`).join('');
 }

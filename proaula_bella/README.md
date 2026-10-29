@@ -1,8 +1,9 @@
 # BellaStyle Manager
 
 Sistema web para un salón de belleza: login por roles (Administradora, Estilista, Clienta),
-registro de cuentas, agendamiento de citas con asignación automática de estilista, panel
-administrativo y chat de asesoría en la página de inicio (sin necesidad de cuenta).
+registro de cuentas, agendamiento de citas con horas libres y asignación automática de estilista,
+horario y ausencias de cada estilista, calificaciones, chat entre la clienta y su estilista por cada
+cita, panel administrativo y chat de asesoría en la página de inicio (sin necesidad de cuenta).
 
 - **Backend:** Node.js + Express + MySQL (contraseñas cifradas con bcrypt)
 - **Frontend:** HTML + JavaScript + Tailwind CSS (compilado)
@@ -13,7 +14,15 @@ administrativo y chat de asesoría en la página de inicio (sin necesidad de cue
 2. Doble clic en `backend/INICIAR_SERVIDOR.bat`.
 3. Abrir `http://localhost:3000`.
 
-Si actualizaste el proyecto, vuelve a ejecutar `INSTALAR_BASE_DE_DATOS.bat`: el chat usa las tablas `conversaciones` y `mensajes`.
+**Si ya tenías la base creada** y solo quieres agregar las tablas nuevas (horarios, ausencias,
+calificaciones y chat de citas) **sin borrar tus datos**, desde la carpeta `backend`:
+
+```
+node actualizar_bd.js
+```
+
+Sirve igual para la base de la nube: primero los `set DB_...` de Aiven y luego ese comando.
+(`INSTALAR_BASE_DE_DATOS.bat` borra todo y vuelve a cargar los datos de prueba.)
 
 Si la clave de MySQL no es `1234`, cambiarla en `backend/config/config.js`.
 

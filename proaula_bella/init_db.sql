@@ -15,6 +15,10 @@ USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS agenda;
+DROP TABLE IF EXISTS mensajes_cita;
+DROP TABLE IF EXISTS calificaciones;
+DROP TABLE IF EXISTS ausencias;
+DROP TABLE IF EXISTS horarios;
 DROP TABLE IF EXISTS mensajes;
 DROP TABLE IF EXISTS conversaciones;
 DROP TABLE IF EXISTS citas;
@@ -134,17 +138,65 @@ CREATE TABLE mensajes (
         REFERENCES conversaciones(id_conversacion) ON DELETE CASCADE
 );
 
+-- Horario de trabajo de cada estilista: una fila por cada día que trabaja.
+-- dia_semana: 1 = lunes ... 6 = sábado (el salón no abre los domingos).
+-- Si una estilista no tiene fila para un día, ese día no trabaja.
+CREATE TABLE horarios (
+    id_horario   INT AUTO_INCREMENT PRIMARY KEY,
+    id_estilista INT NOT NULL,
+    dia_semana   TINYINT NOT NULL,
+    hora_inicio  TIME NOT NULL,
+    hora_fin     TIME NOT NULL,
+    CONSTRAINT uq_horario_dia UNIQUE (id_estilista, dia_semana),
+    CONSTRAINT fk_horarios_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista) ON DELETE CASCADE
+);
+
+-- Días en que una estilista no trabaja: vacaciones, permisos, incapacidades.
+CREATE TABLE ausencias (
+    id_ausencia  INT AUTO_INCREMENT PRIMARY KEY,
+    id_estilista INT NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin    DATE NOT NULL,
+    motivo       VARCHAR(120),
+    creado_en    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ausencias_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista) ON DELETE CASCADE
+);
+
+-- Calificación que deja la clienta cuando su cita queda Finalizada.
+-- id_cita es UNIQUE: cada cita se califica una sola vez.
+CREATE TABLE calificaciones (
+    id_calificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_cita         INT NOT NULL UNIQUE,
+    estrellas       TINYINT NOT NULL,
+    comentario      VARCHAR(300),
+    creado_en       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_estrellas CHECK (estrellas BETWEEN 1 AND 5),
+    CONSTRAINT fk_calificaciones_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
+-- Chat entre la clienta y la estilista de una cita.
+-- Se puede escribir mientras la cita esté Pendiente o Confirmada.
+CREATE TABLE mensajes_cita (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_cita    INT NOT NULL,
+    autor      ENUM('Clienta','Estilista') NOT NULL,
+    texto      VARCHAR(500) NOT NULL,
+    leido      BOOLEAN NOT NULL DEFAULT FALSE,
+    creado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_mensajes_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
 -- =====================================================================
 -- DATOS DE PRUEBA
 -- Contraseñas: admin123, est123, diana123, paula123, cli123
 -- =====================================================================
 
 INSERT INTO usuarios (id_usuario, nombre, username, password, rol, foto) VALUES
-(1, 'Marta Gómez',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/login_admin.jpg'),
-(2, 'Laura Estilista', 'estilista', '$2a$10$WmrWwFDrn6YvFrl0GkMTluTXGFTi7Mo1NTy1QuhTjDKtIptxfSeo2', 'Estilista',      'img/login_estilicista.webp'),
-(3, 'Diana Martínez',  'diana',     '$2a$10$keW7X2fdPNp3lekvelDIJeqnaEtWHFNH3AsRn41qr1RlNMndqXtsO', 'Estilista',      'img/login_estilicista.webp'),
-(4, 'Paula Ríos',      'paula',     '$2a$10$8QYcfgNx/jt2VrF1ECRwie2X6OfGjQHXLppFYJ3Pe9MkEG6UcPPQa', 'Estilista',      'img/login_estilicista.webp'),
-(5, 'César Pestana',   'cliente',   '$2a$10$wPH.tKFjr54oM.IzJVbSHOUYpEJjgJ43.CAekjbRWF3IpVt3P6csa', 'Clienta',        'img/login_cliente.webp');
+(1, 'Marta Gómez',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg'),
+(2, 'Laura Estilista', 'estilista', '$2a$10$WmrWwFDrn6YvFrl0GkMTluTXGFTi7Mo1NTy1QuhTjDKtIptxfSeo2', 'Estilista',      'img/rol_estilista.svg'),
+(3, 'Diana Martínez',  'diana',     '$2a$10$keW7X2fdPNp3lekvelDIJeqnaEtWHFNH3AsRn41qr1RlNMndqXtsO', 'Estilista',      'img/rol_estilista.svg'),
+(4, 'Paula Ríos',      'paula',     '$2a$10$8QYcfgNx/jt2VrF1ECRwie2X6OfGjQHXLppFYJ3Pe9MkEG6UcPPQa', 'Estilista',      'img/rol_estilista.svg'),
+(5, 'César Pestana',   'cliente',   '$2a$10$wPH.tKFjr54oM.IzJVbSHOUYpEJjgJ43.CAekjbRWF3IpVt3P6csa', 'Clienta',        'img/rol_clienta.svg');
 
 INSERT INTO clientas (id_clienta, id_usuario, nombres, apellidos, telefono, email) VALUES
 (1, 5,    'César', 'Pestana',  '3001112233', 'cesar@correo.com'),
@@ -189,3 +241,17 @@ INSERT INTO mensajes (id_conversacion, autor, texto, leido) VALUES
 (1, 'Asistente', '¡Hola, Valentina! Soy el asistente de BellaStyle. Puedo darte precios, horarios y explicarte cómo agendar. Si necesitas algo más, una asesora te responde por aquí.', TRUE),
 (1, 'Visitante', 'Hola, ¿hacen peinados para quinceañera a domicilio?', FALSE),
 (1, 'Asistente', 'Gracias por escribirnos. Una asesora del salón te responderá por aquí en breve.', TRUE);
+
+-- Horarios de prueba: cada estilista con días y horas distintos
+INSERT INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin) VALUES
+(1, 1, '08:00', '19:00'), (1, 2, '08:00', '19:00'), (1, 3, '08:00', '19:00'),
+(1, 4, '08:00', '19:00'), (1, 5, '08:00', '19:00'), (1, 6, '08:00', '19:00'),  -- Laura: lunes a sábado
+(2, 1, '09:00', '17:00'), (2, 2, '09:00', '17:00'), (2, 3, '09:00', '17:00'),
+(2, 4, '09:00', '17:00'), (2, 5, '09:00', '17:00'),                             -- Diana: lunes a viernes
+(3, 2, '08:00', '14:00'), (3, 3, '08:00', '14:00'), (3, 4, '08:00', '14:00'),
+(3, 5, '08:00', '14:00'), (3, 6, '08:00', '14:00');                             -- Paula: martes a sábado, mañanas
+
+-- Calificaciones de prueba de las citas finalizadas
+INSERT INTO calificaciones (id_cita, estrellas, comentario) VALUES
+(1, 5, 'Excelente corte, muy puntual.'),
+(2, 4, 'Me encantó el color.');
