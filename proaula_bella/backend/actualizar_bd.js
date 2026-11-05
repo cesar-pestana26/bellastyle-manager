@@ -1,4 +1,4 @@
-// Agrega las tablas nuevas (horarios, ausencias, calificaciones y chat de citas)
+// Agrega las tablas nuevas (horarios, ausencias, calificaciones, chat de citas y fotos de servicios)
 // a una base que ya existe, SIN borrar ningún dato.
 // Se puede ejecutar varias veces: si una tabla ya existe, no la toca.
 // Uso:  node actualizar_bd.js
@@ -43,6 +43,14 @@ const TABLAS = [
         leido      BOOLEAN NOT NULL DEFAULT FALSE,
         creado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_mensajes_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS fotos_servicio (
+        id_foto     INT AUTO_INCREMENT PRIMARY KEY,
+        id_servicio INT NOT NULL,
+        tipo        VARCHAR(20) NOT NULL,
+        datos       MEDIUMBLOB NOT NULL,
+        creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
     )`
 ];
 

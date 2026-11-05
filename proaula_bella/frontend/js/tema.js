@@ -58,7 +58,10 @@ function crearVideoDeFondo() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // Las páginas con data-sin-video (el panel) usan la imagen quieta: el video distrae al trabajar
     if (document.body.hasAttribute('data-sin-video')) return;
-    document.body.insertAdjacentHTML('afterbegin',
+    // Si la página tiene un panel #ladoVideo, el video va ahí (a un lado del contenido).
+    // Si no, va de fondo en toda la pantalla.
+    const destino = document.getElementById('ladoVideo') || document.body;
+    destino.insertAdjacentHTML('afterbegin',
         htmlVideo('fondo-video-claro', 'fondo') + htmlVideo('fondo-video-oscuro', 'fondo-oscuro'));
     pausarVideoSegunTema();
 }

@@ -15,6 +15,7 @@ USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS agenda;
+DROP TABLE IF EXISTS fotos_servicio;
 DROP TABLE IF EXISTS mensajes_cita;
 DROP TABLE IF EXISTS calificaciones;
 DROP TABLE IF EXISTS ausencias;
@@ -184,6 +185,17 @@ CREATE TABLE mensajes_cita (
     leido      BOOLEAN NOT NULL DEFAULT FALSE,
     creado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_mensajes_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
+-- Fotos de cada servicio (las sube la administradora). La imagen se guarda en la base
+-- de datos para que no se pierda cuando el servidor en la nube se reinicia.
+CREATE TABLE fotos_servicio (
+    id_foto     INT AUTO_INCREMENT PRIMARY KEY,
+    id_servicio INT NOT NULL,
+    tipo        VARCHAR(20) NOT NULL,
+    datos       MEDIUMBLOB NOT NULL,
+    creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 );
 
 -- =====================================================================

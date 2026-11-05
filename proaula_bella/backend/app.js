@@ -8,7 +8,8 @@ const rutas = require('./routes/rutas');
 const app = express();
 
 // Permite leer JSON en el cuerpo de las peticiones
-app.use(express.json());
+// Límite de 3 MB: alcanza para las fotos de los servicios (van en base64)
+app.use(express.json({ limit: '3mb' }));
 
 // La dirección principal (http://localhost:3000) abre el inicio de sesión
 app.get('/', (req, res) => res.redirect('/index.html'));
@@ -25,13 +26,14 @@ async function revisarBaseDeDatos() {
     const [columnas] = await db.query("SHOW COLUMNS FROM citas LIKE 'precio'");
     const [chat] = await db.query("SHOW TABLES LIKE 'mensajes'");
     const [horarios] = await db.query("SHOW TABLES LIKE 'horarios'");
+    const [fotos] = await db.query("SHOW TABLES LIKE 'fotos_servicio'");
     const [usuarios] = await db.query('SELECT password FROM usuarios LIMIT 1');
     const cifradas = usuarios.length === 0 || usuarios[0].password.startsWith('$2');
     if (columnas.length === 0 || chat.length === 0 || !cifradas) {
         console.error('ATENCION: la base de datos es la version vieja.');
         console.error('Ejecuta INSTALAR_BASE_DE_DATOS.bat y vuelve a iniciar el servidor.');
-    } else if (horarios.length === 0) {
-        console.error('ATENCION: faltan las tablas de horarios, calificaciones y chat de citas.');
+    } else if (horarios.length === 0 || fotos.length === 0) {
+        console.error('ATENCION: faltan tablas nuevas (horarios, calificaciones, chat de citas o fotos de servicios).');
         console.error('Ejecuta "node actualizar_bd.js" (no borra datos) y vuelve a iniciar el servidor.');
     }
 }

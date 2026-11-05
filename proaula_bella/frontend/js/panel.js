@@ -133,7 +133,9 @@ function abrirVentana(titulo, camposHtml, alGuardar) {
     document.getElementById('camposVentana').innerHTML = camposHtml;
     ocultarAlerta(document.getElementById('alertaVentana'));
     alGuardarVentana = alGuardar;
-    document.querySelector('#formVentana button[type="submit"]').classList.toggle('hidden', !alGuardar);
+    const botonGuardar = document.querySelector('#formVentana button[type="submit"]');
+    botonGuardar.classList.toggle('hidden', !alGuardar);
+    botonGuardar.textContent = 'Guardar';
     const ventana = document.getElementById('ventana');
     if (!ventana.open) ventana.showModal();
 }
@@ -938,12 +940,84 @@ async function cargarServiciosAdmin() {
                 <td>${pesos(s.precio)}</td>
                 <td>${s.duracion_min} min</td>
                 <td>${etiquetaActivo(s.estado)}</td>
-                <td class="whitespace-nowrap text-right">${botonEditar('Editar', 'editarServicio', s.id_servicio)} ${cambio}</td>
+                <td class="whitespace-nowrap text-right">${botonEditar('Fotos', 'fotosServicio', s.id_servicio)} ${botonEditar('Editar', 'editarServicio', s.id_servicio)} ${cambio}</td>
             </tr>`;
     }).join('');
 
     activarBotones(tabla, cargarServiciosAdmin);
     dibujarCasillasNuevo();
+}
+
+// ---------------------------------------------------------------
+// Fotos de un servicio: se ven en el menú de servicios de la página de inicio.
+// Antes de subirla, la foto se reduce en el navegador (máximo 1200 px, formato WEBP)
+// para que pese poco y cargue rápido.
+// ---------------------------------------------------------------
+
+function reducirImagen(archivo, maximo = 1200) {
+    return new Promise((resolver, rechazar) => {
+        const lector = new FileReader();
+        lector.onerror = () => rechazar(new Error('No se pudo leer el archivo.'));
+        lector.onload = () => {
+            const imagen = new Image();
+            imagen.onerror = () => rechazar(new Error('El archivo no es una imagen.'));
+            imagen.onload = () => {
+                const escala = Math.min(1, maximo / Math.max(imagen.width, imagen.height));
+                const lienzo = document.createElement('canvas');
+                lienzo.width = Math.round(imagen.width * escala);
+                lienzo.height = Math.round(imagen.height * escala);
+                lienzo.getContext('2d').drawImage(imagen, 0, 0, lienzo.width, lienzo.height);
+                let datos = lienzo.toDataURL('image/webp', 0.82);
+                if (!datos.startsWith('data:image/webp')) datos = lienzo.toDataURL('image/jpeg', 0.85);
+                resolver(datos);
+            };
+            imagen.src = lector.result;
+        };
+        lector.readAsDataURL(archivo);
+    });
+}
+
+async function fotosServicio(idServicio) {
+    const s = serviciosAdmin.find((x) => String(x.id_servicio) === String(idServicio));
+    const fotos = (await pedir(`/servicios/${idServicio}/fotos`)).data || [];
+    const galeria = fotos.length === 0
+        ? '<p class="text-sm text-tinta/70">Este servicio todavía no tiene fotos. En la página de inicio se ve una imagen de muestra.</p>'
+        : `<div class="grid grid-cols-3 gap-2">${fotos.map((f) => `
+            <div class="relative aspect-square overflow-hidden rounded-xl bg-tinta/5">
+                <img src="${f.url}" alt="" class="h-full w-full object-cover">
+                <button type="button" data-quitar-foto="${f.id_foto}" class="btn-mini absolute right-1.5 top-1.5 ${COLORES.rojo} bg-white">Quitar</button>
+            </div>`).join('')}</div>`;
+
+    abrirVentana(`Fotos · ${s ? s.nombre : ''}`,
+        galeria +
+        `<div class="border-t border-tinta/10 pt-4">
+            <label for="vFotos" class="etiqueta">Subir fotos (JPG, PNG o WEBP · máximo 6 por servicio)</label>
+            <input id="vFotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="campo file:mr-3 file:rounded-lg file:border-0 file:bg-bella-100 file:px-3 file:py-1.5 file:font-semibold file:text-bella-800">
+            <p class="mt-2 text-xs text-tinta/70">La primera foto es la que se ve en grande. Tip: usa fotos horizontales y de buena calidad.</p>
+         </div>`,
+        async () => {
+            const archivos = [...document.getElementById('vFotos').files];
+            if (archivos.length === 0) return { success: false, message: 'Escoge al menos una foto.' };
+            let subidas = 0;
+            for (const archivo of archivos) {
+                let imagen;
+                try { imagen = await reducirImagen(archivo); } catch (err) { return { success: false, message: `${archivo.name}: ${err.message}` }; }
+                const respuesta = await pedir(`/servicios/${idServicio}/fotos`, 'POST', { imagen });
+                if (!respuesta.success) return { success: false, message: subidas ? `Se subieron ${subidas}. ${respuesta.message}` : respuesta.message };
+                subidas++;
+            }
+            setTimeout(() => fotosServicio(idServicio), 50);   // vuelve a abrir la ventana con las fotos nuevas
+            return { success: true, message: subidas === 1 ? 'Foto subida.' : `${subidas} fotos subidas.` };
+        });
+    document.querySelector('#formVentana button[type="submit"]').textContent = 'Subir';
+
+    document.querySelectorAll('[data-quitar-foto]').forEach((boton) => {
+        boton.addEventListener('click', async () => {
+            const respuesta = await pedir(`/fotos/${boton.dataset.quitarFoto}`, 'DELETE');
+            avisar(respuesta.message);
+            fotosServicio(idServicio);
+        });
+    });
 }
 
 // idServicio vacío = crear uno nuevo
@@ -1174,7 +1248,7 @@ function iniciarAdmin() {
 // Funciones que abren ventanas desde los botones "Editar" de las tablas
 const EDITORES = {
     reprogramarCita, calificarCita, abrirChatCita, editarServiciosEstilista, editarHorario,
-    verAusencias, verOpiniones, editarClienta, editarServicio, editarProducto
+    verAusencias, verOpiniones, editarClienta, editarServicio, editarProducto, fotosServicio
 };
 
 // ---------------------------------------------------------------

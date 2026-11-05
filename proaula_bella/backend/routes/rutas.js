@@ -11,6 +11,7 @@ const chat = require('../controllers/chatController');
 const horarios = require('../controllers/horarioController');
 const calificaciones = require('../controllers/calificacionController');
 const chatCita = require('../controllers/chatCitaController');
+const fotos = require('../controllers/fotoServicioController');
 
 // Autenticación
 router.post('/login', auth.login);
@@ -36,6 +37,13 @@ router.get('/servicios', catalogo.servicios);
 router.post('/servicios', gestion.crearServicio);
 router.put('/servicios/:id', gestion.editarServicio);
 router.put('/servicios/:id/estado', gestion.estadoServicio);
+
+// Fotos de los servicios (menú de servicios de la página de inicio)
+router.get('/fotos-servicios', fotos.listar);
+router.get('/servicios/:id/fotos', fotos.listar);
+router.post('/servicios/:id/fotos', fotos.subir);
+router.get('/fotos/:id', fotos.ver);
+router.delete('/fotos/:id', fotos.eliminar);
 
 // Productos
 router.get('/productos', catalogo.productos);

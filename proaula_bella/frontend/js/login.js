@@ -18,7 +18,7 @@ function dibujarRoles() {
         const boton = document.createElement('button');
         boton.type = 'button';
         boton.textContent = ROLES[clave].titulo;
-        boton.className = 'rounded-lg px-1 py-2 text-xs font-semibold transition '
+        boton.className = 'rounded-lg px-1 py-2.5 text-sm font-semibold transition sm:text-base '
             + (clave === rolActual ? 'bg-bella-700 text-white shadow' : 'text-tinta/75 hover:bg-tinta/10 hover:text-tinta');
         boton.addEventListener('click', () => seleccionarRol(clave));
         lista.appendChild(boton);
@@ -70,20 +70,4 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
     }
 });
 
-// Lista corta de precios: cuatro servicios con su precio real
-async function cargarPrecios() {
-    const respuesta = await pedir('/servicios');
-    const lista = document.getElementById('listaPrecios');
-    if (!respuesta.success) {
-        lista.innerHTML = '<li class="py-3 text-sm text-tinta/80">Enciende el servidor para ver los precios.</li>';
-        return;
-    }
-    lista.innerHTML = respuesta.data.slice(0, 4).map((s) => `
-        <li class="flex items-baseline justify-between gap-4 py-3">
-            <span class="text-tinta/80">${escapar(s.nombre)} <span class="text-xs text-tinta/45">· ${s.duracion_min} min</span></span>
-            <span class="font-semibold text-oro">${pesos(s.precio)}</span>
-        </li>`).join('');
-}
-
 seleccionarRol(rolActual);
-cargarPrecios();

@@ -104,6 +104,30 @@
   @media (prefers-reduced-motion: reduce) {
     .fondo-video, .oscuro .fondo-video-oscuro { display: none; }
   }
+  /* Páginas divididas: el video va en un panel a un lado (#ladoVideo)
+     y el contenido queda sobre un fondo liso, sin distracciones */
+  .pagina-dividida::before {
+    display: none;
+  }
+  .lado-video {
+    @apply relative overflow-hidden;
+    background: url('../img/fondo.webp') center / cover;
+  }
+  .oscuro .lado-video {
+    background-image: url('../img/fondo-oscuro.webp');
+  }
+  .lado-video .fondo-video {
+    position: absolute;
+    z-index: 0;
+  }
+  .lado-video .fondo-video::after {
+    background: transparent;
+  }
+  /* Texto blanco sobre el video (no cambia con el tema) */
+  .texto-sobre-video {
+    color: #fff;
+    text-shadow: 0 2px 16px rgba(40, 20, 45, .45);
+  }
   /* En modo oscuro el velo es oscuro */
   .oscuro body::before {
     background-image: linear-gradient(rgba(18,12,26,.35), rgba(18,12,26,.35)), url('../img/fondo-oscuro.webp');
@@ -247,6 +271,13 @@
   .zona-trabajo .hora-libre.hora-escogida {
     @apply bg-bella-700;
   }
+  /* Botones del menú de servicios (js/servicios.js) */
+  .boton-servicio {
+    @apply border-tinta/15 bg-white/80 text-tinta/80 hover:border-bella-400 hover:text-tinta;
+  }
+  .boton-servicio.boton-servicio-activo {
+    @apply border-bella-700 bg-bella-700 text-white shadow-md shadow-bella-300/40;
+  }
   /* Barra gris animada mientras cargan los datos ("esqueleto") */
   .esqueleto {
     @apply h-4 animate-pulse rounded-full bg-tinta/10;
@@ -362,6 +393,7 @@ html:not(.oscuro) .btn-mini-gris,
 html:not(.oscuro) .hora-libre:not(.hora-escogida) { background-color: rgb(255 255 255 / .85); }
 html:not(.oscuro) .tabla th { background-color: rgb(253 245 248 / .9); color: rgb(var(--tinta) / .8); }
 html:not(.oscuro) #pestanas { background-color: rgb(255 255 255 / .7); }
+html:not(.oscuro) #chatVentana { background-color: rgb(255 255 255 / .9); }
 /* Textos grises un poco más oscuros */
 html:not(.oscuro) .text-tinta\/45,
 html:not(.oscuro) .text-tinta\/60,
@@ -372,3 +404,27 @@ html:not(.oscuro) .text-tinta\/75 { color: rgb(var(--tinta) / .82); }
 html:not(.oscuro) .sobre-video { text-shadow: 0 0 18px rgb(255 255 255 / .95), 0 0 4px rgb(255 255 255 / .8); }
 html:not(.oscuro) .sobre-video .btn-primario,
 html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
+
+/* ---------- Celular y tableta: páginas divididas ----------
+   No hay espacio para poner el video al lado, así que pasa a ser el fondo
+   de toda la pantalla (detrás del contenido) con un velo para poder leer. */
+@media (max-width: 1023px) {
+  .pagina-dividida aside.lado-video {
+    position: fixed;
+    inset: 0;
+    height: auto;
+    display: block;
+    z-index: -10;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .pagina-dividida aside.lado-video > :not(.fondo-video) { display: none; }
+  .pagina-dividida aside.lado-video::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgb(255 255 255 / .6);
+  }
+  .oscuro .pagina-dividida aside.lado-video::after { background: rgb(18 12 26 / .6); }
+}

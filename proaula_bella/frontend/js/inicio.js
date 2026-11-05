@@ -27,25 +27,3 @@ const observador = new IntersectionObserver((entradas) => {
 }, { threshold: 0.15 });
 
 document.querySelectorAll('.revelar').forEach((el) => observador.observe(el));
-
-// 3. Carga los servicios desde la base de datos
-async function cargarDatos() {
-    const servicios = await pedir('/servicios');
-
-    const lista = document.getElementById('listaServicios');
-    if (!servicios.success) {
-        lista.innerHTML = '<p class="text-tinta/80">Enciende el servidor para ver los servicios.</p>';
-        return;
-    }
-    lista.innerHTML = servicios.data.map((s, i) => `
-        <article class="revelar tarjeta group p-6 hover:-translate-y-1 hover:border-bella-400/40" style="transition-delay:${i * 60}ms">
-            <h3 class="text-2xl font-bold transition group-hover:text-bella-800">${escapar(s.nombre)}</h3>
-            <div class="mt-4 flex items-end justify-between">
-                <p class="font-titulo text-3xl font-bold text-oro">${pesos(s.precio)}</p>
-                <p class="text-sm text-tinta/80">${s.duracion_min} min</p>
-            </div>
-        </article>`).join('');
-    lista.querySelectorAll('.revelar').forEach((el) => observador.observe(el));
-}
-
-cargarDatos();

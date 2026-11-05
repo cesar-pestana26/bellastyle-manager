@@ -12,7 +12,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="flex items-center justify-between bg-gradient-to-r from-bella-200 to-lavanda-200 px-4 py-3">
         <div>
           <p class="font-semibold">Chat BellaStyle</p>
-          <p class="text-xs text-tinta/80">Asesoría y cotizaciones</p>
+          <p class="text-xs text-tinta/80">Asistente virtual · responde al instante</p>
         </div>
         <button id="chatCerrar" class="rounded-lg px-2 text-2xl leading-none text-tinta/80 hover:bg-tinta/10" aria-label="Cerrar chat">&times;</button>
       </div>
@@ -35,6 +35,11 @@ document.body.insertAdjacentHTML('beforeend', `
       <!-- Paso 2: conversación -->
       <div id="chatConversacion" class="hidden flex-1 flex-col overflow-hidden">
         <div id="chatMensajes" class="flex-1 space-y-3 overflow-y-auto p-4"></div>
+        <!-- Se muestra mientras el asistente prepara la respuesta -->
+        <p id="chatEscribiendo" class="hidden items-center gap-2 px-4 pb-2 text-xs text-tinta/80">
+          <span class="flex gap-1"><span class="h-1.5 w-1.5 animate-bounce rounded-full bg-bella-500"></span><span class="h-1.5 w-1.5 animate-bounce rounded-full bg-bella-500 [animation-delay:.15s]"></span><span class="h-1.5 w-1.5 animate-bounce rounded-full bg-bella-500 [animation-delay:.3s]"></span></span>
+          Bella está escribiendo…
+        </p>
         <div id="chatAlertaMensaje" class="alerta mx-4"></div>
         <form id="chatFormMensaje" class="flex gap-2 border-t border-tinta/10 p-3">
           <input id="chatTexto" class="campo py-2" maxlength="500" placeholder="Escribe tu mensaje..." autocomplete="off">
@@ -57,7 +62,8 @@ const chat = {
     ultimoId: 0,          // id del último mensaje mostrado
     sinLeer: 0,           // respuestas que llegaron con el chat cerrado
     abierto: false,
-    temporizador: null
+    temporizador: null,
+    esperando: null       // temporizador mientras se espera la respuesta del asistente
 };
 const tituloOriginal = document.title;
 
@@ -83,6 +89,16 @@ function dibujarMensaje(m) {
         </div>`);
 }
 
+// Indicador "Bella está escribiendo…": se muestra hasta que llega la respuesta (máximo 25 s)
+function mostrarEscribiendo(visible) {
+    const aviso = document.getElementById('chatEscribiendo');
+    aviso.classList.toggle('hidden', !visible);
+    aviso.classList.toggle('flex', visible);
+    clearTimeout(chat.esperando);
+    chat.esperando = visible ? setTimeout(() => mostrarEscribiendo(false), 25000) : null;
+    programarRevision();
+}
+
 function actualizarContador() {
     contador.textContent = chat.sinLeer;
     contador.classList.toggle('hidden', chat.sinLeer === 0);
@@ -101,6 +117,8 @@ async function buscarMensajes() {
     }
     const nuevos = respuesta.data.mensajes;
     const primeraCarga = chat.ultimoId === 0;   // al abrir la página no se cuentan como nuevos
+    // Llegó una respuesta: se quita el indicador "escribiendo"
+    if (chat.esperando && nuevos.some((m) => m.autor !== 'Visitante')) mostrarEscribiendo(false);
     nuevos.forEach((m) => {
         dibujarMensaje(m);
         // Notificación: respuestas que llegan con el chat cerrado o la pestaña oculta
@@ -113,11 +131,11 @@ async function buscarMensajes() {
     }
 }
 
-// Abierto: revisa cada 3 segundos. Cerrado: cada 10 (solo para el contador).
+// Esperando respuesta: revisa cada segundo. Abierto: cada 3. Cerrado: cada 10 (solo para el contador).
 function programarRevision() {
     clearInterval(chat.temporizador);
     if (!chat.codigo) return;
-    chat.temporizador = setInterval(buscarMensajes, chat.abierto ? 3000 : 10000);
+    chat.temporizador = setInterval(buscarMensajes, chat.esperando ? 1000 : chat.abierto ? 3000 : 10000);
 }
 
 // --- Pantallas del chat: datos del visitante o conversación ---
@@ -133,6 +151,9 @@ function reiniciarChat() {
     chat.codigo = null;
     chat.ultimoId = 0;
     listaMensajes.innerHTML = '';
+    mostrarEscribiendo(false);
+    // El nombre ya escrito se deja puesto para empezar otra conversación rápido
+    document.getElementById('chatNombre').value = localStorage.getItem('bellaChatNombre') || '';
     mostrarConversacion(false);
     programarRevision();
 }
@@ -150,8 +171,15 @@ function abrirChat(abrir) {
     programarRevision();
 }
 
-burbuja.addEventListener('click', () => abrirChat(!chat.abierto));
-document.getElementById('chatCerrar').addEventListener('click', () => abrirChat(false));
+// Al cerrar el chat, la conversación termina: al abrirlo de nuevo aparece limpio
+// para hacer otras preguntas. (La administradora sigue viendo la conversación en su panel.)
+function cerrarChat() {
+    abrirChat(false);
+    if (chat.codigo) reiniciarChat();
+}
+
+burbuja.addEventListener('click', () => (chat.abierto ? cerrarChat() : abrirChat(true)));
+document.getElementById('chatCerrar').addEventListener('click', cerrarChat);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && chat.abierto) { chat.sinLeer = 0; actualizarContador(); } });
 
 // Paso 1: el visitante escribe su nombre (y si quiere, teléfono o correo)
@@ -166,6 +194,7 @@ document.getElementById('chatDatos').addEventListener('submit', async (e) => {
     ocultarAlerta(alerta);
     chat.codigo = respuesta.data.codigo;
     localStorage.setItem('bellaChat', chat.codigo);
+    localStorage.setItem('bellaChatNombre', document.getElementById('chatNombre').value.trim());
     mostrarConversacion(true);
     await buscarMensajes();
     programarRevision();
@@ -186,6 +215,10 @@ document.getElementById('chatFormMensaje').addEventListener('submit', async (e) 
     }
     ocultarAlerta(document.getElementById('chatAlertaMensaje'));
     await buscarMensajes();
+    if (respuesta.data && respuesta.data.asistenteResponde) {
+        mostrarEscribiendo(true);
+        listaMensajes.scrollTop = listaMensajes.scrollHeight;
+    }
 });
 
 // Al cargar la página: si el visitante ya tenía conversación, se recupera

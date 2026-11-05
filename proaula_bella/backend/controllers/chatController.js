@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const chatModel = require('../models/chatModel');
 const asistente = require('../utils/asistente');
+const asistenteIA = require('../utils/asistenteIA');
 const { nombreValido, telefonoValido, emailValido } = require('../utils/validators');
 
 const MAX_TEXTO = 500;
@@ -52,8 +53,10 @@ async function iniciar(req, res) {
         const codigo = crypto.randomBytes(16).toString('hex');
         const primerNombre = nombre.trim().split(/\s+/)[0];
         const id = await chatModel.crearConversacion({ codigo, nombre: nombre.trim(), contacto: contacto && String(contacto).trim() });
-        await chatModel.agregarMensaje(id, 'Asistente',
-            `¡Hola, ${primerNombre}! Soy el asistente de BellaStyle. Puedo darte precios, horarios y explicarte cómo agendar. Si necesitas algo más, una asesora te responde por aquí.`);
+        const saludo = asistenteIA.activo()
+            ? `¡Hola, ${primerNombre}! Soy Bella, la asistente virtual de BellaStyle 💖 Pregúntame lo que quieras: precios, servicios, horarios, consejos de belleza o cómo agendar tu cita.`
+            : `¡Hola, ${primerNombre}! Soy el asistente de BellaStyle. Puedo darte precios, horarios y explicarte cómo agendar. Si necesitas algo más, una asesora te responde por aquí.`;
+        await chatModel.agregarMensaje(id, 'Asistente', saludo);
         res.status(201).json({ success: true, data: { codigo } });
     } catch (err) {
         errorServidor(res, err);
@@ -73,7 +76,23 @@ async function verMensajes(req, res) {
     }
 }
 
+// Respuesta automática al visitante. Primero intenta con la IA (Gemini);
+// si no está configurada o falla, usa el asistente de palabras clave.
+async function responderAlVisitante(idConversacion, texto) {
+    let respuesta = null;
+    if (asistenteIA.activo()) {
+        respuesta = await asistenteIA.responder(await chatModel.mensajesDesde(idConversacion, 0));
+    }
+    if (!respuesta) {
+        respuesta = await asistente.responder(texto, await chatModel.ultimoDelAsistente(idConversacion));
+    }
+    if (respuesta) await chatModel.agregarMensaje(idConversacion, 'Asistente', respuesta);
+}
+
 // POST /api/chat/:codigo/mensajes   Recibe: { texto }
+// Guarda el mensaje y responde de inmediato. La respuesta del asistente se
+// genera después (la IA puede tardar unos segundos) y el navegador la recibe
+// en su siguiente revisión de mensajes.
 async function enviarVisitante(req, res) {
     const error = validarTexto(req.body.texto);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -84,11 +103,13 @@ async function enviarVisitante(req, res) {
         await chatModel.agregarMensaje(id, 'Visitante', req.body.texto.trim());
 
         // El asistente solo responde mientras el salón no haya entrado a la conversación
-        if (!(await chatModel.salonYaRespondio(id))) {
-            const respuesta = await asistente.responder(req.body.texto, await chatModel.ultimoDelAsistente(id));
-            if (respuesta) await chatModel.agregarMensaje(id, 'Asistente', respuesta);
+        const asistenteResponde = !(await chatModel.salonYaRespondio(id));
+        res.status(201).json({ success: true, data: { asistenteResponde } });
+
+        if (asistenteResponde) {
+            responderAlVisitante(id, req.body.texto.trim())
+                .catch((err) => console.error('Error del asistente:', err.message));
         }
-        res.status(201).json({ success: true });
     } catch (err) {
         errorServidor(res, err);
     }

@@ -8,17 +8,22 @@
   <link rel="apple-touch-icon" href="img/icono-180.png">
   <meta name="description" content="BellaStyle: agenda tu cita en el salón de belleza en minutos.">
   <meta name="theme-color" content="#f7d3e2">
-  <link rel="stylesheet" href="css/estilos.css?v=8">
-  <script src="js/tema.js?v=7"></script>
+  <link rel="stylesheet" href="css/estilos.css?v=12">
+  <script src="js/tema.js?v=11"></script>
 </head>
-<body class="min-h-screen">
+<body class="pagina-dividida min-h-screen bg-noche-950">
 
-  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-    <div class="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-bella-200/50 blur-3xl"></div>
-    <div class="absolute -bottom-40 -left-20 h-[28rem] w-[28rem] rounded-full bg-lavanda-200/50 blur-3xl"></div>
-  </div>
+  <div class="lg:grid lg:min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <!-- Lado izquierdo: video del salón (lo pone js/tema.js). En celular no se muestra. -->
+    <aside id="ladoVideo" class="lado-video hidden lg:sticky lg:top-0 lg:block lg:h-screen">
+      <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/50 to-transparent p-10 pb-24 pt-24">
+        <p class="texto-sobre-video font-titulo text-5xl font-bold leading-tight">Tu próxima cita<br>empieza aquí.</p>
+      </div>
+    </aside>
 
-  <header class="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
+    <!-- Lado derecho: formulario -->
+    <div class="flex min-h-screen flex-col">
+  <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
     <a href="welcome.html" class="flex items-center gap-2 font-titulo text-2xl font-bold"><img src="img/logo.webp" alt="" class="h-9 w-9 rounded-full shadow-sm"><span>Bella<span class="text-bella-700">Style</span></span></a>
     <a href="index.html" class="text-sm text-tinta/80 transition hover:text-tinta">Ya tengo cuenta</a>
   </header>
@@ -86,6 +91,9 @@
       </form>
     </section>
   </main>
+
+    </div>
+  </div>
 
   <script src="js/api.js"></script>
   <script src="js/registro.js"></script>

@@ -49,6 +49,19 @@ Abrir `http://localhost:3000`. Para apagar: `Ctrl + C` y luego `docker compose d
 | `DB_NAME` | bellastylemanager |
 | `DB_SSL` | true (en la nube) |
 | `CODIGO_ADMIN` | código para registrar administradoras |
+| `GEMINI_API_KEY` | clave de Google AI Studio para el asistente con IA del chat |
+| `GEMINI_MODELO` | modelo de IA (por defecto `gemma-4-26b-a4b-it`) |
+
+## Asistente con inteligencia artificial (chat de la página de inicio)
+
+El chat responde con IA (Gemini API de Google) usando los datos reales del salón
+(servicios, precios, productos, estilistas y horario). Archivo: `backend/utils/asistenteIA.js`.
+
+- **En tu PC:** crea el archivo `backend/.env` con la línea `GEMINI_API_KEY=tu_clave` (y opcional `GEMINI_MODELO=...`).
+  Ese archivo no se sube a GitHub.
+- **En la nube (Render, Railway...):** agrega `GEMINI_API_KEY` en las variables de entorno del servicio.
+- **Sin clave, o si se acaba el cupo gratis:** el chat usa el asistente de palabras clave (`backend/utils/asistente.js`).
+- Cuando la administradora responde una conversación, el asistente deja de responder en ella.
 
 ## Usuarios de prueba
 
