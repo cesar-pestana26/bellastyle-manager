@@ -278,6 +278,10 @@
   .boton-servicio.boton-servicio-activo {
     @apply border-bella-700 bg-bella-700 text-white shadow-md shadow-bella-300/40;
   }
+  /* Opciones rápidas de la invitación del chat */
+  .opcion-chat {
+    @apply rounded-xl border border-bella-200 bg-bella-50 px-3 py-2 text-left text-sm font-medium text-bella-800 transition hover:border-bella-400 hover:bg-bella-100;
+  }
   /* Barra gris animada mientras cargan los datos ("esqueleto") */
   .esqueleto {
     @apply h-4 animate-pulse rounded-full bg-tinta/10;
@@ -410,6 +414,17 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
    se oculta y la página queda con fondo liso. Desde 768 px (tableta y PC) va a un lado. */
 @media (max-width: 767px) {
   .pagina-dividida aside.lado-video { display: none; }
+  /* Página de inicio en celular: la silueta va arriba como una tarjeta redondeada
+     (no de fondo), igual que en "Conoce el salón" */
+  .pagina-dividida aside.lado-video.lado-video-movil {
+    display: block;
+    height: 17rem;
+    margin: 1rem 1.25rem 0;
+    border-radius: 1.75rem;
+    box-shadow: 0 20px 40px -20px rgb(var(--bella-400) / .6);
+  }
+  .lado-video-movil > div:not(.fondo-video) { padding: 1.25rem !important; }
+  .lado-video-movil > div:not(.fondo-video) p:first-child { font-size: 1.9rem; }
 }
 
 /* ---------- Paneles (panel.html): fondo liso con un brillo suave, sin imagen ----------

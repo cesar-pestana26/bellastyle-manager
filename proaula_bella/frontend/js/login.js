@@ -33,7 +33,10 @@ function seleccionarRol(clave) {
     document.getElementById('enlaceRegistro').href = 'register.html?rol=' + clave;
     ocultarAlerta(document.getElementById('alerta'));
     dibujarRoles();
-    document.getElementById('usuario').focus();
+    // El cursor va al campo Usuario sin mover la página (en celular, si se movía,
+    // la página abría ya bajada y no se veía la silueta). En celular no se enfoca
+    // para que no se abra el teclado solo.
+    if (window.innerWidth >= 768) document.getElementById('usuario').focus({ preventScroll: true });
 }
 
 // Botón "Mostrar / Ocultar" contraseña

@@ -48,6 +48,23 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
     </div>
 
+    <!-- Invitación: aparece a los 10 segundos con preguntas rápidas -->
+    <div id="chatInvitacion" class="hidden w-[19rem] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-tinta/10 bg-white p-4 shadow-2xl shadow-tinta/20 animate-aparecer">
+      <div class="flex items-start gap-3">
+        <img src="img/logo.webp" alt="" class="h-10 w-10 shrink-0 rounded-full">
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-tinta">¡Hola! Soy Bella 👋</p>
+          <p class="text-sm text-tinta/80">¿Te ayudo con algo? Elige una opción:</p>
+        </div>
+        <button type="button" id="chatInvitacionCerrar" class="-mr-1 -mt-1 rounded-lg px-1.5 text-xl leading-none text-tinta/60 hover:bg-tinta/10" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="mt-3 flex flex-col gap-2">
+        <button type="button" data-pregunta="¿Cuáles son sus servicios y precios?" class="opcion-chat">💰 Ver servicios y precios</button>
+        <button type="button" data-pregunta="¿Cómo agendo una cita?" class="opcion-chat">📅 Quiero agendar una cita</button>
+        <button type="button" data-pregunta="" class="opcion-chat">💬 Tengo otra pregunta</button>
+      </div>
+    </div>
+
     <!-- Burbuja -->
     <button id="chatBurbuja" class="group relative flex items-center gap-3 rounded-full bg-gradient-to-r from-bella-200 to-lavanda-200 py-3 pl-4 pr-5 font-semibold shadow-xl shadow-bella-200/70 transition hover:-translate-y-0.5">
       <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5m-9 6 3-3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v13Z"/></svg>
@@ -63,7 +80,8 @@ const chat = {
     sinLeer: 0,           // respuestas que llegaron con el chat cerrado
     abierto: false,
     temporizador: null,
-    esperando: null       // temporizador mientras se espera la respuesta del asistente
+    esperando: null,      // temporizador mientras se espera la respuesta del asistente
+    preguntaPendiente: '' // pregunta elegida en la invitación antes de escribir el nombre
 };
 const tituloOriginal = document.title;
 
@@ -199,7 +217,15 @@ document.getElementById('chatDatos').addEventListener('submit', async (e) => {
     await buscarMensajes();
     programarRevision();
     document.getElementById('chatTexto').focus();
+    // Si eligió una pregunta en la invitación, se envía sola
+    if (chat.preguntaPendiente) enviarPregunta(chat.preguntaPendiente);
 });
+
+function enviarPregunta(texto) {
+    chat.preguntaPendiente = '';
+    document.getElementById('chatTexto').value = texto;
+    document.getElementById('chatFormMensaje').requestSubmit();
+}
 
 // Paso 2: enviar mensajes
 document.getElementById('chatFormMensaje').addEventListener('submit', async (e) => {
@@ -220,6 +246,39 @@ document.getElementById('chatFormMensaje').addEventListener('submit', async (e) 
         listaMensajes.scrollTop = listaMensajes.scrollHeight;
     }
 });
+
+// --- Invitación automática: a los 10 segundos de entrar, Bella saluda ---
+// Sale una sola vez por visita (sessionStorage) y no aparece si el chat ya está abierto.
+const invitacion = document.getElementById('chatInvitacion');
+
+function ocultarInvitacion() {
+    invitacion.classList.add('hidden');
+    try { sessionStorage.setItem('bellaInvitacion', 'vista'); } catch (e) { /* sin guardado */ }
+}
+
+function yaSeMostroInvitacion() {
+    try { return sessionStorage.getItem('bellaInvitacion') === 'vista'; } catch (e) { return false; }
+}
+
+setTimeout(() => {
+    if (chat.abierto || yaSeMostroInvitacion()) return;
+    invitacion.classList.remove('hidden');
+}, 10000);
+
+document.getElementById('chatInvitacionCerrar').addEventListener('click', ocultarInvitacion);
+burbuja.addEventListener('click', ocultarInvitacion);
+invitacion.querySelectorAll('[data-pregunta]').forEach((boton) => boton.addEventListener('click', () => {
+    ocultarInvitacion();
+    abrirChat(true);
+    const pregunta = boton.dataset.pregunta;
+    if (!pregunta) return;
+    // Con conversación abierta se envía de una; si no, después de escribir el nombre
+    if (chat.codigo) enviarPregunta(pregunta);
+    else {
+        chat.preguntaPendiente = pregunta;
+        document.getElementById('chatNombre').focus();
+    }
+}));
 
 // Al cargar la página: si el visitante ya tenía conversación, se recupera
 if (chat.codigo) {
