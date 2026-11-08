@@ -4,7 +4,7 @@ const servicioModel = require('../models/servicioModel');
 const productoModel = require('../models/productoModel');
 const estilistaModel = require('../models/estilistaModel');
 const clienteModel = require('../models/clienteModel');
-const { nombreValido } = require('../utils/validators');
+const { nombreValido, telefonoValido } = require('../utils/validators');
 
 // Revisa que un número sea entero y no negativo (precio, stock, duración)
 function numeroValido(valor) {
@@ -170,8 +170,8 @@ async function editarClienta(req, res) {
     if (!nombreValido(nombres) || !nombreValido(apellidos)) {
         return res.status(400).json({ success: false, message: 'Nombres y apellidos solo pueden tener letras y espacios.' });
     }
-    if (telefono && !/^[0-9 +]{7,20}$/.test(telefono)) {
-        return res.status(400).json({ success: false, message: 'El teléfono solo puede tener números y espacios.' });
+    if (telefono && !telefonoValido(telefono)) {
+        return res.status(400).json({ success: false, message: 'El teléfono debe tener 10 dígitos: celular que empiece por 3 o fijo que empiece por 60.' });
     }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ success: false, message: 'El correo no es válido.' });

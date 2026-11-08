@@ -27,7 +27,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
         <div>
           <label for="chatContacto" class="etiqueta">Teléfono o correo (opcional)</label>
-          <input id="chatContacto" class="campo" maxlength="120">
+          <input id="chatContacto" data-contacto class="campo" maxlength="120" placeholder="3001234567 o tu@correo.com">
         </div>
         <button class="btn-primario mt-auto py-3">Empezar chat</button>
       </form>

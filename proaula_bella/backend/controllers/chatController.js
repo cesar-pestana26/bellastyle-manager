@@ -45,7 +45,7 @@ async function iniciar(req, res) {
     if (contacto && String(contacto).trim() !== '') {
         const texto = String(contacto).trim();
         if (texto.length > 120 || (!telefonoValido(texto) && !emailValido(texto))) {
-            return res.status(400).json({ success: false, message: 'Escribe un teléfono (solo números) o un correo válido.' });
+            return res.status(400).json({ success: false, message: 'Escribe un celular de 10 dígitos (empieza por 3) o un correo válido.' });
         }
     }
     try {

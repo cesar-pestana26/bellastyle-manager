@@ -82,7 +82,7 @@ async function registrar(req, res) {
     }
     // Teléfono y correo son opcionales, pero si se escriben deben tener formato válido
     if (telefono && !telefonoValido(telefono)) {
-        return res.status(400).json({ success: false, message: 'El teléfono solo puede tener números y espacios (7 a 20).' });
+        return res.status(400).json({ success: false, message: 'El teléfono debe tener 10 dígitos: celular que empiece por 3 o fijo que empiece por 60.' });
     }
     if (email && !emailValido(email)) {
         return res.status(400).json({ success: false, message: 'El correo no es válido.' });

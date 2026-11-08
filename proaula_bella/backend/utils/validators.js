@@ -15,8 +15,12 @@ function passwordValida(valor) {
 }
 
 // Teléfono: solo números, espacios y "+", de 7 a 20 caracteres. Ej: "300 111 2233"
+// Teléfono de Colombia: 10 dígitos. Celular empieza por 3 (300 123 4567)
+// y fijo por 60 (601 234 5678). Se aceptan espacios y el prefijo +57.
 function telefonoValido(valor) {
-    return typeof valor === 'string' && /^[0-9 +]{7,20}$/.test(valor.trim());
+    if (typeof valor !== 'string') return false;
+    const limpio = valor.replace(/[\s-]/g, '').replace(/^\+57/, '');
+    return /^(3\d{9}|60\d{8})$/.test(limpio);
 }
 
 // Correo con forma texto@dominio.ext

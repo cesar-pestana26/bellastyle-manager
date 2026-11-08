@@ -416,7 +416,7 @@ function editarMisDatos() {
     abrirVentana('Mis datos',
         campo('vNombres', 'Nombres', c.nombres, 'text', 'required') +
         campo('vApellidos', 'Apellidos', c.apellidos, 'text', 'required') +
-        campo('vTelefono', 'Teléfono', c.telefono || '', 'tel') +
+        campo('vTelefono', 'Teléfono (10 dígitos)', c.telefono || '', 'tel', 'inputmode="numeric" maxlength="10"') +
         campo('vEmail', 'Correo', c.email || '', 'email') +
         campoProfesion(c.profesion),
         async () => {
@@ -940,7 +940,7 @@ function editarClienta(idClienta) {
     abrirVentana('Editar clienta',
         campo('vNombres', 'Nombres', c.nombres, 'text', 'required') +
         campo('vApellidos', 'Apellidos', c.apellidos, 'text', 'required') +
-        campo('vTelefono', 'Teléfono', c.telefono || '', 'tel') +
+        campo('vTelefono', 'Teléfono (10 dígitos)', c.telefono || '', 'tel', 'inputmode="numeric" maxlength="10"') +
         campo('vEmail', 'Correo', c.email || '', 'email') +
         campoProfesion(c.profesion),
         async () => {

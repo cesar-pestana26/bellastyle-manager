@@ -79,3 +79,20 @@ const ROLES = {
         imagen: 'img/rol_admin.svg'
     }
 };
+
+// ---------------------------------------------------------------
+// Teléfonos: mientras se escribe, solo se dejan números y máximo 10
+// (celular 3xx xxx xxxx o fijo 60x xxx xxxx). Aplica a todos los campos
+// type="tel" de cualquier página, incluso los de las ventanas que se crean después.
+// El campo de contacto del chat acepta teléfono O correo: si lo escrito
+// tiene letras o @ se trata como correo; si son solo números, se limita a 10.
+// ---------------------------------------------------------------
+document.addEventListener('input', (e) => {
+    const campo = e.target;
+    const esTelefono = campo.type === 'tel';
+    const esContacto = campo.dataset && campo.dataset.contacto !== undefined;
+    if (!esTelefono && !esContacto) return;
+    if (esContacto && /[a-zA-Z@]/.test(campo.value)) return;   // es un correo: no se toca
+    const digitos = campo.value.replace(/\D/g, '').slice(0, 10);
+    if (campo.value !== digitos) campo.value = digitos;
+});
