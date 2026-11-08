@@ -12,6 +12,8 @@ const horarios = require('../controllers/horarioController');
 const calificaciones = require('../controllers/calificacionController');
 const chatCita = require('../controllers/chatCitaController');
 const fotos = require('../controllers/fotoServicioController');
+const perfil = require('../controllers/perfilController');
+const comprobantes = require('../controllers/comprobanteController');
 
 // Autenticación
 router.post('/login', auth.login);
@@ -44,6 +46,27 @@ router.get('/servicios/:id/fotos', fotos.listar);
 router.post('/servicios/:id/fotos', fotos.subir);
 router.get('/fotos/:id', fotos.ver);
 router.delete('/fotos/:id', fotos.eliminar);
+
+// Personalización: foto de perfil de cada cuenta y vitrina de trabajos
+router.get('/usuarios/:id/foto', perfil.verFoto);
+router.put('/usuarios/:id/foto', perfil.cambiarFoto);
+router.delete('/usuarios/:id/foto', perfil.quitarFoto);
+router.get('/vitrina', perfil.listarVitrina);
+router.post('/vitrina', perfil.agregarVitrina);
+router.get('/vitrina/:id/imagen', perfil.verImagenVitrina);
+router.put('/vitrina/:id', perfil.editarVitrina);
+router.delete('/vitrina/:id', perfil.eliminarVitrina);
+router.put('/usuarios/:id/nombre', perfil.cambiarNombre);
+
+// Foto de cada producto
+router.get('/productos/:id/foto', perfil.verFotoProducto);
+router.put('/productos/:id/foto', perfil.cambiarFotoProducto);
+router.delete('/productos/:id/foto', perfil.quitarFotoProducto);
+
+// Historial de la clienta, notas del servicio y comprobante en PDF
+router.get('/clientas/:id/historial', citas.historialClienta);
+router.put('/citas/:id/notas', citas.guardarNotas);
+router.get('/citas/:id/comprobante', comprobantes.comprobante);
 
 // Productos
 router.get('/productos', catalogo.productos);

@@ -8,8 +8,8 @@
   <link rel="apple-touch-icon" href="img/icono-180.png">
   <meta name="description" content="BellaStyle: agenda tu cita en el salón de belleza en minutos.">
   <meta name="theme-color" content="#f7d3e2">
-  <link rel="stylesheet" href="css/estilos.css?v=12">
-  <script src="js/tema.js?v=11"></script>
+  <link rel="stylesheet" href="css/estilos.css?v=15">
+  <script src="js/tema.js?v=15"></script>
 </head>
 <body class="pagina-dividida min-h-screen bg-noche-950">
 
@@ -70,6 +70,12 @@
           <div>
             <label for="email" class="etiqueta">Correo</label>
             <input id="email" class="campo" type="email" placeholder="tu@correo.com">
+          </div>
+          <div class="sm:col-span-2">
+            <label for="profesion" class="etiqueta">Profesión u ocupación (opcional)</label>
+            <input id="profesion" class="campo" maxlength="80" list="listaProfesiones" placeholder="Ej: Enfermera, docente, estudiante...">
+            <datalist id="listaProfesiones"><option value="Estudiante"><option value="Docente"><option value="Enfermera"><option value="Médica"><option value="Abogada"><option value="Ingeniera"><option value="Contadora"><option value="Comerciante"><option value="Ama de casa"><option value="Independiente"></datalist>
+            <p class="mt-1 text-xs text-tinta/70">Nos ayuda a recomendarte estilos prácticos para tu día a día.</p>
           </div>
         </div>
 

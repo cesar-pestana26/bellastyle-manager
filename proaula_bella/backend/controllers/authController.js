@@ -62,6 +62,7 @@ async function login(req, res) {
 // Recibe: { rol, nombre, username, password, telefono, email, servicios, codigoAdmin }
 async function registrar(req, res) {
     const { rol, nombre, password, telefono, email, codigoAdmin } = req.body;
+    const profesion = typeof req.body.profesion === 'string' ? req.body.profesion.trim().slice(0, 80) : '';
     const username = (req.body.username || '').trim().toLowerCase();
     const servicios = Array.isArray(req.body.servicios) ? req.body.servicios : [];
     const rolBD = ROLES[rol];
@@ -121,7 +122,7 @@ async function registrar(req, res) {
         const { nombres, apellidos } = separarNombre(nombre);
 
         if (rolBD === 'Clienta') {
-            await clienteModel.crear(conexion, { idUsuario, nombres, apellidos, telefono, email });
+            await clienteModel.crear(conexion, { idUsuario, nombres, apellidos, telefono, email, profesion });
         }
 
         if (rolBD === 'Estilista') {

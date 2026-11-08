@@ -8,8 +8,8 @@
   <link rel="apple-touch-icon" href="img/icono-180.png">
   <meta name="description" content="BellaStyle: agenda tu cita en el salón de belleza en minutos.">
   <meta name="theme-color" content="#f7d3e2">
-  <link rel="stylesheet" href="css/estilos.css?v=12">
-  <script src="js/tema.js?v=11"></script>
+  <link rel="stylesheet" href="css/estilos.css?v=15">
+  <script src="js/tema.js?v=15"></script>
 </head>
 <body class="pagina-dividida overflow-x-hidden bg-noche-950">
 
@@ -19,6 +19,8 @@
       <a href="index.html" class="flex items-center gap-2 font-titulo text-2xl font-bold"><img src="img/logo.webp" alt="" class="h-9 w-9 rounded-full"><span>Bella<span class="text-bella-700">Style</span></span></a>
       <div class="flex items-center gap-2 sm:gap-6">
         <a href="#servicios" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Servicios</a>
+        <a href="#vitrina" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Vitrina</a>
+        <a href="#productos" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Productos</a>
         <a href="#como-funciona" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Cómo funciona</a>
         <a href="index.html" class="btn-primario px-4 py-2">&larr; Volver al inicio</a>
       </div>
@@ -73,6 +75,27 @@
       <div data-menu-servicios class="mt-10"><div class="esqueleto h-10 w-2/3"></div></div>
     </div>
   </section>
+
+  <!-- ===================== VITRINA (fotos del salón y trabajos de las estilistas) ===================== -->
+  <section id="vitrina" class="mx-auto max-w-6xl scroll-mt-20 px-5 pt-24">
+    <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Vitrina</p>
+    <h2 class="mt-3 text-4xl font-bold sm:text-5xl">Nuestros trabajos</h2>
+    <p class="mt-2 text-tinta/80">Fotos reales del salón y de lo que hacen nuestras estilistas.</p>
+    <div id="galeriaVitrina" class="mt-10 columns-2 gap-4 md:columns-3 [&>*]:mb-4"><div class="esqueleto h-40"></div></div>
+  </section>
+
+  <!-- ===================== PRODUCTOS (con su foto) ===================== -->
+  <section id="productos" class="mx-auto max-w-6xl scroll-mt-20 px-5 pt-24">
+    <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Tienda</p>
+    <h2 class="mt-3 text-4xl font-bold sm:text-5xl">Productos que usamos y vendemos</h2>
+    <p class="mt-2 text-tinta/80">Pregunta por ellos en tu próxima cita o por el chat.</p>
+    <div id="listaProductos" class="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4"><div class="esqueleto h-40"></div></div>
+  </section>
+
+  <dialog id="visorFoto" class="max-h-[90vh] w-auto max-w-[min(56rem,calc(100%-2rem))] overflow-hidden rounded-2xl bg-transparent p-0 backdrop:bg-black/70">
+    <img id="visorImagen" src="" alt="" class="mx-auto max-h-[80vh] w-auto rounded-2xl object-contain">
+    <p id="visorTexto" class="mt-2 text-center text-sm font-medium text-white"></p>
+  </dialog>
 
   <!-- ===================== CÓMO FUNCIONA ===================== -->
   <section id="como-funciona" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">

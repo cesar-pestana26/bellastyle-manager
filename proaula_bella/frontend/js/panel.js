@@ -136,6 +136,8 @@ function abrirVentana(titulo, camposHtml, alGuardar) {
     const botonGuardar = document.querySelector('#formVentana button[type="submit"]');
     botonGuardar.classList.toggle('hidden', !alGuardar);
     botonGuardar.textContent = 'Guardar';
+    // Ventana solo para ver (sin guardar): el botón de abajo dice "Cerrar"
+    document.getElementById('btnCerrarVentana').textContent = alGuardar ? 'Cancelar' : 'Cerrar';
     const ventana = document.getElementById('ventana');
     if (!ventana.open) ventana.showModal();
 }
@@ -236,9 +238,17 @@ function fechaDeHoy() {
 function prepararEncabezado() {
     document.getElementById('nombreUsuario').textContent = usuario.nombre;
     document.getElementById('rolUsuario').textContent = usuario.rol;
-    // Ícono según el rol (mismo estilo en toda la app)
-    const iconoRol = Object.values(ROLES).find((r) => r.titulo === usuario.rol);
-    document.getElementById('fotoUsuario').src = iconoRol ? iconoRol.imagen : usuario.foto;
+    // Foto de perfil (si no ha subido una, el servidor devuelve el ícono de su rol)
+    mostrarFotoPerfil();
+    document.getElementById('rolPortada').textContent = usuario.rol;
+    document.getElementById('btnCambiarFoto').addEventListener('click', () => document.getElementById('archivoFotoPerfil').click());
+    document.getElementById('archivoFotoPerfil').addEventListener('change', cambiarFotoPerfil);
+    document.getElementById('btnQuitarFoto').addEventListener('click', quitarFotoPerfil);
+    if (usuario.rol === 'Administradora') {
+        const boton = document.getElementById('btnEditarNombre');
+        boton.classList.remove('hidden');
+        boton.addEventListener('click', editarMiNombre);
+    }
     // La administradora ve un saludo general; los demás roles ven su nombre
     document.getElementById('saludo').textContent = usuario.rol === 'Administradora'
         ? 'Bienvenida a tu salón de belleza'
@@ -247,8 +257,8 @@ function prepararEncabezado() {
 
     const subtitulos = {
         Clienta: 'Agenda una cita nueva o administra las que ya tienes.',
-        Estilista: 'Estas son las citas que te asignaron.',
-        Administradora: 'Resumen general del salón.'
+        Estilista: 'Tus citas, tu horario y tu vitrina de trabajos.',
+        Administradora: 'Resumen general del salón, tu equipo y la vitrina.'
     };
     document.getElementById('subtitulo').textContent = subtitulos[usuario.rol];
 
@@ -301,7 +311,7 @@ async function cargarHorasLibres() {
     }
 
     aviso.textContent = 'Buscando horas libres...';
-    const parametros = new URLSearchParams({ idServicio, fecha });
+    const parametros = new URLSearchParams({ idServicio, fecha, idUsuario: usuario.id });
     if (idEstilista) parametros.set('idEstilista', idEstilista);
     const respuesta = await pedir('/disponibilidad?' + parametros);
     const horas = respuesta.success ? respuesta.data.horas : [];
@@ -343,6 +353,7 @@ async function iniciarClienta() {
 
     document.getElementById('formCita').addEventListener('submit', agendarCita);
     document.getElementById('btnEditarMisDatos').addEventListener('click', editarMisDatos);
+    cargarEstilistasClienta();
     cargarMisDatos();
     cargarCitasClienta();
     // Cada 15 segundos se actualiza la tabla (mensajes nuevos de la estilista, cambios de estado)
@@ -396,7 +407,8 @@ async function cargarMisDatos() {
     document.getElementById('misDatos').innerHTML = `
         <div><dt class="inline text-tinta/60">Nombre:</dt> <dd class="inline">${escapar(c.nombres + ' ' + c.apellidos)}</dd></div>
         <div><dt class="inline text-tinta/60">Teléfono:</dt> <dd class="inline">${escapar(c.telefono || '—')}</dd></div>
-        <div><dt class="inline text-tinta/60">Correo:</dt> <dd class="inline">${escapar(c.email || '—')}</dd></div>`;
+        <div><dt class="inline text-tinta/60">Correo:</dt> <dd class="inline">${escapar(c.email || '—')}</dd></div>
+        <div><dt class="inline text-tinta/60">Profesión:</dt> <dd class="inline">${escapar(c.profesion || '—')}</dd></div>`;
 }
 
 function editarMisDatos() {
@@ -405,11 +417,12 @@ function editarMisDatos() {
         campo('vNombres', 'Nombres', c.nombres, 'text', 'required') +
         campo('vApellidos', 'Apellidos', c.apellidos, 'text', 'required') +
         campo('vTelefono', 'Teléfono', c.telefono || '', 'tel') +
-        campo('vEmail', 'Correo', c.email || '', 'email'),
+        campo('vEmail', 'Correo', c.email || '', 'email') +
+        campoProfesion(c.profesion),
         async () => {
             const respuesta = await pedir(`/clientas/${c.id_clienta}`, 'PUT', {
                 nombres: valor('vNombres'), apellidos: valor('vApellidos'),
-                telefono: valor('vTelefono'), email: valor('vEmail')
+                telefono: valor('vTelefono'), email: valor('vEmail'), profesion: valor('vProfesion')
             });
             if (respuesta.success) cargarMisDatos();
             return respuesta;
@@ -419,7 +432,8 @@ function editarMisDatos() {
 function reprogramarCita(idCita) {
     const cita = citasClienta.find((c) => String(c.id) === String(idCita));
     abrirVentana(`Reprogramar: ${cita.servicio}`,
-        `<p class="text-sm text-tinta/65">Se mantiene la misma estilista (${escapar(cita.estilista)}). La cita vuelve a quedar pendiente.</p>` +
+        `<p class="text-sm text-tinta/65">Se mantiene la misma estilista (${escapar(cita.estilista)}). La cita vuelve a quedar pendiente.</p>
+         <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">Recuerda: cada cita se puede reprogramar <b>una sola vez</b>.</p>` +
         campo('vFecha', 'Nueva fecha', cita.fecha, 'date', `min="${fechaDeHoy()}" required`) +
         `<div>
             <label for="vHora" class="etiqueta">Nueva hora (libres de ${escapar(cita.estilista)})</label>
@@ -437,7 +451,7 @@ function reprogramarCita(idCita) {
         const select = document.getElementById('vHora');
         const parametros = new URLSearchParams({
             idServicio: cita.id_servicio, idEstilista: cita.id_estilista,
-            fecha: valor('vFecha'), excluirCita: cita.id
+            fecha: valor('vFecha'), excluirCita: cita.id, idUsuario: usuario.id
         });
         const respuesta = await pedir('/disponibilidad?' + parametros);
         const horas = respuesta.success ? respuesta.data.horas : [];
@@ -482,9 +496,12 @@ async function cargarCitasClienta() {
         const activa = c.estado === 'Pendiente' || c.estado === 'Confirmada';
         let acciones = botonChat(c.id, c.sin_leer_clienta) + ' ';
         if (activa) {
-            acciones += botonEditar('Reprogramar', 'reprogramarCita', c.id) + ' ' +
+            acciones += (c.reprogramaciones >= 1
+                ? '<span class="mr-1 text-xs text-tinta/60" title="Cada cita se puede reprogramar una sola vez">Ya reprogramada</span> '
+                : botonEditar('Reprogramar', 'reprogramarCita', c.id) + ' ') +
                 botonAccion('Cancelar', 'rojo', `/citas/${c.id}/estado`, { estado: 'Cancelada' });
         } else if (c.estado === 'Finalizada') {
+            acciones += botonComprobante(c.id) + ' ';
             acciones += c.calificacion
                 ? `<span class="text-sm text-oro" title="Tu calificación">${estrellas(c.calificacion)}</span>`
                 : `<button class="btn-mini ${COLORES.verde}" data-editar="calificarCita" data-id="${c.id}">Calificar</button>`;
@@ -513,8 +530,10 @@ async function iniciarEstilista() {
     document.getElementById('btnEditarMiHorario').addEventListener('click', () => editarHorario(miPerfilEstilista.id_estilista));
     document.getElementById('btnMisAusencias').addEventListener('click', () => verAusencias(miPerfilEstilista.id_estilista));
     document.getElementById('btnMisOpiniones').addEventListener('click', () => verOpiniones(miPerfilEstilista.id_estilista));
+    document.getElementById('btnAgregarVitrina').addEventListener('click', () => agregarAVitrina(usuario.id, cargarMiVitrina));
     await cargarMiPerfilEstilista();
     cargarMiHorario();
+    cargarMiVitrina();
     cargarCitasEstilista();
     // Cada 15 segundos se actualiza la tabla (mensajes nuevos de las clientas, citas nuevas)
     setInterval(() => actualizarSiNoHayConfirmacion('tablaCitasEstilista', cargarCitasEstilista), 15000);
@@ -522,9 +541,10 @@ async function iniciarEstilista() {
 
 async function cargarMiPerfilEstilista() {
     miPerfilEstilista = (await pedir(`/estilistas/usuario/${usuario.id}`)).data;
-    document.getElementById('misServicios').textContent = miPerfilEstilista
-        ? (miPerfilEstilista.servicios || 'Aún no tienes servicios asignados.')
-        : 'No se encontró tu perfil de estilista.';
+    const misServicios = miPerfilEstilista && miPerfilEstilista.servicios ? miPerfilEstilista.servicios.split(', ') : [];
+    document.getElementById('misServicios').innerHTML = misServicios.length
+        ? misServicios.map((n) => `<span class="rounded-full border border-bella-200 bg-bella-50 px-3 py-1 font-medium text-bella-800">${escapar(n)}</span>`).join('')
+        : `<p>${miPerfilEstilista ? 'Aún no tienes servicios asignados.' : 'No se encontró tu perfil de estilista.'}</p>`;
     const cal = miPerfilEstilista;
     document.getElementById('miCalificacion').innerHTML = cal && cal.num_calificaciones
         ? `<div class="flex items-end gap-3">
@@ -552,8 +572,11 @@ async function cargarMiHorario() {
     document.getElementById('miHorario').innerHTML = dias.join('') + proximas.join('');
 }
 
+let citasEstilista = [];
+
 async function cargarCitasEstilista() {
     const citas = (await pedir(`/citas?rol=Estilista&idUsuario=${usuario.id}`)).data || [];
+    citasEstilista = citas;
 
     const finalizadas = citas.filter((c) => c.estado === 'Finalizada');
     const pendientes = citas.filter((c) => c.estado === 'Pendiente' || c.estado === 'Confirmada');
@@ -575,11 +598,13 @@ async function cargarCitasEstilista() {
             acciones += botonAccion('Finalizar', 'verde', `/citas/${c.id}/estado`, { estado: 'Finalizada' }) + ' ';
             acciones += botonAccion('Cancelar', 'rojo', `/citas/${c.id}/estado`, { estado: 'Cancelada' }) + ' ';
         }
+        acciones += botonEditar('Historial', 'verHistorialClienta', c.id_cliente) + ' ';
+        if (c.estado !== 'Cancelada') acciones += botonEditar(c.notas_servicio ? 'Notas ✓' : 'Notas', 'editarNotasServicio', c.id) + ' ';
         acciones += botonChat(c.id, c.sin_leer_estilista);
         return `
             <tr>
                 <td class="font-mono text-xs text-tinta/65">BS-${c.id}</td>
-                <td class="font-medium text-tinta">${escapar(c.cliente)}</td>
+                <td class="font-medium text-tinta">${escapar(c.cliente)}${c.profesion ? `<span class="block text-xs font-normal text-tinta/60">${escapar(c.profesion)}</span>` : ''}</td>
                 <td>${escapar(c.servicio)}</td>
                 <td class="whitespace-nowrap">${c.fecha} · ${c.hora}</td>
                 <td>${etiquetaEstado(c.estado)}</td>
@@ -841,8 +866,11 @@ function dibujarCitasAdmin() {
             acciones += botonAccion('Confirmar', 'azul', `/citas/${c.id}/estado`, { estado: 'Confirmada' }) + ' ';
         }
         if (c.estado === 'Pendiente' || c.estado === 'Confirmada') {
-            acciones += botonAccion('Cancelar', 'rojo', `/citas/${c.id}/estado`, { estado: 'Cancelada' });
+            acciones += botonAccion('Cancelar', 'rojo', `/citas/${c.id}/estado`, { estado: 'Cancelada' }) + ' ';
         }
+        if (c.estado === 'Finalizada') acciones += botonComprobante(c.id) + ' ';
+        if (c.estado !== 'Cancelada') acciones += botonEditar(c.notas_servicio ? 'Notas ✓' : 'Notas', 'editarNotasServicio', c.id) + ' ';
+        acciones += botonEditar('Historial', 'verHistorialClienta', c.id_cliente);
         return `
             <tr>
                 <td class="font-mono text-xs text-tinta/65">BS-${c.id}</td>
@@ -871,7 +899,7 @@ async function cargarEstilistasAdmin() {
             : botonAccion('Activar', 'verde', `/estilistas/${e.id_estilista}/estado`, { estado: 'Activo' });
         return `
             <tr>
-                <td class="font-medium text-tinta">${escapar(e.nombres + ' ' + e.apellidos)}</td>
+                <td class="font-medium text-tinta"><span class="flex items-center gap-3"><img src="${fotoDe(e.id_usuario)}" alt="" class="h-9 w-9 shrink-0 rounded-xl object-cover">${escapar(e.nombres + ' ' + e.apellidos)}</span></td>
                 <td class="text-tinta/75">${escapar(e.servicios || 'Sin servicios')}</td>
                 <td class="whitespace-nowrap text-sm ${e.num_calificaciones ? 'text-oro' : 'text-tinta/45'}">${e.num_calificaciones ? `★ ${Number(e.promedio).toFixed(1)} (${e.num_calificaciones})` : '—'}</td>
                 <td>${etiquetaActivo(e.estado)}</td>
@@ -894,13 +922,14 @@ async function cargarClientasAdmin() {
     clientasAdmin = (await pedir('/clientas')).data || [];
     const tabla = document.getElementById('tablaClientas');
 
-    tabla.innerHTML = clientasAdmin.length === 0 ? filaVacia(5) : clientasAdmin.map((c) => `
+    tabla.innerHTML = clientasAdmin.length === 0 ? filaVacia(6) : clientasAdmin.map((c) => `
         <tr>
             <td class="font-medium text-tinta">${escapar(c.nombres + ' ' + c.apellidos)}</td>
             <td>${escapar(c.telefono || '—')}</td>
             <td>${escapar(c.email || '—')}</td>
+            <td>${escapar(c.profesion || '—')}</td>
             <td>${c.id_usuario ? '<span class="estado estado-Finalizada">Con cuenta</span>' : '<span class="estado bg-tinta/10 text-tinta/65">Sin cuenta</span>'}</td>
-            <td class="text-right">${botonEditar('Editar', 'editarClienta', c.id_clienta)}</td>
+            <td class="whitespace-nowrap text-right">${botonEditar('Historial', 'verHistorialClienta', c.id_clienta)} ${botonEditar('Editar', 'editarClienta', c.id_clienta)}</td>
         </tr>`).join('');
 
     activarBotones(tabla, cargarClientasAdmin);
@@ -912,11 +941,12 @@ function editarClienta(idClienta) {
         campo('vNombres', 'Nombres', c.nombres, 'text', 'required') +
         campo('vApellidos', 'Apellidos', c.apellidos, 'text', 'required') +
         campo('vTelefono', 'Teléfono', c.telefono || '', 'tel') +
-        campo('vEmail', 'Correo', c.email || '', 'email'),
+        campo('vEmail', 'Correo', c.email || '', 'email') +
+        campoProfesion(c.profesion),
         async () => {
             const respuesta = await pedir(`/clientas/${idClienta}`, 'PUT', {
                 nombres: valor('vNombres'), apellidos: valor('vApellidos'),
-                telefono: valor('vTelefono'), email: valor('vEmail')
+                telefono: valor('vTelefono'), email: valor('vEmail'), profesion: valor('vProfesion')
             });
             if (respuesta.success) cargarClientasAdmin();
             return respuesta;
@@ -982,35 +1012,24 @@ async function fotosServicio(idServicio) {
     const fotos = (await pedir(`/servicios/${idServicio}/fotos`)).data || [];
     const galeria = fotos.length === 0
         ? '<p class="text-sm text-tinta/70">Este servicio todavía no tiene fotos. En la página de inicio se ve una imagen de muestra.</p>'
-        : `<div class="grid grid-cols-3 gap-2">${fotos.map((f) => `
-            <div class="relative aspect-square overflow-hidden rounded-xl bg-tinta/5">
+        : `<div class="grid grid-cols-3 gap-2">${fotos.map((f, i) => `
+            <figure class="relative aspect-square overflow-hidden rounded-xl bg-tinta/5">
                 <img src="${f.url}" alt="" class="h-full w-full object-cover">
-                <button type="button" data-quitar-foto="${f.id_foto}" class="btn-mini absolute right-1.5 top-1.5 ${COLORES.rojo} bg-white">Quitar</button>
-            </div>`).join('')}</div>`;
+                ${i === 0 ? '<span class="absolute left-1.5 top-1.5 rounded-full bg-bella-700 px-2 py-0.5 text-[10px] font-bold text-white">Principal</span>' : ''}
+                <button type="button" data-quitar-foto="${f.id_foto}" class="btn-mini absolute bottom-1.5 right-1.5 ${COLORES.rojo} bg-white">Quitar</button>
+            </figure>`).join('')}</div>`;
 
+    // Sin botón "Guardar": la foto se sube apenas se escoge
     abrirVentana(`Fotos · ${s ? s.nombre : ''}`,
-        galeria +
-        `<div class="border-t border-tinta/10 pt-4">
-            <label for="vFotos" class="etiqueta">Subir fotos (JPG, PNG o WEBP · máximo 6 por servicio)</label>
-            <input id="vFotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="campo file:mr-3 file:rounded-lg file:border-0 file:bg-bella-100 file:px-3 file:py-1.5 file:font-semibold file:text-bella-800">
-            <p class="mt-2 text-xs text-tinta/70">La primera foto es la que se ve en grande. Tip: usa fotos horizontales y de buena calidad.</p>
-         </div>`,
-        async () => {
-            const archivos = [...document.getElementById('vFotos').files];
-            if (archivos.length === 0) return { success: false, message: 'Escoge al menos una foto.' };
-            let subidas = 0;
-            for (const archivo of archivos) {
-                let imagen;
-                try { imagen = await reducirImagen(archivo); } catch (err) { return { success: false, message: `${archivo.name}: ${err.message}` }; }
-                const respuesta = await pedir(`/servicios/${idServicio}/fotos`, 'POST', { imagen });
-                if (!respuesta.success) return { success: false, message: subidas ? `Se subieron ${subidas}. ${respuesta.message}` : respuesta.message };
-                subidas++;
-            }
-            setTimeout(() => fotosServicio(idServicio), 50);   // vuelve a abrir la ventana con las fotos nuevas
-            return { success: true, message: subidas === 1 ? 'Foto subida.' : `${subidas} fotos subidas.` };
-        });
-    document.querySelector('#formVentana button[type="submit"]').textContent = 'Subir';
+        galeria + selectorDeFotos('vFotos', 'Agregar fotos (JPG, PNG o WEBP · máximo 6 por servicio)', true,
+            'Se suben apenas las escoges. La primera foto es la principal (la que se ve en grande).'), null);
 
+    document.getElementById('vFotos').addEventListener('change', async (e) => {
+        const resultado = await subirArchivos([...e.target.files], (imagen) =>
+            pedir(`/servicios/${idServicio}/fotos`, 'POST', { imagen }));
+        avisar(resultado);
+        fotosServicio(idServicio);
+    });
     document.querySelectorAll('[data-quitar-foto]').forEach((boton) => {
         boton.addEventListener('click', async () => {
             const respuesta = await pedir(`/fotos/${boton.dataset.quitarFoto}`, 'DELETE');
@@ -1049,11 +1068,11 @@ async function cargarProductosAdmin() {
             : botonAccion('Activar', 'verde', `/productos/${p.id_producto}/estado`, { estado: 'Activo' });
         return `
             <tr>
-                <td class="font-medium text-tinta">${escapar(p.nombre)}</td>
+                <td class="font-medium text-tinta"><span class="flex items-center gap-3"><img src="/api/productos/${p.id_producto}/foto?v=${versionFoto}" alt="" class="h-11 w-11 shrink-0 rounded-xl object-cover">${escapar(p.nombre)}</span></td>
                 <td>${pesos(p.precio)}</td>
                 <td>${p.stock < 10 ? `<span class="estado estado-Cancelada">${p.stock} · bajo</span>` : p.stock}</td>
                 <td>${etiquetaActivo(p.estado)}</td>
-                <td class="whitespace-nowrap text-right">${botonEditar('Editar', 'editarProducto', p.id_producto)} ${cambio}</td>
+                <td class="whitespace-nowrap text-right">${botonEditar(Number(p.tiene_foto) ? 'Foto ✓' : 'Foto', 'fotoProducto', p.id_producto)} ${botonEditar('Editar', 'editarProducto', p.id_producto)} ${cambio}</td>
             </tr>`;
     }).join('');
 
@@ -1091,6 +1110,7 @@ function prepararFormNuevo() {
     const selectRol = document.getElementById('nuevoRol');
     selectRol.addEventListener('change', () => {
         document.getElementById('bloqueServicios').classList.toggle('hidden', selectRol.value !== 'estilista');
+        document.getElementById('bloqueProfesion').classList.toggle('hidden', selectRol.value === 'estilista');
     });
 
     document.getElementById('formNuevo').addEventListener('submit', async (e) => {
@@ -1104,12 +1124,15 @@ function prepararFormNuevo() {
         };
         if (datos.rol === 'estilista') {
             datos.servicios = [...document.querySelectorAll('input[name="nuevoServicio"]:checked')].map((c) => Number(c.value));
+        } else {
+            datos.profesion = document.getElementById('nuevoProfesion').value.trim();
         }
 
         const respuesta = await pedir('/register', 'POST', datos);
         if (respuesta.success) {
             mostrarAlerta(alerta, `Cuenta creada. Usuario: ${datos.username} · Contraseña: ${datos.password}`, 'ok');
             e.target.reset();
+            selectRol.dispatchEvent(new Event('change'));
             cargarEstilistasAdmin();
             cargarClientasAdmin();
         } else {
@@ -1243,13 +1266,309 @@ function iniciarAdmin() {
     cargarProductosAdmin();
     prepararFormNuevo();
     prepararChatAdmin();
+    document.getElementById('btnAgregarVitrinaSalon').addEventListener('click', () => agregarAVitrina(usuario.id, cargarVitrinaSalon));
+    cargarVitrinaSalon();
+}
+
+// La administradora ve la vitrina completa (suya y de las estilistas) y puede editar o quitar cualquier foto
+function cargarVitrinaSalon() {
+    dibujarVitrina(document.getElementById('vitrinaSalon'), 'todas', true,
+        'Sube fotos del salón, de promociones o de tendencias.');
 }
 
 // Funciones que abren ventanas desde los botones "Editar" de las tablas
 const EDITORES = {
     reprogramarCita, calificarCita, abrirChatCita, editarServiciosEstilista, editarHorario,
-    verAusencias, verOpiniones, editarClienta, editarServicio, editarProducto, fotosServicio
+    verAusencias, verOpiniones, editarClienta, editarServicio, editarProducto, fotosServicio,
+    verHistorialClienta, editarNotasServicio, fotoProducto
 };
+
+// ---------------------------------------------------------------
+// PERSONALIZACIÓN: foto de perfil y vitrina de trabajos
+// Las imágenes se reducen en el navegador antes de subirlas (reducirImagen)
+// y se guardan en la base de datos.
+// ---------------------------------------------------------------
+
+// Dirección de la foto de perfil de un usuario. "version" evita que el navegador
+// muestre la foto vieja guardada en caché después de cambiarla.
+let versionFoto = Date.now();
+function fotoDe(idUsuario) {
+    return `/api/usuarios/${idUsuario}/foto?v=${versionFoto}`;
+}
+
+function mostrarFotoPerfil() {
+    document.getElementById('fotoUsuario').src = fotoDe(usuario.id);
+    document.getElementById('fotoPerfil').src = fotoDe(usuario.id);
+}
+
+async function cambiarFotoPerfil(e) {
+    const archivo = e.target.files[0];
+    e.target.value = '';
+    if (!archivo) return;
+    let imagen;
+    try { imagen = await reducirImagen(archivo, 500); } catch (err) { return avisar(err.message); }
+    const respuesta = await pedir(`/usuarios/${usuario.id}/foto`, 'PUT', { imagen });
+    avisar(respuesta.message);
+    if (respuesta.success) {
+        versionFoto = Date.now();
+        mostrarFotoPerfil();
+    }
+}
+
+async function quitarFotoPerfil() {
+    const respuesta = await pedir(`/usuarios/${usuario.id}/foto`, 'DELETE');
+    avisar(respuesta.message);
+    versionFoto = Date.now();
+    mostrarFotoPerfil();
+}
+
+// La administradora puede cambiar el nombre con que aparece (por defecto "Admin")
+function editarMiNombre() {
+    abrirVentana('Nombre que se muestra',
+        campo('vMiNombre', 'Nombre', usuario.nombre, 'text', 'maxlength="60" required'),
+        async () => {
+            const respuesta = await pedir(`/usuarios/${usuario.id}/nombre`, 'PUT', { nombre: valor('vMiNombre') });
+            if (respuesta.success) {
+                usuario.nombre = respuesta.nombre;
+                guardarSesion(usuario);
+                document.getElementById('nombreUsuario').textContent = usuario.nombre;
+            }
+            return respuesta;
+        });
+}
+
+// Muestra una foto en grande (clic en cualquier parte para cerrar)
+function verFotoGrande(url, texto) {
+    const visor = document.getElementById('visorFoto');
+    document.getElementById('visorImagen').src = url;
+    document.getElementById('visorTexto').textContent = texto || '';
+    visor.showModal();
+}
+document.getElementById('visorFoto').addEventListener('click', () => document.getElementById('visorFoto').close());
+
+// Dibuja una vitrina. idUsuario = 'todas' muestra la del salón completa (fotos del salón
+// y trabajos de las estilistas). editable = botones "Editar" (descripción) y "Quitar".
+async function dibujarVitrina(contenedor, idUsuario, editable, textoVacio) {
+    const ruta = idUsuario === 'todas' ? '/vitrina?todas=1' : `/vitrina?idUsuario=${idUsuario}`;
+    const fotos = (await pedir(ruta)).data || [];
+    const recargar = () => dibujarVitrina(contenedor, idUsuario, editable, textoVacio);
+    if (fotos.length === 0) {
+        contenedor.innerHTML = `
+            <div class="grid place-items-center gap-2 rounded-2xl border-2 border-dashed border-bella-200 px-6 py-10 text-center">
+                <span class="icono h-12 w-12">${ICONOS.lista}</span>
+                <p class="font-semibold text-tinta">Todavía no hay fotos</p>
+                <p class="text-sm text-tinta/70">${textoVacio || 'Sube fotos de tus mejores trabajos.'}</p>
+            </div>`;
+        return;
+    }
+    contenedor.innerHTML = `<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">${fotos.map((f) => {
+        const autor = idUsuario === 'todas' ? (f.rol === 'Administradora' ? 'Salón' : f.autor) : '';
+        const texto = [f.descripcion, autor].filter(Boolean).join(' · ');
+        return `
+        <figure class="group relative aspect-square overflow-hidden rounded-2xl bg-tinta/5">
+            <button type="button" data-ver="${f.url}" data-texto="${atributo(texto)}" class="h-full w-full" aria-label="Ver en grande">
+                <img src="${f.url}" alt="${atributo(f.descripcion || 'Trabajo')}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+            </button>
+            ${texto ? `<figcaption class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-8 text-xs font-medium text-white">${escapar(texto)}</figcaption>` : ''}
+            ${editable ? `<div class="absolute right-2 top-2 flex gap-1">
+                <button type="button" data-editar-vitrina="${f.id_foto}" data-descripcion="${atributo(f.descripcion || '')}" class="btn-mini btn-mini-gris bg-white">Editar</button>
+                <button type="button" data-quitar-vitrina="${f.id_foto}" class="btn-mini ${COLORES.rojo} bg-white">Quitar</button>
+            </div>` : ''}
+        </figure>`;
+    }).join('')}</div>`;
+
+    contenedor.querySelectorAll('[data-ver]').forEach((b) => b.addEventListener('click', () => verFotoGrande(b.dataset.ver, b.dataset.texto)));
+    contenedor.querySelectorAll('[data-quitar-vitrina]').forEach((b) => b.addEventListener('click', async () => {
+        const respuesta = await pedir(`/vitrina/${b.dataset.quitarVitrina}?idUsuario=${usuario.id}`, 'DELETE');
+        avisar(respuesta.message);
+        recargar();
+    }));
+    contenedor.querySelectorAll('[data-editar-vitrina]').forEach((b) => b.addEventListener('click', () => {
+        abrirVentana('Editar descripción',
+            campo('vDescripcion', 'Descripción', b.dataset.descripcion, 'text', 'maxlength="120" placeholder="Ej: Balayage miel en cabello largo"'),
+            async () => {
+                const respuesta = await pedir(`/vitrina/${b.dataset.editarVitrina}`, 'PUT', { idUsuario: usuario.id, descripcion: valor('vDescripcion') });
+                if (respuesta.success) recargar();
+                return respuesta;
+            });
+    }));
+}
+
+// Campo para escoger fotos (con el mismo estilo en todas las ventanas)
+function selectorDeFotos(id, etiqueta, varias, ayuda) {
+    return `<div class="border-t border-tinta/10 pt-4">
+        <label for="${id}" class="etiqueta">${etiqueta}</label>
+        <input id="${id}" type="file" accept="image/jpeg,image/png,image/webp" ${varias ? 'multiple' : ''} class="campo file:mr-3 file:rounded-lg file:border-0 file:bg-bella-100 file:px-3 file:py-1.5 file:font-semibold file:text-bella-800">
+        <p class="mt-2 text-xs text-tinta/70">${ayuda}</p>
+    </div>`;
+}
+
+// Reduce y sube varias fotos, una por una. "enviar" recibe la imagen y hace la petición.
+// Devuelve el mensaje para mostrar.
+async function subirArchivos(archivos, enviar) {
+    let subidas = 0;
+    for (const archivo of archivos) {
+        let imagen;
+        try { imagen = await reducirImagen(archivo); } catch (err) { return `${archivo.name}: ${err.message}`; }
+        avisar(`Subiendo ${subidas + 1} de ${archivos.length}...`);
+        const respuesta = await enviar(imagen);
+        if (!respuesta.success) return subidas ? `Se subieron ${subidas}. ${respuesta.message}` : respuesta.message;
+        subidas++;
+    }
+    return subidas === 1 ? 'Foto subida.' : `${subidas} fotos subidas.`;
+}
+
+// Ventana para subir fotos a la vitrina: se suben apenas se escogen
+function agregarAVitrina(idUsuario, recargar) {
+    abrirVentana('Agregar a la vitrina',
+        campo('vDescripcion', 'Descripción (opcional, escríbela antes de escoger las fotos)', '', 'text', 'maxlength="120" placeholder="Ej: Balayage miel en cabello largo"') +
+        selectorDeFotos('vVitrina', 'Fotos (JPG, PNG o WEBP · máximo 12)', true, 'Se suben apenas las escoges. Luego puedes editar la descripción de cada una.'),
+        null);
+    document.getElementById('vVitrina').addEventListener('change', async (e) => {
+        const descripcion = valor('vDescripcion');
+        const mensaje = await subirArchivos([...e.target.files], (imagen) => pedir('/vitrina', 'POST', { idUsuario, imagen, descripcion }));
+        cerrarVentana();
+        avisar(mensaje);
+        recargar();
+    });
+}
+
+function cargarMiVitrina() {
+    dibujarVitrina(document.getElementById('miVitrina'), usuario.id, true,
+        'Sube fotos de tus mejores trabajos: aparecen en la vitrina del salón y las clientas las ven al agendar.');
+}
+
+// Campo "Profesión" con sugerencias (la estilista lo usa para recomendar: horarios, estilo práctico...)
+const PROFESIONES = ['Estudiante', 'Docente', 'Enfermera', 'Médica', 'Abogada', 'Ingeniera', 'Contadora', 'Comerciante',
+    'Ama de casa', 'Estilista', 'Secretaria', 'Administradora', 'Policía', 'Deportista', 'Modelo', 'Independiente'];
+function campoProfesion(valorActual) {
+    return campo('vProfesion', 'Profesión u ocupación (opcional)', valorActual || '', 'text', 'list="listaProfesiones" maxlength="80" placeholder="Ej: Enfermera"') +
+        `<datalist id="listaProfesiones">${PROFESIONES.map((p) => `<option value="${p}">`).join('')}</datalist>`;
+}
+
+// Botón que abre el comprobante PDF de un servicio finalizado
+function botonComprobante(idCita) {
+    return `<a href="/api/citas/${idCita}/comprobante" target="_blank" rel="noopener" class="btn-mini ${COLORES.azul}" title="Constancia del servicio prestado">PDF</a>`;
+}
+
+// Historial de servicios de una clienta: qué le hicieron, quién y las notas de la estilista
+async function verHistorialClienta(idClienta) {
+    const datos = (await pedir(`/clientas/${idClienta}/historial`)).data;
+    if (!datos) return avisar('No se pudo cargar el historial.');
+    const lista = datos.servicios.length === 0
+        ? '<p class="text-sm text-tinta/70">Todavía no tiene servicios finalizados. Es su primera visita.</p>'
+        : `<ol class="max-h-80 space-y-3 overflow-y-auto">${datos.servicios.map((s, i) => `
+            <li class="rounded-xl border border-tinta/10 px-4 py-3 ${i === 0 ? 'bg-bella-50' : ''}">
+                <p class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="font-semibold text-tinta">${escapar(s.servicio)}</span>
+                    <span class="text-xs text-tinta/60">${s.fecha} · ${escapar(s.estilista)}</span>
+                </p>
+                ${i === 0 ? '<p class="text-xs font-semibold text-bella-700">Última visita</p>' : ''}
+                <p class="mt-1 text-sm text-tinta/80">${s.notas_servicio ? escapar(s.notas_servicio) : '<span class="text-tinta/50">Sin notas de la estilista</span>'}</p>
+                ${usuario.rol === 'Administradora' ? `<button type="button" data-notas-historial="${s.id}" class="btn-mini btn-mini-gris mt-2">Editar notas</button>` : ''}
+                ${s.observaciones ? `<p class="mt-1 text-xs text-tinta/60">Pidió: ${escapar(s.observaciones)}</p>` : ''}
+                ${s.calificacion ? `<p class="mt-1 text-xs text-oro">${estrellas(s.calificacion)}</p>` : ''}
+            </li>`).join('')}</ol>`;
+    abrirVentana(`Historial de ${datos.clienta.nombre}`,
+        `<p class="text-sm"><span class="text-tinta/60">Profesión:</span> <b>${escapar(datos.clienta.profesion || 'No registrada')}</b></p>` + lista,
+        null);
+    // Administradora: editar las notas de un servicio desde el historial y volver a él
+    document.querySelectorAll('[data-notas-historial]').forEach((b) => b.addEventListener('click', () => {
+        const servicio = datos.servicios.find((x) => String(x.id) === b.dataset.notasHistorial);
+        abrirVentana(`Notas · ${servicio.servicio} (${servicio.fecha})`,
+            `<p class="text-sm text-tinta/70">Atendida por ${escapar(servicio.estilista)}. Puedes corregir o completar lo que se le hizo.</p>
+             <div>
+                <label for="vNotas" class="etiqueta">Notas</label>
+                <textarea id="vNotas" rows="4" maxlength="500" class="campo">${escapar(servicio.notas_servicio || '')}</textarea>
+             </div>`,
+            async () => {
+                const respuesta = await pedir(`/citas/${servicio.id}/notas`, 'PUT', { notas: valor('vNotas') });
+                if (respuesta.success) {
+                    cargarCitasAdmin();
+                    setTimeout(() => verHistorialClienta(idClienta), 50);
+                }
+                return respuesta;
+            });
+    }));
+}
+
+// La estilista anota lo que hizo (productos, tono, técnica) para la próxima visita.
+// La administradora también puede corregirlas o completarlas (por ejemplo, si la estilista ya no está).
+function editarNotasServicio(idCita) {
+    const lista = usuario.rol === 'Administradora' ? citasAdmin : citasEstilista;
+    const c = lista.find((x) => String(x.id) === String(idCita));
+    abrirVentana(`Notas del servicio · ${c ? c.cliente : ''}`,
+        `<p class="text-sm text-tinta/70">Anota qué le hiciste: productos, tono o técnica. Se verá en el historial de la clienta la próxima vez.</p>
+         <div>
+            <label for="vNotas" class="etiqueta">Notas</label>
+            <textarea id="vNotas" rows="4" maxlength="500" class="campo" placeholder="Ej: Tinte 7.1 rubio ceniza, mascarilla de keratina. Recomendar retoque en 6 semanas.">${escapar(c && c.notas_servicio || '')}</textarea>
+         </div>`,
+        async () => {
+            const respuesta = await pedir(`/citas/${idCita}/notas`, 'PUT', { notas: valor('vNotas') });
+            if (respuesta.success) (usuario.rol === 'Administradora' ? cargarCitasAdmin : cargarCitasEstilista)();
+            return respuesta;
+        });
+}
+
+// Foto de un producto: se sube apenas se escoge; se puede cambiar o quitar
+function fotoProducto(idProducto) {
+    const p = productosAdmin.find((x) => String(x.id_producto) === String(idProducto));
+    abrirVentana(`Foto · ${p.nombre}`,
+        `<div class="flex items-center gap-4">
+            <img src="/api/productos/${idProducto}/foto?v=${versionFoto}" alt="" class="h-32 w-32 rounded-2xl object-cover shadow-sm">
+            ${Number(p.tiene_foto) ? `<button type="button" id="btnQuitarFotoProducto" class="btn-mini ${COLORES.rojo}">Quitar foto</button>` : '<p class="text-sm text-tinta/70">Sin foto: se muestra un ícono.</p>'}
+         </div>` +
+        selectorDeFotos('vFotoProducto', Number(p.tiene_foto) ? 'Cambiar foto' : 'Subir foto', false, 'Se sube apenas la escoges. Usa una foto cuadrada del producto.'),
+        null);
+    document.getElementById('vFotoProducto').addEventListener('change', async (e) => {
+        const mensaje = await subirArchivos([e.target.files[0]], (imagen) => pedir(`/productos/${idProducto}/foto`, 'PUT', { imagen }));
+        versionFoto = Date.now();
+        cerrarVentana();
+        avisar(mensaje);
+        cargarProductosAdmin();
+    });
+    const quitar = document.getElementById('btnQuitarFotoProducto');
+    if (quitar) quitar.addEventListener('click', async () => {
+        const respuesta = await pedir(`/productos/${idProducto}/foto`, 'DELETE');
+        versionFoto = Date.now();
+        cerrarVentana();
+        avisar(respuesta.message);
+        cargarProductosAdmin();
+    });
+}
+
+// Clienta: tarjetas de las estilistas con su foto, calificación, servicios y vitrina
+async function cargarEstilistasClienta() {
+    const lista = document.getElementById('listaEstilistasClienta');
+    if (estilistas.length === 0) {
+        lista.innerHTML = '<p class="text-sm text-tinta/70">Pronto conocerás a nuestro equipo.</p>';
+        return;
+    }
+    const vitrinas = await Promise.all(estilistas.map((e) => pedir(`/vitrina?idUsuario=${e.id_usuario}`)));
+    lista.innerHTML = estilistas.map((e, i) => {
+        const fotos = (vitrinas[i].data || []).slice(0, 4);
+        const trabajos = fotos.length === 0
+            ? '<p class="text-xs text-tinta/60">Aún no ha subido fotos de sus trabajos.</p>'
+            : `<div class="grid grid-cols-4 gap-2">${fotos.map((f) => `
+                <button type="button" data-ver="${f.url}" data-texto="${atributo((f.descripcion ? f.descripcion + ' · ' : '') + e.nombres)}"
+                    class="aspect-square overflow-hidden rounded-xl bg-tinta/5" aria-label="Ver trabajo en grande">
+                    <img src="${f.url}" alt="" loading="lazy" class="h-full w-full object-cover transition hover:scale-105">
+                </button>`).join('')}</div>`;
+        return `
+            <article class="rounded-2xl border border-tinta/10 bg-white/60 p-4">
+                <div class="flex items-center gap-3">
+                    <img src="${fotoDe(e.id_usuario)}" alt="" class="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-sm">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-titulo text-xl font-bold text-tinta">${escapar(e.nombres + ' ' + e.apellidos)}</p>
+                        <p class="truncate text-xs text-tinta/70">${escapar(e.servicios || 'Varios servicios')}</p>
+                    </div>
+                    <p class="shrink-0 text-sm font-semibold ${e.num_calificaciones ? 'text-amber-600' : 'text-tinta/50'}">${e.num_calificaciones ? `★ ${Number(e.promedio).toFixed(1)}` : 'Nueva'}</p>
+                </div>
+                <div class="mt-3">${trabajos}</div>
+            </article>`;
+    }).join('');
+    lista.querySelectorAll('[data-ver]').forEach((b) => b.addEventListener('click', () => verFotoGrande(b.dataset.ver, b.dataset.texto)));
+}
 
 // ---------------------------------------------------------------
 // Inicio

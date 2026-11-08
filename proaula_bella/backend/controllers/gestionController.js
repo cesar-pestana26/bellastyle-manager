@@ -160,9 +160,13 @@ async function serviciosEstilista(req, res) {
 // CLIENTAS
 // ---------------------------------------------------------------
 
-// PUT /api/clientas/:id   Recibe: { nombres, apellidos, telefono, email }
+// PUT /api/clientas/:id   Recibe: { nombres, apellidos, telefono, email, profesion }
 async function editarClienta(req, res) {
     const { nombres, apellidos, telefono, email } = req.body;
+    const profesion = typeof req.body.profesion === 'string' ? req.body.profesion.trim() : '';
+    if (profesion.length > 80) {
+        return res.status(400).json({ success: false, message: 'La profesión puede tener máximo 80 caracteres.' });
+    }
     if (!nombreValido(nombres) || !nombreValido(apellidos)) {
         return res.status(400).json({ success: false, message: 'Nombres y apellidos solo pueden tener letras y espacios.' });
     }
@@ -174,7 +178,7 @@ async function editarClienta(req, res) {
     }
     try {
         const ok = await clienteModel.actualizar(req.params.id, {
-            nombres: nombres.trim(), apellidos: apellidos.trim(), telefono, email
+            nombres: nombres.trim(), apellidos: apellidos.trim(), telefono, email, profesion
         });
         if (!ok) return res.status(404).json({ success: false, message: 'La clienta no existe.' });
         res.json({ success: true, message: 'Datos actualizados.' });

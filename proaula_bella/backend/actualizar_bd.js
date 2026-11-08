@@ -1,4 +1,5 @@
-// Agrega las tablas nuevas (horarios, ausencias, calificaciones, chat de citas y fotos de servicios)
+// Agrega las tablas nuevas (horarios, ausencias, calificaciones, chat de citas, fotos de servicios y productos, fotos de perfil, vitrina,
+// profesión de la clienta, notas del servicio y límite de reprogramación)
 // a una base que ya existe, SIN borrar ningún dato.
 // Se puede ejecutar varias veces: si una tabla ya existe, no la toca.
 // Uso:  node actualizar_bd.js
@@ -51,7 +52,37 @@ const TABLAS = [
         datos       MEDIUMBLOB NOT NULL,
         creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS fotos_perfil (
+        id_usuario    INT PRIMARY KEY,
+        tipo          VARCHAR(20) NOT NULL,
+        datos         MEDIUMBLOB NOT NULL,
+        actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_fotos_perfil_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS vitrina (
+        id_foto     INT AUTO_INCREMENT PRIMARY KEY,
+        id_usuario  INT NOT NULL,
+        tipo        VARCHAR(20) NOT NULL,
+        datos       MEDIUMBLOB NOT NULL,
+        descripcion VARCHAR(120),
+        creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_vitrina_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS fotos_producto (
+        id_producto INT PRIMARY KEY,
+        tipo        VARCHAR(20) NOT NULL,
+        datos       MEDIUMBLOB NOT NULL,
+        CONSTRAINT fk_fotos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
     )`
+];
+
+// Columnas nuevas en tablas que ya existen: [tabla, columna, definición].
+// MySQL no tiene "ADD COLUMN IF NOT EXISTS", así que primero se pregunta si ya está.
+const COLUMNAS = [
+    ['clientas', 'profesion', 'VARCHAR(80) NULL'],
+    ['citas', 'notas_servicio', 'VARCHAR(500) NULL'],
+    ['citas', 'reprogramaciones', 'TINYINT NOT NULL DEFAULT 0']
 ];
 
 // Las estilistas que todavía no tienen horario reciben el de siempre:
@@ -68,6 +99,10 @@ async function actualizar() {
 
     for (const sql of TABLAS) {
         await conexion.query(sql);
+    }
+    for (const [tabla, columna, definicion] of COLUMNAS) {
+        const [existe] = await conexion.query(`SHOW COLUMNS FROM ${tabla} LIKE ?`, [columna]);
+        if (existe.length === 0) await conexion.query(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${definicion}`);
     }
     const [resultado] = await conexion.query(HORARIO_POR_DEFECTO);
     const [tablas] = await conexion.query('SHOW TABLES');

@@ -127,10 +127,21 @@ async function disponibilidad(req, res) {
             agendas.push(await agendaDelDia(e.id_estilista, fecha, excluirCita));
         }
 
+        // Si la pide una clienta, tampoco se ofrecen las horas en que ella ya tiene otra cita
+        let ocupadasClienta = [];
+        if (req.query.idUsuario) {
+            const clienta = await clienteModel.buscarPorUsuario(req.query.idUsuario);
+            if (clienta) {
+                ocupadasClienta = (await citaModel.ocupadasClientaDelDia(clienta.id_clienta, fecha, excluirCita))
+                    .map((c) => ({ inicio: aMinutos(c.hora), fin: aMinutos(c.hora) + c.duracion_min }));
+            }
+        }
+
         const horas = [];
         for (let inicio = APERTURA; inicio + servicio.duracion_min <= CIERRE; inicio += INTERVALO) {
             if (fecha === ahora.fecha && inicio <= ahora.minutos) continue;   // hoy: solo horas que no han pasado
             const fin = inicio + servicio.duracion_min;
+            if (ocupadasClienta.some((o) => seCruzan(inicio, fin, o.inicio, o.fin))) continue;
             if (agendas.some((a) => motivoNoDisponible(a, inicio, fin) === null)) {
                 horas.push(aHora(inicio));
             }
@@ -266,6 +277,10 @@ async function reprogramar(req, res) {
         if (cita.estado !== 'Pendiente' && cita.estado !== 'Confirmada') {
             return res.status(400).json({ success: false, message: 'Solo se pueden reprogramar citas pendientes o confirmadas.' });
         }
+        // Regla del salón: cada cita se puede reprogramar una sola vez
+        if (cita.reprogramaciones >= 1) {
+            return res.status(400).json({ success: false, message: 'Esta cita ya fue reprogramada una vez. Si no puedes asistir, cancélala y agenda una nueva.' });
+        }
 
         const inicio = aMinutos(hora);
         const fin = inicio + cita.duracion_min;
@@ -286,11 +301,46 @@ async function reprogramar(req, res) {
         }
 
         await citaModel.reprogramar(cita.id_cita, fecha, hora + ':00');
-        res.json({ success: true, message: 'Cita reprogramada. Queda pendiente de confirmación.' });
+        res.json({ success: true, message: 'Cita reprogramada. Queda pendiente de confirmación (ya no se puede volver a reprogramar).' });
     } catch (err) {
         console.error('Error al reprogramar:', err.message);
         res.status(500).json({ success: false, message: 'No se pudo reprogramar la cita.' });
     }
 }
 
-module.exports = { listar, disponibilidad, crear, reprogramar, cambiarEstado };
+// PUT /api/citas/:id/notas   Recibe: { notas }
+// La estilista anota lo que hizo (productos, tono, técnica) para el historial de la clienta.
+async function guardarNotas(req, res) {
+    const notas = typeof req.body.notas === 'string' ? req.body.notas.trim() : '';
+    if (notas.length > 500) {
+        return res.status(400).json({ success: false, message: 'Las notas pueden tener máximo 500 caracteres.' });
+    }
+    try {
+        const ok = await citaModel.guardarNotas(req.params.id, notas);
+        if (!ok) return res.status(404).json({ success: false, message: 'La cita no existe.' });
+        res.json({ success: true, message: 'Notas del servicio guardadas.' });
+    } catch (err) {
+        console.error('Error al guardar notas:', err.message);
+        res.status(500).json({ success: false, message: 'No se pudieron guardar las notas.' });
+    }
+}
+
+// GET /api/clientas/:id/historial   Servicios que se le han hecho a la clienta
+async function historialClienta(req, res) {
+    try {
+        const clienta = await clienteModel.buscarPorId(req.params.id);
+        if (!clienta) return res.status(404).json({ success: false, message: 'La clienta no existe.' });
+        res.json({
+            success: true,
+            data: {
+                clienta: { nombre: `${clienta.nombres} ${clienta.apellidos}`, profesion: clienta.profesion },
+                servicios: await clienteModel.historial(clienta.id_clienta)
+            }
+        });
+    } catch (err) {
+        console.error('Error en historial:', err.message);
+        res.status(500).json({ success: false, message: 'No se pudo consultar el historial.' });
+    }
+}
+
+module.exports = { listar, disponibilidad, crear, reprogramar, cambiarEstado, guardarNotas, historialClienta };

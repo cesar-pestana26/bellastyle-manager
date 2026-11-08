@@ -15,6 +15,9 @@ USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS agenda;
+DROP TABLE IF EXISTS vitrina;
+DROP TABLE IF EXISTS fotos_producto;
+DROP TABLE IF EXISTS fotos_perfil;
 DROP TABLE IF EXISTS fotos_servicio;
 DROP TABLE IF EXISTS mensajes_cita;
 DROP TABLE IF EXISTS calificaciones;
@@ -51,6 +54,7 @@ CREATE TABLE clientas (
     apellidos   VARCHAR(80) NOT NULL,
     telefono    VARCHAR(30),
     email       VARCHAR(120),
+    profesion   VARCHAR(80),          -- ocupación: ayuda a la estilista a recomendar (ej: enfermera -> peinados prácticos)
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_clientas_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
 );
@@ -106,6 +110,8 @@ CREATE TABLE citas (
     precio        DECIMAL(10,2) NOT NULL DEFAULT 0,   -- precio del servicio el día que se agendó
     estado        ENUM('Pendiente','Confirmada','Finalizada','Cancelada') NOT NULL DEFAULT 'Pendiente',
     observaciones TEXT,
+    notas_servicio VARCHAR(500),        -- lo que hizo la estilista (productos, tono, técnica): historial de la clienta
+    reprogramaciones TINYINT NOT NULL DEFAULT 0,   -- la clienta puede reprogramar una sola vez
     creado_en     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_citas_cliente   FOREIGN KEY (id_cliente)   REFERENCES clientas(id_clienta),
     CONSTRAINT fk_citas_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista),
@@ -198,13 +204,41 @@ CREATE TABLE fotos_servicio (
     CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 );
 
+-- Foto de cada producto (una por producto)
+CREATE TABLE fotos_producto (
+    id_producto INT PRIMARY KEY,
+    tipo        VARCHAR(20) NOT NULL,
+    datos       MEDIUMBLOB NOT NULL,
+    CONSTRAINT fk_fotos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+);
+
+-- Foto de perfil de cada cuenta (una por usuario)
+CREATE TABLE fotos_perfil (
+    id_usuario    INT PRIMARY KEY,
+    tipo          VARCHAR(20) NOT NULL,
+    datos         MEDIUMBLOB NOT NULL,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_fotos_perfil_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- Vitrina: fotos de trabajos de cada estilista y del salón (administradora)
+CREATE TABLE vitrina (
+    id_foto     INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario  INT NOT NULL,
+    tipo        VARCHAR(20) NOT NULL,
+    datos       MEDIUMBLOB NOT NULL,
+    descripcion VARCHAR(120),
+    creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_vitrina_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
 -- =====================================================================
 -- DATOS DE PRUEBA
 -- Contraseñas: admin123, est123, diana123, paula123, cli123
 -- =====================================================================
 
 INSERT INTO usuarios (id_usuario, nombre, username, password, rol, foto) VALUES
-(1, 'Marta Gómez',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg'),
+(1, 'Admin',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg'),
 (2, 'Laura Estilista', 'estilista', '$2a$10$WmrWwFDrn6YvFrl0GkMTluTXGFTi7Mo1NTy1QuhTjDKtIptxfSeo2', 'Estilista',      'img/rol_estilista.svg'),
 (3, 'Diana Martínez',  'diana',     '$2a$10$keW7X2fdPNp3lekvelDIJeqnaEtWHFNH3AsRn41qr1RlNMndqXtsO', 'Estilista',      'img/rol_estilista.svg'),
 (4, 'Paula Ríos',      'paula',     '$2a$10$8QYcfgNx/jt2VrF1ECRwie2X6OfGjQHXLppFYJ3Pe9MkEG6UcPPQa', 'Estilista',      'img/rol_estilista.svg'),

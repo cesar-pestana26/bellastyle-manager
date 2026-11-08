@@ -63,6 +63,7 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
     if (rolActual === 'cliente') {
         datos.telefono = document.getElementById('telefono').value.trim();
         datos.email = document.getElementById('email').value.trim();
+        datos.profesion = document.getElementById('profesion').value.trim();
     }
     if (rolActual === 'estilista') {
         datos.servicios = [...document.querySelectorAll('input[name="servicio"]:checked')].map((c) => Number(c.value));

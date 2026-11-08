@@ -16,6 +16,10 @@ const SELECT_CITAS = `
            TIME_FORMAT(c.hora, '%H:%i') AS hora,
            c.estado,
            c.observaciones,
+           c.notas_servicio,
+           c.reprogramaciones,
+           c.id_cliente,
+           cl.profesion,
            (SELECT cal.estrellas FROM calificaciones cal WHERE cal.id_cita = c.id_cita) AS calificacion,
            (SELECT COUNT(*) FROM mensajes_cita m
              WHERE m.id_cita = c.id_cita AND m.autor = 'Estilista' AND m.leido = FALSE) AS sin_leer_clienta,
@@ -48,7 +52,7 @@ async function listarPorClienta(idUsuario) {
 // Datos de una cita con la duración de su servicio (para reprogramar)
 async function buscarPorId(idCita) {
     const [filas] = await db.query(`
-        SELECT c.id_cita, c.id_cliente, c.id_estilista, c.id_servicio, c.estado,
+        SELECT c.id_cita, c.id_cliente, c.id_estilista, c.id_servicio, c.estado, c.reprogramaciones,
                cl.id_usuario AS id_usuario_clienta, s.duracion_min
         FROM citas c
         JOIN clientas cl ON cl.id_clienta = c.id_cliente
@@ -99,7 +103,19 @@ async function cambiarEstado(idCita, estado) {
 
 // Cambia fecha y hora. La cita vuelve a Pendiente para que el salón la confirme otra vez.
 async function reprogramar(idCita, fecha, hora) {
-    await db.query("UPDATE citas SET fecha = ?, hora = ?, estado = 'Pendiente' WHERE id_cita = ?", [fecha, hora, idCita]);
+    // Se cuenta cada reprogramación (la clienta solo puede hacerlo una vez)
+    await db.query("UPDATE citas SET fecha = ?, hora = ?, estado = 'Pendiente', reprogramaciones = reprogramaciones + 1 WHERE id_cita = ?", [fecha, hora, idCita]);
+}
+
+async function guardarNotas(idCita, notas) {
+    const [resultado] = await db.query('UPDATE citas SET notas_servicio = ? WHERE id_cita = ?', [notas || null, idCita]);
+    return resultado.affectedRows > 0;
+}
+
+// Todos los datos de una cita para el comprobante PDF
+async function detalle(idCita) {
+    const [filas] = await db.query(`${SELECT_CITAS.replace('c.precio,', 'c.precio, s.duracion_min, cl.telefono, cl.email,')} WHERE c.id_cita = ?`, [idCita]);
+    return filas[0] || null;
 }
 
 // Quiénes participan en una cita (para el chat y la calificación)
@@ -124,5 +140,5 @@ async function buscarParticipantes(idCita) {
 module.exports = {
     buscarParticipantes,
     listarTodas, listarPorEstilista, listarPorClienta, buscarPorId,
-    ocupadasDelDia, ocupadasClientaDelDia, crear, cambiarEstado, reprogramar
+    ocupadasDelDia, ocupadasClientaDelDia, crear, cambiarEstado, reprogramar, guardarNotas, detalle
 };

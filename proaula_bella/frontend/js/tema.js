@@ -39,7 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     actualizarBoton();
-    document.body.appendChild(boton);
+    // En el panel, el botón va en la barra de arriba; en las demás páginas flota abajo a la izquierda
+    const lugar = document.getElementById('lugarBotonTema');
+    if (lugar) {
+        boton.classList.add('btn-tema-barra');
+        lugar.appendChild(boton);
+    } else {
+        document.body.appendChild(boton);
+    }
     crearVideoDeFondo();
 });
 

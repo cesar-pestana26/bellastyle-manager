@@ -15,7 +15,13 @@ app.use(express.json({ limit: '3mb' }));
 app.get('/', (req, res) => res.redirect('/index.html'));
 
 // Sirve las páginas del frontend (index.html, panel.html, etc.)
-app.use(express.static(path.join(__dirname, '../frontend')));
+// "no-cache": el navegador puede guardar los archivos, pero siempre pregunta si cambiaron.
+// Así, después de actualizar el código, nadie ve una versión vieja de las páginas.
+app.use(express.static(path.join(__dirname, '../frontend'), {
+    setHeaders: (res, ruta) => {
+        if (/\.(html|js|css)$/.test(ruta)) res.setHeader('Cache-Control', 'no-cache');
+    }
+}));
 
 // Todas las rutas de la API empiezan por /api
 app.use('/api', rutas);
@@ -26,14 +32,14 @@ async function revisarBaseDeDatos() {
     const [columnas] = await db.query("SHOW COLUMNS FROM citas LIKE 'precio'");
     const [chat] = await db.query("SHOW TABLES LIKE 'mensajes'");
     const [horarios] = await db.query("SHOW TABLES LIKE 'horarios'");
-    const [fotos] = await db.query("SHOW TABLES LIKE 'fotos_servicio'");
+    const [fotos] = await db.query("SHOW COLUMNS FROM citas LIKE 'reprogramaciones'");
     const [usuarios] = await db.query('SELECT password FROM usuarios LIMIT 1');
     const cifradas = usuarios.length === 0 || usuarios[0].password.startsWith('$2');
     if (columnas.length === 0 || chat.length === 0 || !cifradas) {
         console.error('ATENCION: la base de datos es la version vieja.');
         console.error('Ejecuta INSTALAR_BASE_DE_DATOS.bat y vuelve a iniciar el servidor.');
     } else if (horarios.length === 0 || fotos.length === 0) {
-        console.error('ATENCION: faltan tablas nuevas (horarios, calificaciones, chat de citas o fotos de servicios).');
+        console.error('ATENCION: faltan tablas o columnas nuevas (fotos, vitrina, historial de la clienta...).');
         console.error('Ejecuta "node actualizar_bd.js" (no borra datos) y vuelve a iniciar el servidor.');
     }
 }
