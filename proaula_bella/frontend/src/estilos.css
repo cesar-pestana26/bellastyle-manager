@@ -405,28 +405,11 @@ html:not(.oscuro) .sobre-video { text-shadow: 0 0 18px rgb(255 255 255 / .95), 0
 html:not(.oscuro) .sobre-video .btn-primario,
 html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
 
-/* ---------- Celular y tableta: páginas divididas ----------
-   No hay espacio para poner el video al lado, así que pasa a ser el fondo
-   de toda la pantalla (detrás del contenido) con un velo para poder leer. */
-@media (max-width: 1023px) {
-  .pagina-dividida aside.lado-video {
-    position: fixed;
-    inset: 0;
-    height: auto;
-    display: block;
-    z-index: -10;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  .pagina-dividida aside.lado-video > :not(.fondo-video) { display: none; }
-  .pagina-dividida aside.lado-video::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: rgb(255 255 255 / .6);
-  }
-  .oscuro .pagina-dividida aside.lado-video::after { background: rgb(18 12 26 / .6); }
+/* ---------- Celular: páginas divididas ----------
+   En pantallas angostas no cabe el video al lado. No se pone de fondo (distrae):
+   se oculta y la página queda con fondo liso. Desde 768 px (tableta y PC) va a un lado. */
+@media (max-width: 767px) {
+  .pagina-dividida aside.lado-video { display: none; }
 }
 
 /* ---------- Paneles (panel.html): fondo liso con un brillo suave, sin imagen ----------

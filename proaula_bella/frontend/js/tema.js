@@ -68,6 +68,8 @@ function crearVideoDeFondo() {
     // Si la página tiene un panel #ladoVideo, el video va ahí (a un lado del contenido).
     // Si no, va de fondo en toda la pantalla.
     const destino = document.getElementById('ladoVideo') || document.body;
+    // Panel lateral oculto (celular): no se carga el video, así no gasta datos
+    if (destino.id === 'ladoVideo' && getComputedStyle(destino).display === 'none') return;
     destino.insertAdjacentHTML('afterbegin',
         htmlVideo('fondo-video-claro', 'fondo') + htmlVideo('fondo-video-oscuro', 'fondo-oscuro'));
     pausarVideoSegunTema();
