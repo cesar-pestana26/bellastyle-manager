@@ -1,98 +1,91 @@
-// Funciones compartidas por todas las páginas
+// js/api.js - Cliente API HTTP, Control de Sesión y Formatos Globales
 
-// El mismo servidor sirve las páginas y la API, por eso basta con "/api"
-const API = '/api';
+const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+  ? 'http://localhost:3000/api'
+  : '/api';
 
-// Hace una petición a la API y devuelve la respuesta en JSON.
-// Si el servidor no responde, devuelve un mensaje de error.
-async function pedir(ruta, metodo = 'GET', datos = null) {
-    const opciones = { method: metodo, headers: {} };
-    if (datos) {
-        opciones.headers['Content-Type'] = 'application/json';
-        opciones.body = JSON.stringify(datos);
+/**
+ * Peticiones HTTP unificadas al servidor backend
+ */
+async function pedir(endpoint, metodo = 'GET', datos = null) {
+  const url = endpoint.startsWith('http') 
+    ? endpoint 
+    : `${API_BASE}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  
+  const opciones = {
+    method: metodo,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     }
-    try {
-        const respuesta = await fetch(API + ruta, opciones);
-        return await respuesta.json();
-    } catch (err) {
-        return { success: false, message: 'No hay conexión con el servidor. ¿Está encendido?' };
+  };
+
+  const token = localStorage.getItem('token');
+  if (token) {
+    opciones.headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (datos && ['POST', 'PUT', 'PATCH'].includes(metodo.toUpperCase())) {
+    opciones.body = JSON.stringify(datos);
+  }
+
+  try {
+    const respuesta = await fetch(url, opciones);
+    const resultado = await respuesta.json().catch(() => ({}));
+
+    if (!respuesta.ok) {
+      return {
+        success: false,
+        mensaje: resultado.mensaje || resultado.error || `Error ${respuesta.status}: No se pudo procesar la solicitud.`
+      };
     }
+
+    return { success: true, ...resultado };
+  } catch (error) {
+    console.warn(`[API] Sin conexión backend en ${url}. Usando persistencia local.`);
+    return {
+      success: false,
+      errorRed: true,
+      mensaje: 'Servidor local no detectado. Modo demostración activo.'
+    };
+  }
 }
 
-// Sesión: se guarda el usuario en sessionStorage (se borra al cerrar la pestaña)
-function guardarSesion(usuario) {
-    sessionStorage.setItem('usuario', JSON.stringify(usuario));
+// Formateadores globales
+function pesos(valor) {
+  const num = Number(valor) || 0;
+  return '$' + num.toLocaleString('es-CO');
 }
 
-function obtenerSesion() {
-    const texto = sessionStorage.getItem('usuario');
-    return texto ? JSON.parse(texto) : null;
+function escapar(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Control de Sesión en el Navegador
+function obtenerUsuarioActual() {
+  try {
+    return JSON.parse(localStorage.getItem('usuarioLogueado')) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function guardarSesion(usuario, token = null) {
+  if (usuario) {
+    localStorage.setItem('usuarioLogueado', JSON.stringify(usuario));
+  }
+  if (token) {
+    localStorage.setItem('token', token);
+  }
 }
 
 function cerrarSesion() {
-    sessionStorage.removeItem('usuario');
-    window.location.href = 'index.html';
+  localStorage.removeItem('usuarioLogueado');
+  localStorage.removeItem('token');
+  window.location.href = 'index.html';
 }
-
-// Muestra un mensaje en una caja de alerta (tipo: 'error' u 'ok')
-function mostrarAlerta(caja, mensaje, tipo = 'error') {
-    caja.textContent = mensaje;
-    caja.classList.remove('hidden', 'alerta-error', 'alerta-ok');
-    caja.classList.add('block', tipo === 'ok' ? 'alerta-ok' : 'alerta-error');
-}
-
-function ocultarAlerta(caja) {
-    caja.classList.add('hidden');
-    caja.classList.remove('block');
-}
-
-// Evita que un texto con etiquetas HTML se ejecute al mostrarlo en la tabla
-function escapar(texto) {
-    const div = document.createElement('div');
-    div.textContent = texto ?? '';
-    return div.innerHTML;
-}
-
-// 35000 -> "$35.000"
-function pesos(valor) {
-    return '$' + Number(valor || 0).toLocaleString('es-CO');
-}
-
-// Datos de cada rol para las pantallas de login y registro
-const ROLES = {
-    cliente: {
-        titulo: 'Clienta',
-        pregunta: '¿Eres clienta?',
-        descripcion: 'Agenda tus citas y revisa tu historial.',
-        imagen: 'img/rol_clienta.svg'
-    },
-    estilista: {
-        titulo: 'Estilista',
-        pregunta: '¿Eres estilista?',
-        descripcion: 'Consulta las citas que te asignaron.',
-        imagen: 'img/rol_estilista.svg'
-    },
-    admin: {
-        titulo: 'Administradora',
-        pregunta: '¿Eres administradora?',
-        descripcion: 'Gestiona el salón, el equipo y las citas.',
-        imagen: 'img/rol_admin.svg'
-    }
-};
-
-// ---------------------------------------------------------------
-// Teléfonos: mientras se escribe, solo se dejan números y máximo 10
-// (celular 3xx xxx xxxx o fijo 60x xxx xxxx). Aplica a todos los campos
-// type="tel" de cualquier página, incluso los de las ventanas que se crean después.
-// El campo de contacto del chat acepta teléfono O correo: si lo escrito
-// tiene letras o @ se trata como correo; si son solo números, se limita a 10.
-// ---------------------------------------------------------------
-document.addEventListener('input', (e) => {
-    const campo = e.target;
-    const esTelefono = campo.type === 'tel';
-    const esContacto = campo.dataset && campo.dataset.contacto !== undefined;
-    if (!esTelefono && !esContacto) return;
-    if (esContacto && /[a-zA-Z@]/.test(campo.value)) return;   // es un correo: no se toca
-    const digitos = campo.value.replace(/\D/g, '').slice(0, 10);
-    if (campo.value !== digitos) campo.value = digitos;
-});

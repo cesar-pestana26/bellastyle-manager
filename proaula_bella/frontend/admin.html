@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Ejecutivo de Administración | BellaStyle</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="css/estilos.css?v=110">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tema.js"></script>
+</head>
+<body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Header Exclusivo de Administrador -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      
+      <div class="flex items-center gap-3">
+        <a href="welcome.html" class="flex items-center gap-2">
+          <img src="img/logo.webp" alt="Logo" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
+          <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
+        </a>
+        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          Panel Administrador
+        </span>
+      </div>
+
+      <nav class="flex items-center space-x-4 text-sm font-medium">
+        <button type="button" class="btn-toggle-tema p-2 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition">
+        </button>
+
+        <div class="relative group">
+          <button type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 transition text-xs font-semibold">
+            <span id="nombreAdminHeader">Administradora</span>
+            <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+
+          <div class="absolute right-0 mt-2 w-48 rounded-xl border border-white/15 bg-[#120f1d] p-1.5 shadow-2xl backdrop-blur-xl hidden group-hover:block transition-all z-50">
+            <a href="welcome.html" class="block px-3 py-2 text-xs text-white/80 hover:bg-white/10 rounded-lg transition">Ver sitio web</a>
+            <button type="button" onclick="cerrarSesionAdmin()" class="w-full text-left px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition font-semibold">
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </nav>
+
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full space-y-8">
+    
+    <!-- Mensaje Flotante de Notificaciones -->
+    <div id="avisoAdmin" class="fixed top-20 right-6 z-50 transition-all duration-300 opacity-0 -translate-y-4 px-4 py-3 rounded-xl bg-pink-500 text-white font-semibold text-xs shadow-2xl"></div>
+
+    <!-- Título y Estado -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-serif font-bold text-white">Centro de Control de Operaciones & Ganancias</h1>
+        <p class="text-xs text-white/70 mt-1">Supervisión en tiempo real de citas, ingresos, distribución 40/60 y catálogo.</p>
+      </div>
+      <div class="text-xs text-right text-white/60 bg-white/5 px-4 py-2.5 rounded-xl border border-white/10">
+        <span>Cierre contable: </span><strong class="text-pink-300 font-bold" id="fechaHoyAdmin">-</strong>
+      </div>
+    </div>
+
+    <!-- MÉTRICAS FINANCIERAS Y DE CITAS -->
+    <div id="metricasAdminPanel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Generado dinámicamente -->
+    </div>
+
+    <!-- PANEL PRINCIPAL CON PESTAÑAS SEPARADAS -->
+    <div class="tarjeta p-6 sm:p-8 space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-white/10 pb-4 overflow-x-auto">
+        <div class="flex gap-2">
+          <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">
+            📋 Control Total de Citas
+          </button>
+          <button type="button" id="tabGanancias" onclick="switchTabAdmin('ganancias')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">
+            💰 Liquidación & Comisiones (60/40)
+          </button>
+          <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">
+            ✂️ Precios & Catálogo de Servicios
+          </button>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 1: TABLA COMPLETA DE CITAS CON FILTROS -->
+      <section id="secCitasAdmin" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+          <div>
+            <label class="text-[11px] text-white/60 block mb-1">Estado de Cita</label>
+            <select id="filtroEstado" onchange="filtrarCitasAdmin()" class="campo bg-[#120f1d] py-1.5">
+              <option value="todos">Todos los Estados</option>
+              <option value="Pendiente">Pendientes</option>
+              <option value="Confirmada">Confirmadas</option>
+              <option value="Finalizada">Finalizadas</option>
+              <option value="Cancelada">Canceladas</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-white/60 block mb-1">Filtrar por Estilista</label>
+            <select id="filtroEstilista" onchange="filtrarCitasAdmin()" class="campo bg-[#120f1d] py-1.5">
+              <option value="todos">Todas las Estilistas</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-white/60 block mb-1">Búsqueda rápida</label>
+            <input id="filtroBuscar" oninput="filtrarCitasAdmin()" type="text" placeholder="Cliente o servicio..." class="campo py-1.5">
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] uppercase tracking-wider text-pink-300 border-b border-white/10 bg-white/5">
+              <tr>
+                <th class="p-3.5 rounded-l-xl">Cód. Cita</th>
+                <th class="p-3.5">Clienta</th>
+                <th class="p-3.5">Servicio</th>
+                <th class="p-3.5">Estilista Asignada</th>
+                <th class="p-3.5">Fecha & Hora</th>
+                <th class="p-3.5">Monto ($)</th>
+                <th class="p-3.5">Estado</th>
+                <th class="p-3.5 text-right rounded-r-xl">Acciones de Gestión</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCitasAdmin" class="divide-y divide-white/5">
+              <!-- Cargado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 2: DESGLOSE FINANCIERO Y COMISIONES -->
+      <section id="secGananciasAdmin" class="space-y-4 hidden">
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+          💡 <strong>Regla de negocio:</strong> Las ganancias brutas corresponden únicamente a las citas con estado <strong>Finalizada</strong>. Se calcula automáticamente el 60% para la estilista y el 40% para el salón.
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] uppercase tracking-wider text-amber-300 border-b border-white/10 bg-white/5">
+              <tr>
+                <th class="p-3.5 rounded-l-xl">Estilista</th>
+                <th class="p-3.5">Citas Finalizadas</th>
+                <th class="p-3.5">Total Recaudado</th>
+                <th class="p-3.5">Pago a Estilista (60%)</th>
+                <th class="p-3.5 text-right rounded-r-xl">Ganancia Salón BellaStyle (40%)</th>
+              </tr>
+            </thead>
+            <tbody id="tablaGananciasAdmin" class="divide-y divide-white/5">
+              <!-- Cargado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 3: CATÁLOGO Y EDICIÓN DE PRECIOS -->
+      <section id="secServiciosAdmin" class="space-y-4 hidden">
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-white/70">Ajusta las tarifas públicas, duración estimada o crea nuevos servicios.</p>
+          <button type="button" onclick="modalCrearServicio()" class="btn-primario text-xs px-4 py-2">
+            + Nuevo Servicio
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] uppercase tracking-wider text-pink-300 border-b border-white/10 bg-white/5">
+              <tr>
+                <th class="p-3.5 rounded-l-xl">ID</th>
+                <th class="p-3.5">Nombre del Servicio</th>
+                <th class="p-3.5">Duración Estimada</th>
+                <th class="p-3.5">Tarifa Pública</th>
+                <th class="p-3.5 text-right rounded-r-xl">Modificar</th>
+              </tr>
+            </thead>
+            <tbody id="tablaServiciosAdmin" class="divide-y divide-white/5">
+              <!-- Cargado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL DE ACCIONES -->
+  <dialog id="modalAdmin" class="max-w-lg w-full rounded-2xl bg-[#120f1d] p-6 text-white border border-white/20 backdrop:bg-black/80 shadow-2xl">
+    <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
+      <h3 id="tituloModalAdmin" class="font-serif font-bold text-lg text-pink-300">Gestión</h3>
+      <button type="button" onclick="cerrarModalAdmin()" class="text-white/50 hover:text-white text-base font-bold">&times;</button>
+    </div>
+    
+    <form id="formModalAdmin" class="space-y-4">
+      <div id="contenidoModalAdmin" class="space-y-3"></div>
+      
+      <div class="flex justify-end gap-2 pt-4 border-t border-white/10">
+        <button type="button" onclick="cerrarModalAdmin()" class="btn-secundario text-xs px-4 py-2">Cancelar</button>
+        <button type="submit" class="btn-primario text-xs px-5 py-2">Guardar Cambios</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 bg-[#07060b]">
+    BellaStyle Manager · Sistema de Gestión Gerencial · Ingeniería de Sistemas
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

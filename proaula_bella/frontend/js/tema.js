@@ -1,87 +1,104 @@
-// Modo claro / oscuro.
-// Se carga en el <head> de cada página para aplicar el tema antes de dibujar
-// (así la página no "parpadea" en blanco). El tema escogido se guarda en el navegador.
+// js/tema.js - Control global de tema (Claro/Oscuro) y reproducción de fondo
 
-const ICONO_LUNA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-const ICONO_SOL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const ICONO_LUNA = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICONO_SOL = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 
 function temaGuardado() {
-    try { return localStorage.getItem('tema'); } catch (e) { return null; }
+  try { return localStorage.getItem('tema'); } catch (e) { return 'oscuro'; }
 }
 
 function aplicarTema(tema) {
-    document.documentElement.classList.toggle('oscuro', tema === 'oscuro');
+  const esOscuro = tema === 'oscuro';
+  document.documentElement.classList.toggle('oscuro', esOscuro);
+  document.documentElement.classList.toggle('dark', esOscuro);
 }
 
-// 1) Apenas carga: aplica el tema guardado (por defecto, claro)
-aplicarTema(temaGuardado());
+// 1) Aplicación inmediata antes de renderizar para evitar parpadeos
+aplicarTema(temaGuardado() || 'oscuro');
 
-// 2) Cuando la página termina de cargar: crea el botón flotante
+// 2) Eventos de carga del DOM
 document.addEventListener('DOMContentLoaded', () => {
+  const botonesEnPagina = document.querySelectorAll('.btn-toggle-tema');
+
+  if (botonesEnPagina.length > 0) {
+    botonesEnPagina.forEach(btn => {
+      btn.addEventListener('click', () => alternarTema());
+      actualizarEstiloBoton(btn);
+    });
+  } else {
+    // Si la página no incluye un botón en la barra, crea uno flotante
     const boton = document.createElement('button');
     boton.type = 'button';
-    boton.className = 'btn-tema';
+    boton.className = 'btn-tema-flotante';
+    
+    boton.addEventListener('click', () => alternarTema());
 
-    function actualizarBoton() {
-        const oscuro = document.documentElement.classList.contains('oscuro');
-        // Ícono + texto para que se entienda qué hace
-        boton.innerHTML = oscuro ? ICONO_SOL + '<span>Modo claro</span>' : ICONO_LUNA + '<span>Modo oscuro</span>';
-        boton.title = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
-        boton.setAttribute('aria-label', boton.title);
-    }
-
-    boton.addEventListener('click', () => {
-        const nuevo = document.documentElement.classList.contains('oscuro') ? 'claro' : 'oscuro';
-        aplicarTema(nuevo);
-        try { localStorage.setItem('tema', nuevo); } catch (e) { /* sin guardado, igual cambia */ }
-        actualizarBoton();
-        pausarVideoSegunTema();
-    });
-
-    actualizarBoton();
-    // En el panel, el botón va en la barra de arriba; en las demás páginas flota abajo a la izquierda
     const lugar = document.getElementById('lugarBotonTema');
     if (lugar) {
-        boton.classList.add('btn-tema-barra');
-        lugar.appendChild(boton);
+      lugar.appendChild(boton);
     } else {
-        document.body.appendChild(boton);
+      document.body.appendChild(boton);
     }
-    crearVideoDeFondo();
+    actualizarEstiloBoton(boton);
+  }
+
+  crearVideoDeFondo();
 });
 
-// Videos de fondo: uno para el modo claro y otro para el oscuro (9 s que se repiten sin corte).
-// Cada uno va en dos formatos, WebM y MP4: el navegador usa el primero que pueda reproducir.
-// muted + playsinline son obligatorios para que el celular los reproduzca solos.
+function alternarTema() {
+  const esOscuro = document.documentElement.classList.contains('oscuro');
+  const nuevoTema = esOscuro ? 'claro' : 'oscuro';
+  
+  aplicarTema(nuevoTema);
+  try { localStorage.setItem('tema', nuevoTema); } catch (e) {}
+
+  document.querySelectorAll('.btn-toggle-tema, .btn-tema-flotante').forEach(actualizarEstiloBoton);
+  pausarVideoSegunTema();
+}
+
+function actualizarEstiloBoton(btn) {
+  if (!btn) return;
+  const oscuro = document.documentElement.classList.contains('oscuro');
+  btn.innerHTML = oscuro 
+    ? `${ICONO_SOL} <span>Modo claro</span>` 
+    : `${ICONO_LUNA} <span>Modo oscuro</span>`;
+  btn.title = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+  btn.setAttribute('aria-label', btn.title);
+}
+
 function htmlVideo(clase, nombre) {
-    return `<div class="fondo-video ${clase}" aria-hidden="true">
-        <video muted loop playsinline preload="none" poster="img/${nombre}.webp">
-            <source src="img/${nombre}.webm" type="video/webm">
-            <source src="img/${nombre}.mp4" type="video/mp4">
-        </video></div>`;
+  return `<div class="fondo-video ${clase}" aria-hidden="true">
+    <video muted loop playsinline preload="none" poster="img/${nombre}.webp">
+      <source src="img/${nombre}.webm" type="video/webm">
+      <source src="img/${nombre}.mp4" type="video/mp4">
+    </video>
+  </div>`;
 }
 
 function crearVideoDeFondo() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // Las páginas con data-sin-video (el panel) usan la imagen quieta: el video distrae al trabajar
-    if (document.body.hasAttribute('data-sin-video')) return;
-    // Si la página tiene un panel #ladoVideo, el video va ahí (a un lado del contenido).
-    // Si no, va de fondo en toda la pantalla.
-    const destino = document.getElementById('ladoVideo') || document.body;
-    // Panel lateral oculto (celular): no se carga el video, así no gasta datos
-    if (destino.id === 'ladoVideo' && getComputedStyle(destino).display === 'none') return;
-    destino.insertAdjacentHTML('afterbegin',
-        htmlVideo('fondo-video-claro', 'fondo') + htmlVideo('fondo-video-oscuro', 'fondo-oscuro'));
-    pausarVideoSegunTema();
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (document.body.hasAttribute('data-sin-video')) return;
+
+  const destino = document.getElementById('ladoVideo') || document.body;
+  if (destino.id === 'ladoVideo' && getComputedStyle(destino).display === 'none') return;
+
+  // Evita duplicar elementos si ya fueron creados previamente
+  if (destino.querySelector('.fondo-video')) return;
+
+  destino.insertAdjacentHTML('afterbegin',
+    htmlVideo('fondo-video-claro', 'fondo') + htmlVideo('fondo-video-oscuro', 'fondo-oscuro')
+  );
+  pausarVideoSegunTema();
 }
 
-// Reproduce solo el video del tema actual y pausa el otro (así no se gasta batería ni datos)
 function pausarVideoSegunTema() {
-    const oscuro = document.documentElement.classList.contains('oscuro');
-    const activo = document.querySelector(oscuro ? '.fondo-video-oscuro video' : '.fondo-video-claro video');
-    const otro = document.querySelector(oscuro ? '.fondo-video-claro video' : '.fondo-video-oscuro video');
-    if (!activo) return;
-    if (otro) otro.pause();
+  const oscuro = document.documentElement.classList.contains('oscuro');
+  const activo = document.querySelector(oscuro ? '.fondo-video-oscuro video' : '.fondo-video-claro video');
+  const otro = document.querySelector(oscuro ? '.fondo-video-claro video' : '.fondo-video-oscuro video');
+
+  if (otro) otro.pause();
+  if (activo) {
     activo.preload = 'auto';
-    activo.play().catch(() => { /* el navegador no dejó reproducir: queda la imagen */ });
+    activo.play().catch(() => {});
+  }
 }

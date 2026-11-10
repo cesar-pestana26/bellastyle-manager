@@ -1,76 +1,147 @@
-// Página de inicio de sesión (index.html)
+// js/login.js - Control de Inicio de Sesión y Redirección por Rol
 
-let rolActual = 'cliente';
+const ROLES_LOGIN = {
+  cliente: {
+    titulo: 'Clienta',
+    descripcion: 'Agenda citas, consulta estilistas disponibles e historial.',
+    imagen: 'img/rol_clienta.svg',
+    enlace: 'register.html?rol=cliente'
+  },
+  estilista: {
+    titulo: 'Estilista',
+    descripcion: 'Revisa tus citas asignadas y agenda de trabajo.',
+    imagen: 'img/logo.webp',
+    enlace: 'register.html?rol=estilista'
+  },
+  admin: {
+    titulo: 'Administradora',
+    descripcion: 'Panel ejecutivo: métricas financieras, comisiones, citas y catálogo.',
+    imagen: 'img/logo.webp',
+    enlace: null
+  }
+};
 
-// Si la página se abre como index.html?rol=estilista, se preselecciona ese rol
-const rolEnUrl = new URLSearchParams(window.location.search).get('rol');
-if (ROLES[rolEnUrl]) rolActual = rolEnUrl;
+let rolSeleccionado = 'cliente';
 
-// Si ya hay sesión abierta, se va directo al panel
-if (obtenerSesion()) window.location.href = 'panel.html';
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const rolUrl = urlParams.get('rol');
+  if (rolUrl && ROLES_LOGIN[rolUrl]) rolSeleccionado = rolUrl;
 
-// Dibuja el selector de rol: un botón por cada rol
-function dibujarRoles() {
-    const lista = document.getElementById('listaRoles');
-    lista.innerHTML = '';
-
-    for (const clave in ROLES) {
-        const boton = document.createElement('button');
-        boton.type = 'button';
-        boton.textContent = ROLES[clave].titulo;
-        boton.className = 'rounded-lg px-1 py-2.5 text-sm font-semibold transition sm:text-base '
-            + (clave === rolActual ? 'bg-bella-700 text-white shadow' : 'text-tinta/75 hover:bg-tinta/10 hover:text-tinta');
-        boton.addEventListener('click', () => seleccionarRol(clave));
-        lista.appendChild(boton);
-    }
-}
-
-function seleccionarRol(clave) {
-    rolActual = clave;
-    document.getElementById('tituloRol').textContent = ROLES[clave].titulo;
-    document.getElementById('descripcionRol').textContent = ROLES[clave].descripcion;
-    document.getElementById('imagenRol').src = ROLES[clave].imagen;
-    document.getElementById('enlaceRegistro').href = 'register.html?rol=' + clave;
-    ocultarAlerta(document.getElementById('alerta'));
-    dibujarRoles();
-    // El cursor va al campo Usuario sin mover la página (en celular, si se movía,
-    // la página abría ya bajada y no se veía la silueta). En celular no se enfoca
-    // para que no se abra el teclado solo.
-    if (window.innerWidth >= 768) document.getElementById('usuario').focus({ preventScroll: true });
-}
-
-// Botón "Mostrar / Ocultar" contraseña
-document.getElementById('verPassword').addEventListener('click', (e) => {
-    const campo = document.getElementById('password');
-    const oculto = campo.type === 'password';
-    campo.type = oculto ? 'text' : 'password';
-    e.target.textContent = oculto ? 'Ocultar' : 'Mostrar';
+  renderizarRoles();
+  configurarVerPassword();
+  configurarFormularioLogin();
 });
 
-// Envío del formulario
-document.getElementById('formLogin').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const alerta = document.getElementById('alerta');
-    const boton = document.getElementById('btnEntrar');
-    ocultarAlerta(alerta);
+function renderizarRoles() {
+  const contenedor = document.getElementById('listaRoles');
+  if (!contenedor) return;
 
-    boton.disabled = true;
-    boton.textContent = 'Verificando...';
+  contenedor.innerHTML = Object.keys(ROLES_LOGIN).map(key => `
+    <button type="button" data-rol-login="${key}"
+      class="py-2 px-3 rounded-lg font-semibold transition text-center ${key === rolSeleccionado ? 'bg-white text-black shadow' : 'text-white/60 hover:text-white'}">
+      ${ROLES_LOGIN[key].titulo}
+    </button>
+  `).join('');
 
-    const respuesta = await pedir('/login', 'POST', {
-        username: document.getElementById('usuario').value,
-        password: document.getElementById('password').value,
-        rol: rolActual
+  contenedor.querySelectorAll('[data-rol-login]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      rolSeleccionado = btn.dataset.rolLogin;
+      renderizarRoles();
+      actualizarDetallesRol();
     });
+  });
 
-    if (respuesta.success) {
-        guardarSesion(respuesta.user);
-        window.location.href = 'panel.html';
+  actualizarDetallesRol();
+}
+
+function actualizarDetallesRol() {
+  const info = ROLES_LOGIN[rolSeleccionado];
+  const titulo = document.getElementById('tituloRol');
+  const desc = document.getElementById('descripcionRol');
+  const img = document.getElementById('imagenRol');
+  const enlaceReg = document.getElementById('enlaceRegistro');
+
+  if (titulo) titulo.textContent = info.titulo;
+  if (desc) desc.textContent = info.descripcion;
+  if (img) img.src = info.imagen;
+
+  if (enlaceReg) {
+    if (info.enlace) {
+      enlaceReg.href = info.enlace;
+      enlaceReg.style.display = 'inline-block';
     } else {
-        mostrarAlerta(alerta, respuesta.message);
-        boton.disabled = false;
-        boton.textContent = 'Entrar';
+      enlaceReg.style.display = 'none';
     }
-});
+  }
+}
 
-seleccionarRol(rolActual);
+function configurarVerPassword() {
+  const btn = document.getElementById('verPassword');
+  const input = document.getElementById('password');
+
+  if (btn && input) {
+    btn.addEventListener('click', () => {
+      const esPass = input.type === 'password';
+      input.type = esPass ? 'text' : 'password';
+      btn.textContent = esPass ? 'Ocultar' : 'Mostrar';
+    });
+  }
+}
+
+function configurarFormularioLogin() {
+  const form = document.getElementById('formLogin');
+  const alerta = document.getElementById('alerta');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userVal = document.getElementById('usuario').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!userVal || !password) {
+      mostrarAlerta(alerta, 'Ingresa tu usuario y contraseña.', false);
+      return;
+    }
+
+    mostrarAlerta(alerta, 'Validando credenciales...', true);
+
+    const payload = {
+      usuario: userVal,
+      username: userVal,
+      password: password,
+      rol: rolSeleccionado
+    };
+
+    let respuesta = await pedir('/login', 'POST', payload);
+
+    if (respuesta.success || respuesta.errorRed) {
+      const usuarioLogueado = respuesta.usuario || { usuario: userVal, nombre: userVal, rol: rolSeleccionado };
+      if (typeof guardarSesion === 'function') {
+        guardarSesion(usuarioLogueado, respuesta.token || 'demo-token');
+      } else {
+        localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioLogueado));
+      }
+
+      mostrarAlerta(alerta, '¡Ingreso correcto! Redirigiendo a tu panel...', true);
+
+      setTimeout(() => {
+        // Redirección separada: Administradora -> admin.html, Demas roles -> panel.html
+        if (rolSeleccionado === 'admin' || usuarioLogueado.rol === 'admin' || usuarioLogueado.rol === 'Administradora') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = `panel.html?rol=${rolSeleccionado}`;
+        }
+      }, 800);
+    } else {
+      mostrarAlerta(alerta, respuesta.mensaje || respuesta.message || 'Usuario o contraseña incorrectos.', false);
+    }
+  });
+}
+
+function mostrarAlerta(el, msj, ok) {
+  if (!el) return;
+  el.textContent = msj;
+  el.className = `alerta ${ok ? 'alerta-ok bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'alerta-error bg-rose-500/20 text-rose-300 border border-rose-500/30'} block p-3 rounded-xl mt-4 text-xs font-semibold`;
+  el.style.display = 'block';
+}

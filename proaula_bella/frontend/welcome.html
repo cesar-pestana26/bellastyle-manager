@@ -3,138 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BellaStyle | Salón de belleza</title>
+  <title>BellaStyle | Salón de Belleza</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="apple-touch-icon" href="img/icono-180.png">
-  <meta name="description" content="BellaStyle: agenda tu cita en el salón de belleza en minutos.">
-  <meta name="theme-color" content="#f7d3e2">
-  <link rel="stylesheet" href="css/estilos.css?v=16">
-  <script src="js/tema.js?v=16"></script>
+  <link rel="stylesheet" href="css/estilos.css?v=60">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tema.js"></script>
 </head>
-<body class="pagina-dividida overflow-x-hidden bg-noche-950">
+<body class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- Menú -->
-  <header id="menu" class="fixed inset-x-0 top-0 z-30 border-b border-transparent transition duration-300">
-    <nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-      <a href="index.html" class="flex items-center gap-2 font-titulo text-2xl font-bold"><img src="img/logo.webp" alt="" class="h-9 w-9 rounded-full"><span>Bella<span class="text-bella-700">Style</span></span></a>
-      <div class="flex items-center gap-2 sm:gap-6">
-        <a href="#servicios" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Servicios</a>
-        <a href="#vitrina" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Vitrina</a>
-        <a href="#productos" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Productos</a>
-        <a href="#como-funciona" class="hidden text-sm text-tinta/75 transition hover:text-tinta sm:inline">Cómo funciona</a>
-        <a href="index.html" class="btn-primario px-4 py-2">&larr; Volver al inicio</a>
+  <!-- Header Global -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <a href="welcome.html" class="flex items-center gap-3 shrink-0">
+        <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
+        <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
+      </a>
+
+      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-white/80">
+        <a href="welcome.html" class="text-pink-400 font-semibold">Inicio</a>
+        <a href="servicios.html" class="hover:text-pink-400 transition">Servicios</a>
+        <a href="galeria.html" class="hover:text-pink-400 transition">Galería</a>
+        <a href="tienda.html" class="hover:text-pink-400 transition">Tienda</a>
+      </nav>
+
+      <div class="flex items-center space-x-3">
+        <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
+        <a href="index.html" class="text-xs sm:text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
+        <a href="register.html?rol=cliente" class="btn-primario text-xs sm:text-sm px-4 py-2 rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Crear cuenta</a>
       </div>
-    </nav>
+    </div>
   </header>
 
-  <!-- ===================== PORTADA ===================== -->
-  <section class="relative flex min-h-screen items-center overflow-hidden pt-20">
-    <div class="mx-auto grid max-w-6xl items-center gap-14 px-5 lg:grid-cols-2">
-      <div>
-        <p class="animate-aparecer text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Salón de belleza · Cartagena</p>
-        <h1 class="mt-4 animate-aparecer text-5xl font-bold leading-[1.05] [animation-delay:.1s] sm:text-7xl">
-          Tu estilo,<br><em class="texto-brillo pr-2">a un clic</em><br>de distancia
+  <!-- Hero con Descripción de BellaStyle -->
+  <main class="flex-1">
+    <section class="pt-20 pb-16 px-6 text-center">
+      <div class="max-w-4xl mx-auto backdrop-blur-sm bg-black/20 p-8 rounded-3xl border border-white/10">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-pink-400 mb-3">Salón de Belleza · Cartagena</p>
+        <h1 class="text-4xl sm:text-6xl font-bold font-serif tracking-tight leading-tight">
+          Tu estilo, <em class="not-italic text-pink-400">a un clic</em> de distancia
         </h1>
-        <p class="mt-6 max-w-lg animate-aparecer text-lg text-tinta/75 [animation-delay:.2s]">
+        <p class="text-white/85 text-base sm:text-lg max-w-2xl mx-auto mt-4 font-normal leading-relaxed">
           Agenda tu cita en línea. El sistema busca por ti la estilista disponible que domina el servicio que elegiste.
         </p>
-        <div class="mt-8 flex animate-aparecer flex-wrap gap-3 [animation-delay:.3s]">
-          <a href="register.html?rol=cliente" class="btn-primario px-6 py-3 text-base">Crear cuenta</a>
-          <a href="#servicios" class="btn-secundario px-6 py-3 text-base">Ver servicios</a>
+
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <a href="servicios.html" class="btn-primario">Ver catálogo de servicios</a>
+          <a href="register.html?rol=cliente" class="btn-secundario">Crear cuenta gratis</a>
         </div>
       </div>
+    </section>
 
-      <!-- Video del salón (lo pone js/tema.js) con tarjetas flotantes -->
-      <div class="relative">
-        <div id="ladoVideo" class="lado-video h-80 rounded-[2rem] shadow-2xl shadow-bella-300/40 sm:h-[28rem] lg:h-[34rem]"></div>
-        <div class="tarjeta absolute -left-4 top-10 hidden px-4 py-3 motion-safe:animate-subir-bajar sm:block">
-          <p class="text-xs text-tinta/80">Cita agendada</p>
-          <p class="text-sm font-semibold">Corte · 10:00 a. m.</p>
-          <p class="text-xs text-emerald-700">Te atiende Diana</p>
+    <!-- Sección Cómo funciona -->
+    <section class="max-w-7xl mx-auto px-6 pb-20">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="tarjeta p-8">
+          <p class="font-serif text-5xl font-bold text-pink-400">01</p>
+          <h3 class="text-xl font-bold mt-4">Crea tu cuenta</h3>
+          <p class="text-white/70 text-sm mt-2">Regístrate como clienta con tu nombre, usuario y contraseña.</p>
         </div>
-        <div class="tarjeta absolute -right-4 bottom-10 hidden px-4 py-3 motion-safe:animate-subir-bajar [animation-delay:-2s] sm:block">
-          <p class="font-titulo text-3xl font-bold text-oro">8:00 – 19:00</p>
-          <p class="text-xs text-tinta/80">Lunes a sábado</p>
+        <div class="tarjeta p-8">
+          <p class="font-serif text-5xl font-bold text-pink-400">02</p>
+          <h3 class="text-xl font-bold mt-4">Elige servicio y hora</h3>
+          <p class="text-white/70 text-sm mt-2">Escoge el servicio deseado, la fecha y el horario libre que más te convenga.</p>
+        </div>
+        <div class="tarjeta p-8">
+          <p class="font-serif text-5xl font-bold text-pink-400">03</p>
+          <h3 class="text-xl font-bold mt-4">Te asignamos estilista</h3>
+          <p class="text-white/70 text-sm mt-2">El sistema asigna automáticamente a la estilista especialista disponible ese día.</p>
         </div>
       </div>
-    </div>
+    </section>
+  </main>
 
-    <a href="#servicios" class="absolute bottom-6 left-1/2 hidden -translate-x-1/2 text-xs uppercase tracking-widest text-tinta/45 transition hover:text-tinta/75 sm:block motion-safe:animate-subir-bajar">
-      Desliza ↓
-    </a>
-  </section>
-
-  <!-- ===================== SERVICIOS (desde la base de datos) ===================== -->
-  <section id="servicios" class="scroll-mt-20 border-t border-tinta/5 bg-tinta/[.02] py-24">
-    <div class="mx-auto max-w-6xl px-5">
-      <div class="revelar">
-        <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Nuestros servicios</p>
-        <h2 class="mt-3 text-4xl font-bold sm:text-5xl">Lo que hacemos por ti</h2>
-        <p class="mt-2 text-tinta/80">Toca un servicio para ver sus fotos, precio y duración.</p>
-      </div>
-      <div data-menu-servicios class="mt-10"><div class="esqueleto h-10 w-2/3"></div></div>
-    </div>
-  </section>
-
-  <!-- ===================== VITRINA (fotos del salón y trabajos de las estilistas) ===================== -->
-  <section id="vitrina" class="mx-auto max-w-6xl scroll-mt-20 px-5 pt-24">
-    <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Vitrina</p>
-    <h2 class="mt-3 text-4xl font-bold sm:text-5xl">Nuestros trabajos</h2>
-    <p class="mt-2 text-tinta/80">Fotos reales del salón y de lo que hacen nuestras estilistas.</p>
-    <div id="galeriaVitrina" class="mt-10 columns-2 gap-4 md:columns-3 [&>*]:mb-4"><div class="esqueleto h-40"></div></div>
-  </section>
-
-  <!-- ===================== PRODUCTOS (con su foto) ===================== -->
-  <section id="productos" class="mx-auto max-w-6xl scroll-mt-20 px-5 pt-24">
-    <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Tienda</p>
-    <h2 class="mt-3 text-4xl font-bold sm:text-5xl">Productos que usamos y vendemos</h2>
-    <p class="mt-2 text-tinta/80">Pregunta por ellos en tu próxima cita o por el chat.</p>
-    <div id="listaProductos" class="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4"><div class="esqueleto h-40"></div></div>
-  </section>
-
-  <dialog id="visorFoto" class="max-h-[90vh] w-auto max-w-[min(56rem,calc(100%-2rem))] overflow-hidden rounded-2xl bg-transparent p-0 backdrop:bg-black/70">
-    <img id="visorImagen" src="" alt="" class="mx-auto max-h-[80vh] w-auto rounded-2xl object-contain">
-    <p id="visorTexto" class="mt-2 text-center text-sm font-medium text-white"></p>
-  </dialog>
-
-  <!-- ===================== CÓMO FUNCIONA ===================== -->
-  <section id="como-funciona" class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24">
-    <h2 class="revelar text-4xl font-bold sm:text-5xl">Cómo funciona</h2>
-    <div class="mt-10 grid gap-6 md:grid-cols-3">
-      <div class="revelar tarjeta p-6">
-        <p class="font-titulo text-5xl font-bold text-bella-700">01</p>
-        <h3 class="mt-3 text-2xl font-bold">Crea tu cuenta</h3>
-        <p class="mt-2 text-tinta/80">Regístrate como clienta con tu nombre, usuario y contraseña.</p>
-      </div>
-      <div class="revelar tarjeta p-6 [transition-delay:120ms]">
-        <p class="font-titulo text-5xl font-bold text-bella-700">02</p>
-        <h3 class="mt-3 text-2xl font-bold">Elige servicio y hora</h3>
-        <p class="mt-2 text-tinta/80">Escoge el servicio, la fecha y la hora que te sirvan.</p>
-      </div>
-      <div class="revelar tarjeta p-6 [transition-delay:240ms]">
-        <p class="font-titulo text-5xl font-bold text-bella-700">03</p>
-        <h3 class="mt-3 text-2xl font-bold">Te asignamos estilista</h3>
-        <p class="mt-2 text-tinta/80">El sistema elige la estilista libre con menos citas ese día.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== LLAMADO FINAL ===================== -->
-  <section class="relative overflow-hidden border-t border-tinta/5 py-24 text-center">
-        <h2 class="revelar text-4xl font-bold sm:text-6xl">¿Lista para tu <em class="texto-brillo pr-2">cambio</em>?</h2>
-    <div class="revelar mt-8 flex flex-wrap justify-center gap-3 [transition-delay:150ms]">
-      <a href="register.html?rol=cliente" class="btn-primario px-6 py-3 text-base">Crear cuenta</a>
-      <a href="index.html" class="btn-secundario px-6 py-3 text-base">&larr; Volver al inicio</a>
-    </div>
-  </section>
-
-  <footer class="border-t border-tinta/5 py-8 text-center text-sm text-tinta/80">
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 backdrop-blur-md bg-black/40">
     BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
   </footer>
 
-  <script src="js/api.js"></script>
-  <script src="js/inicio.js"></script>
-  <script src="js/servicios.js"></script>
-  <script src="js/chat.js"></script>
 </body>
 </html>
