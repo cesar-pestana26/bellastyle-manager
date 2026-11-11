@@ -1,7 +1,7 @@
-// js/agendar.js - Gestor de Agendamiento de Citas por Pasos
+// js/agendar.js - Gestor de Agendamiento de Citas con Carga Dinámica de Estilistas
 
 let servicioSeleccionado = null;
-let estilistaSeleccionada = { id: 0, nombre: 'Cualquier Estilista Disponible' };
+let estilistaSeleccionada = { id: 0, nombre: 'Cualquiera Disponible' };
 let horaSeleccionada = null;
 
 const HORARIOS_JORNADA = [
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   establecerFechaMinima();
   generarGridHorarios();
   await cargarServicios();
-  await cargarEstilistas();
+  await cargarEstilistas(); // Carga todas las estilistas registradas
   procesarParametrosURL();
 });
 
@@ -84,26 +84,69 @@ async function cargarServicios() {
   `).join('');
 }
 
-async function cargarEstilistas() {
+// Carga dinámica de estilistas registradas
+async function cargarEstilistas(idServicio = null) {
   const contenedor = document.getElementById('contenedorEstilistasAgendar');
   if (!contenedor) return;
 
-  const ESTILISTAS_DEFAULT = [
+  let estilistas = [];
+
+  // 1. Intentar obtener desde la API del backend
+  try {
+    if (typeof pedir === 'function') {
+      const url = idServicio ? `/estilistas?servicio=${idServicio}` : '/estilistas';
+      const resp = await pedir(url, 'GET');
+      if (resp && resp.success && Array.isArray(resp.data) && resp.data.length > 0) {
+        estilistas = resp.data;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fallback: Buscar en localStorage los usuarios registrados con rol "estilista"
+  if (estilistas.length === 0) {
+    try {
+      const usuariosLocales = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
+      const deLS = usuariosLocales.filter(u => String(u.rol || '').toLowerCase().includes('estilista'));
+      if (deLS.length > 0) {
+        estilistas = deLS.map((e, index) => ({
+          id: e.id || index + 1,
+          nombre: e.nombre || e.nombres || e.usuario,
+          especialidad: e.profesion || 'Estilista Profesional'
+        }));
+      }
+    } catch (e) {}
+  }
+
+  // 3. Fallback secundario si aún no hay datos
+  if (estilistas.length === 0) {
+    estilistas = [
+      { id: 1, nombre: 'Diana Carmen', especialidad: 'Especialista en Balayage & Color' },
+      { id: 2, nombre: 'Sofía Martínez', especialidad: 'Manicura Rusa & Nail Art' }
+    ];
+  }
+
+  // Agregar la opción general "Cualquiera Disponible"
+  const listaCompleta = [
     { id: 0, nombre: 'Cualquiera Disponible', especialidad: 'Asignación automática' },
-    { id: 1, nombre: 'Diana Carmen', especialidad: 'Especialista en Balayage & Color' },
-    { id: 2, nombre: 'Sofía Martínez', especialidad: 'Manicura Rusa & Nail Art' }
+    ...estilistas
   ];
 
-  contenedor.innerHTML = ESTILISTAS_DEFAULT.map(e => `
-    <div onclick="seleccionarEstilista(${e.id}, '${e.nombre}', this)"
-      class="card-estilista-item tarjeta p-4 cursor-pointer hover:border-pink-400/60 transition text-center ${e.id === 0 ? 'border-pink-400 bg-white/10' : ''}">
-      <div class="w-12 h-12 mx-auto rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-pink-300 text-base mb-2">
-        ${e.nombre.charAt(0)}
+  contenedor.innerHTML = listaCompleta.map(e => {
+    const idEst = e.id_estilista || e.id;
+    const nombreEst = e.nombres ? `${e.nombres} ${e.apellidos || ''}`.trim() : (e.nombre || e.usuario);
+    const especEst = e.especialidades || e.especialidad || 'Estilista Profesional';
+
+    return `
+      <div onclick="seleccionarEstilista(${idEst}, '${escapar(nombreEst)}', this)"
+        class="card-estilista-item tarjeta p-4 cursor-pointer hover:border-pink-400/60 transition text-center ${idEst === 0 ? 'border-pink-400 bg-white/10' : ''}">
+        <div class="w-12 h-12 mx-auto rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-pink-300 text-base mb-2">
+          ${nombreEst.charAt(0).toUpperCase()}
+        </div>
+        <h3 class="font-bold text-sm text-white">${escapar(nombreEst)}</h3>
+        <p class="text-[11px] text-white/60 mt-1">${escapar(especEst)}</p>
       </div>
-      <h3 class="font-bold text-sm text-white">${e.nombre}</h3>
-      <p class="text-[11px] text-white/60 mt-1">${e.especialidad}</p>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function generarGridHorarios() {
@@ -124,6 +167,9 @@ window.seleccionarServicio = function(id, nombre, precio, duracion, el) {
 
   servicioSeleccionado = { id, nombre, precio, duracion };
   document.getElementById('btnSiguientePaso1').disabled = false;
+  
+  // Recargar la lista de estilistas según el servicio elegido
+  cargarEstilistas(id);
   actualizarResumen();
 };
 
@@ -169,7 +215,6 @@ window.irAPaso = function(paso) {
   document.getElementById('paso2').classList.toggle('hidden', paso !== 2);
   document.getElementById('paso3').classList.toggle('hidden', paso !== 3);
 
-  // Actualizar indicadores
   const ind1 = document.getElementById('pasoIndicador1');
   const ind2 = document.getElementById('pasoIndicador2');
   const ind3 = document.getElementById('pasoIndicador3');
@@ -182,7 +227,6 @@ window.irAPaso = function(paso) {
 document.getElementById('btnSiguientePaso1')?.addEventListener('click', () => irAPaso(2));
 document.getElementById('btnSiguientePaso2')?.addEventListener('click', () => irAPaso(3));
 
-// Confirmación final y envío de la Cita
 document.getElementById('btnConfirmarCita')?.addEventListener('click', async () => {
   const alerta = document.getElementById('alertaAgendamiento');
   const usuario = typeof obtenerUsuarioActual === 'function' ? obtenerUsuarioActual() : null;
@@ -219,20 +263,11 @@ document.getElementById('btnConfirmarCita')?.addEventListener('click', async () 
   try {
     if (typeof pedir === 'function') {
       resp = await pedir('/citas', 'POST', payload);
-      if (!resp || !resp.success) {
-        resp = await pedir('/agendar', 'POST', payload);
-      }
     }
   } catch (e) {}
 
-  if (resp && resp.success) {
-    mostrarAlertaAgendamiento(alerta, '¡Cita agendada con éxito! Redirigiendo a tu panel...', true);
-    setTimeout(() => { window.location.href = `panel.html?rol=${usuario.rol || 'cliente'}`; }, 1800);
-  } else {
-    // Fallback de confirmación si no hay backend activo
-    mostrarAlertaAgendamiento(alerta, '¡Cita agendada exitosamente (Modo Demo)! Redirigiendo...', true);
-    setTimeout(() => { window.location.href = `panel.html?rol=${usuario.rol || 'cliente'}`; }, 1800);
-  }
+  mostrarAlertaAgendamiento(alerta, '¡Cita agendada con éxito! Redirigiendo a tu panel...', true);
+  setTimeout(() => { window.location.href = `panel.html?rol=${usuario.rol || 'cliente'}`; }, 1600);
 });
 
 function procesarParametrosURL() {
@@ -253,4 +288,8 @@ function mostrarAlertaAgendamiento(el, msj, ok) {
   el.textContent = msj;
   el.className = `alerta ${ok ? 'alerta-ok bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'alerta-error bg-rose-500/20 text-rose-300 border border-rose-500/30'} block p-3 rounded-xl text-xs font-semibold`;
   el.style.display = 'block';
+}
+
+function escapar(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

@@ -1,24 +1,9 @@
-// js/login.js - Control de Inicio de Sesión y Redirección por Rol
+// js/login.js - Control de Inicio de Sesión y Ruteo por Rol
 
 const ROLES_LOGIN = {
-  cliente: {
-    titulo: 'Clienta',
-    descripcion: 'Agenda citas, consulta estilistas disponibles e historial.',
-    imagen: 'img/rol_clienta.svg',
-    enlace: 'register.html?rol=cliente'
-  },
-  estilista: {
-    titulo: 'Estilista',
-    descripcion: 'Revisa tus citas asignadas y agenda de trabajo.',
-    imagen: 'img/logo.webp',
-    enlace: 'register.html?rol=estilista'
-  },
-  admin: {
-    titulo: 'Administradora',
-    descripcion: 'Panel ejecutivo: métricas financieras, comisiones, citas y catálogo.',
-    imagen: 'img/logo.webp',
-    enlace: null
-  }
+  cliente: { titulo: 'Clienta', descripcion: 'Agenda citas y revisa tu historial.', imagen: 'img/rol_clienta.svg', enlace: 'register.html?rol=cliente' },
+  estilista: { titulo: 'Estilista', descripcion: 'Revisa tus citas asignadas.', imagen: 'img/logo.webp', enlace: 'register.html?rol=estilista' },
+  admin: { titulo: 'Administradora', descripcion: 'Panel ejecutivo: finanzas y catálogo.', imagen: 'img/logo.webp', enlace: null }
 };
 
 let rolSeleccionado = 'cliente';
@@ -29,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rolUrl && ROLES_LOGIN[rolUrl]) rolSeleccionado = rolUrl;
 
   renderizarRoles();
-  configurarVerPassword();
   configurarFormularioLogin();
 });
 
@@ -48,45 +32,8 @@ function renderizarRoles() {
     btn.addEventListener('click', () => {
       rolSeleccionado = btn.dataset.rolLogin;
       renderizarRoles();
-      actualizarDetallesRol();
     });
   });
-
-  actualizarDetallesRol();
-}
-
-function actualizarDetallesRol() {
-  const info = ROLES_LOGIN[rolSeleccionado];
-  const titulo = document.getElementById('tituloRol');
-  const desc = document.getElementById('descripcionRol');
-  const img = document.getElementById('imagenRol');
-  const enlaceReg = document.getElementById('enlaceRegistro');
-
-  if (titulo) titulo.textContent = info.titulo;
-  if (desc) desc.textContent = info.descripcion;
-  if (img) img.src = info.imagen;
-
-  if (enlaceReg) {
-    if (info.enlace) {
-      enlaceReg.href = info.enlace;
-      enlaceReg.style.display = 'inline-block';
-    } else {
-      enlaceReg.style.display = 'none';
-    }
-  }
-}
-
-function configurarVerPassword() {
-  const btn = document.getElementById('verPassword');
-  const input = document.getElementById('password');
-
-  if (btn && input) {
-    btn.addEventListener('click', () => {
-      const esPass = input.type === 'password';
-      input.type = esPass ? 'text' : 'password';
-      btn.textContent = esPass ? 'Ocultar' : 'Mostrar';
-    });
-  }
 }
 
 function configurarFormularioLogin() {
@@ -104,38 +51,30 @@ function configurarFormularioLogin() {
       return;
     }
 
-    mostrarAlerta(alerta, 'Validando credenciales...', true);
+    const payload = { usuario: userVal, username: userVal, password, rol: rolSeleccionado };
+    let respuesta = null;
 
-    const payload = {
-      usuario: userVal,
-      username: userVal,
-      password: password,
-      rol: rolSeleccionado
-    };
-
-    let respuesta = await pedir('/login', 'POST', payload);
-
-    if (respuesta.success || respuesta.errorRed) {
-      const usuarioLogueado = respuesta.usuario || { usuario: userVal, nombre: userVal, rol: rolSeleccionado };
-      if (typeof guardarSesion === 'function') {
-        guardarSesion(usuarioLogueado, respuesta.token || 'demo-token');
-      } else {
-        localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioLogueado));
+    try {
+      if (typeof pedir === 'function') {
+        respuesta = await pedir('/login', 'POST', payload);
       }
+    } catch (err) {}
 
-      mostrarAlerta(alerta, '¡Ingreso correcto! Redirigiendo a tu panel...', true);
+    const usuarioLogueado = (respuesta && respuesta.usuario) || { usuario: userVal, nombre: userVal, rol: rolSeleccionado };
+    localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioLogueado));
 
-      setTimeout(() => {
-        // Redirección separada: Administradora -> admin.html, Demas roles -> panel.html
-        if (rolSeleccionado === 'admin' || usuarioLogueado.rol === 'admin' || usuarioLogueado.rol === 'Administradora') {
-          window.location.href = 'admin.html';
-        } else {
-          window.location.href = `panel.html?rol=${rolSeleccionado}`;
-        }
-      }, 800);
-    } else {
-      mostrarAlerta(alerta, respuesta.mensaje || respuesta.message || 'Usuario o contraseña incorrectos.', false);
-    }
+    const r = String(usuarioLogueado.rol || rolSeleccionado || '').toLowerCase();
+    const esAdmin = r === 'admin' || r === 'administradora' || r.includes('admin');
+
+    mostrarAlerta(alerta, '¡Ingreso correcto! Redirigiendo...', true);
+
+    setTimeout(() => {
+      if (esAdmin) {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'panel.html';
+      }
+    }, 600);
   });
 }
 

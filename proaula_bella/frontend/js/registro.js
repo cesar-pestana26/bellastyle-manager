@@ -1,4 +1,4 @@
-// js/registro.js - Registro de usuarios con compatibilidad total de backend
+// js/registro.js - Registro de usuarios con persistencia local y compatibilidad total de backend
 
 const ROLES_REGISTRO = typeof ROLES !== 'undefined' ? ROLES : {
   cliente: { titulo: 'Clienta', imagen: 'img/rol_clienta.svg' },
@@ -103,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Se envían 'usuario' y 'username' simultáneamente para asegurar compatibilidad con cualquier backend
     const datos = {
       rol: rolActual,
       nombre: nombre,
@@ -118,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       datos.profesion = document.getElementById('profesion')?.value.trim() || '';
     } else if (rolActual === 'estilista') {
       datos.servicios = [...document.querySelectorAll('input[name="servicio"]:checked')].map((c) => Number(c.value));
+      datos.especialidad = 'Estilista Profesional';
     } else if (rolActual === 'admin') {
       const cod = document.getElementById('codigo')?.value || '';
       datos.codigoAdmin = cod;
@@ -138,16 +138,24 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Backend sin conexión, activando modo demostración.');
     }
 
+    // 1. Guardar en la lista global de usuarios registrados (para disponibilizar estilistas en agendar.html)
+    guardarEnUsuariosRegistrados(datos);
+
+    // 2. Definir redirección según el rol
+    const esAdmin = rolActual === 'admin' || rolActual === 'administradora';
+    const destinoRedireccion = esAdmin ? 'admin.html' : 'panel.html';
+
     if (respuesta && respuesta.success) {
+      const usuarioSesion = respuesta.usuario || datos;
+      localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
       mostrarMensajeAlerta(alerta, (respuesta.message || respuesta.mensaje || '¡Cuenta creada con éxito!') + ' Redirigiendo...', 'ok');
-      localStorage.setItem('usuarioLogueado', JSON.stringify({ nombre: datos.nombre, usuario: userVal, rol: rolActual }));
-      setTimeout(() => { window.location.href = 'index.html?rol=' + rolActual; }, 1500);
+      setTimeout(() => { window.location.href = destinoRedireccion; }, 1200);
     } else if (!respuesta || respuesta.errorRed) {
-      mostrarMensajeAlerta(alerta, '¡Registro completado! Redirigiendo al inicio de sesión...', 'ok');
-      localStorage.setItem('usuarioLogueado', JSON.stringify({ nombre: datos.nombre, usuario: userVal, rol: rolActual }));
-      setTimeout(() => { window.location.href = 'index.html?rol=' + rolActual; }, 1500);
+      localStorage.setItem('usuarioLogueado', JSON.stringify(datos));
+      mostrarMensajeAlerta(alerta, '¡Registro completado! Redirigiendo a tu panel...', 'ok');
+      setTimeout(() => { window.location.href = destinoRedireccion; }, 1200);
     } else {
-      mostrarMensajeAlerta(alerta, respuesta.mensaje || respuesta.message || 'Error al procesar la solicitud (400). Verifica los datos introducidos.', 'error');
+      mostrarMensajeAlerta(alerta, respuesta.mensaje || respuesta.message || 'Error al procesar la solicitud. Verifica los datos introducidos.', 'error');
       if (boton) boton.disabled = false;
     }
   });
@@ -155,6 +163,26 @@ document.addEventListener('DOMContentLoaded', () => {
   cambiarRol(rolActual);
   cargarServicios();
 });
+
+/**
+ * Persiste los datos del nuevo usuario registrado en localStorage para consultas offline/demo.
+ */
+function guardarEnUsuariosRegistrados(nuevoUsuario) {
+  try {
+    const listaUsuarios = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
+    const existeIndice = listaUsuarios.findIndex(u => u.usuario === nuevoUsuario.usuario || u.username === nuevoUsuario.username);
+
+    if (existeIndice !== -1) {
+      listaUsuarios[existeIndice] = { ...listaUsuarios[existeIndice], ...nuevoUsuario };
+    } else {
+      listaUsuarios.push(nuevoUsuario);
+    }
+
+    localStorage.setItem('usuariosRegistrados', JSON.stringify(listaUsuarios));
+  } catch (e) {
+    console.error('Error al guardar usuario en localStorage:', e);
+  }
+}
 
 function mostrarMensajeAlerta(el, msj, tipo = 'error') {
   if (!el) return;

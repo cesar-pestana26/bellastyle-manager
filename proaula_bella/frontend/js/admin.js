@@ -4,9 +4,10 @@ let citasGlobales = [];
 let serviciosGlobales = [];
 let estilistasGlobales = [];
 
-document.addEventListener('DOMContentLoaded', async () => {
-  verificarAccesoAdmin();
+// Ejecución de seguridad antes de renderizar la vista
+verificarAccesoAdmin();
 
+document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('fechaHoyAdmin').textContent = new Date().toLocaleDateString('es-CO', {
     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
   });
@@ -19,27 +20,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   poblarFiltroEstilistas();
 });
 
+/**
+ * Control estricto de acceso para el rol de Administradora
+ */
 function verificarAccesoAdmin() {
-  const usuario = typeof obtenerUsuarioActual === 'function' ? obtenerUsuarioActual() : null;
-  const nombreHeader = document.getElementById('nombreAdminHeader');
+  let usuario = null;
+  
+  if (typeof obtenerUsuarioActual === 'function') {
+    usuario = obtenerUsuarioActual();
+  } else {
+    try {
+      usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
+    } catch (e) {
+      usuario = null;
+    }
+  }
 
+  // Redirección si no hay sesión activa
   if (!usuario) {
-    window.location.href = 'index.html';
+    window.location.replace('index.html');
     return;
   }
 
-  // Si no es administradora, redirige al panel normal
-  const rolNorm = String(usuario.rol || '').toLowerCase();
-  if (!rolNorm.includes('admin')) {
-    window.location.href = 'panel.html';
+  const rolNorm = String(usuario.rol || '').toLowerCase().trim();
+  const esAdmin = rolNorm === 'admin' || rolNorm === 'administradora' || rolNorm.includes('admin');
+
+  // Redirección inmediata si el rol es Clienta o Estilista
+  if (!esAdmin) {
+    window.location.replace('panel.html?rol=' + encodeURIComponent(usuario.rol || 'cliente'));
     return;
   }
 
-  if (nombreHeader) nombreHeader.textContent = usuario.nombre || usuario.usuario;
+  const nombreHeader = document.getElementById('nombreAdminHeader');
+  if (nombreHeader) {
+    nombreHeader.textContent = usuario.nombre || usuario.usuario || 'Administradora';
+  }
 }
 
 async function cargarDatosAdministrador() {
-  // Datos base con fallback seguro
   citasGlobales = [
     { id: 101, cliente: 'Ana María López', servicio: 'Mechas / Balayage', id_servicio: 3, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '10:00 AM', valor: 180000, estado: 'Finalizada' },
     { id: 102, cliente: 'Martina Flórez', servicio: 'Manicure', id_servicio: 5, estilista: 'Sofía Martínez', id_estilista: 2, fecha: obtenerFechaHoy(), hora: '11:30 AM', valor: 45000, estado: 'Confirmada' },
@@ -452,5 +470,5 @@ function escapar(str) {
 window.cerrarSesionAdmin = function() {
   localStorage.removeItem('usuarioLogueado');
   localStorage.removeItem('token');
-  window.location.href = 'index.html';
+  window.location.replace('index.html');
 };
