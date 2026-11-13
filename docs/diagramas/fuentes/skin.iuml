@@ -1,0 +1,21 @@
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam dpi 150
+skinparam ArrowColor #333333
+skinparam classBackgroundColor #FCF1F6
+skinparam classBorderColor #B03A78
+skinparam classHeaderBackgroundColor #F6DDE9
+skinparam entityBackgroundColor #FCF1F6
+skinparam entityBorderColor #B03A78
+skinparam actorBackgroundColor #FCF1F6
+skinparam actorBorderColor #B03A78
+skinparam usecaseBackgroundColor #FCF1F6
+skinparam usecaseBorderColor #B03A78
+skinparam participantBackgroundColor #FCF1F6
+skinparam participantBorderColor #B03A78
+skinparam databaseBackgroundColor #EAF6EC
+skinparam databaseBorderColor #2E8B57
+skinparam rectangleBorderColor #555555
+skinparam noteBackgroundColor #F6F6F6
+skinparam noteBorderColor #999999
+hide circle

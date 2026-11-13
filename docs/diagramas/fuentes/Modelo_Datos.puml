@@ -1,0 +1,154 @@
+@startuml Modelo_Datos
+!include skin.iuml
+title Modelo relacional — base de datos bellastylemanager (17 tablas)
+skinparam linetype ortho
+left to right direction
+entity usuarios {
+  * id_usuario : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  username : VARCHAR(50) <<UNIQUE>>
+  password : VARCHAR(255)
+  rol : ENUM
+  creado_en : TIMESTAMP
+}
+entity clientas {
+  * id_clienta : INT <<PK>>
+  --
+  id_usuario : INT <<FK, UNIQUE>>
+  nombres, apellidos : VARCHAR(80)
+  telefono : VARCHAR(30)
+  email : VARCHAR(120)
+  profesion : VARCHAR(80)
+}
+entity estilistas {
+  * id_estilista : INT <<PK>>
+  --
+  id_usuario : INT <<FK, UNIQUE>>
+  nombres, apellidos : VARCHAR(80)
+  especialidad : VARCHAR(80)
+  estado : ENUM
+}
+entity servicios {
+  * id_servicio : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  precio : DECIMAL(10,2)
+  duracion_min : INT
+  estado : ENUM
+}
+entity productos {
+  * id_producto : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  precio : DECIMAL(10,2)
+  stock : INT
+  estado : ENUM
+}
+entity estilista_servicios {
+  * id_estilista : INT <<PK, FK>>
+  * id_servicio : INT <<PK, FK>>
+}
+entity citas {
+  * id_cita : INT <<PK>>
+  --
+  id_cliente : INT <<FK>>
+  id_estilista : INT <<FK>>
+  id_servicio : INT <<FK>>
+  fecha : DATE
+  hora : TIME
+  precio : DECIMAL(10,2)
+  estado : ENUM
+  observaciones : TEXT
+  notas_servicio : VARCHAR(500)
+  reprogramaciones : TINYINT
+}
+entity horarios {
+  * id_horario : INT <<PK>>
+  --
+  id_estilista : INT <<FK>>
+  dia_semana : TINYINT
+  hora_inicio, hora_fin : TIME
+}
+entity ausencias {
+  * id_ausencia : INT <<PK>>
+  --
+  id_estilista : INT <<FK>>
+  fecha_inicio, fecha_fin : DATE
+  motivo : VARCHAR(120)
+}
+entity calificaciones {
+  * id_calificacion : INT <<PK>>
+  --
+  id_cita : INT <<FK, UNIQUE>>
+  estrellas : TINYINT (1 a 5)
+  comentario : VARCHAR(300)
+}
+entity mensajes_cita {
+  * id_mensaje : INT <<PK>>
+  --
+  id_cita : INT <<FK>>
+  autor : ENUM
+  texto : VARCHAR(500)
+  leido : BOOLEAN
+}
+entity conversaciones {
+  * id_conversacion : INT <<PK>>
+  --
+  codigo : CHAR(32) <<UNIQUE>>
+  nombre : VARCHAR(60)
+  contacto : VARCHAR(120)
+  estado : ENUM
+}
+entity mensajes {
+  * id_mensaje : INT <<PK>>
+  --
+  id_conversacion : INT <<FK>>
+  autor : ENUM
+  texto : VARCHAR(500)
+  leido : BOOLEAN
+}
+entity fotos_servicio {
+  * id_foto : INT <<PK>>
+  --
+  id_servicio : INT <<FK>>
+  tipo : VARCHAR(20)
+  datos : MEDIUMBLOB
+}
+entity fotos_producto {
+  * id_producto : INT <<PK, FK>>
+  --
+  tipo : VARCHAR(20)
+  datos : MEDIUMBLOB
+}
+entity fotos_perfil {
+  * id_usuario : INT <<PK, FK>>
+  --
+  tipo : VARCHAR(20)
+  datos : MEDIUMBLOB
+}
+entity vitrina {
+  * id_foto : INT <<PK>>
+  --
+  id_usuario : INT <<FK>>
+  tipo : VARCHAR(20)
+  datos : MEDIUMBLOB
+  descripcion : VARCHAR(120)
+}
+usuarios ||--o| clientas
+usuarios ||--o| estilistas
+usuarios ||--o| fotos_perfil
+usuarios ||--o{ vitrina
+estilistas ||--o{ estilista_servicios
+servicios ||--o{ estilista_servicios
+clientas ||--o{ citas
+estilistas ||--o{ citas
+servicios ||--o{ citas
+estilistas ||--o{ horarios
+estilistas ||--o{ ausencias
+citas ||--o| calificaciones
+citas ||--o{ mensajes_cita
+conversaciones ||--o{ mensajes
+servicios ||--o{ fotos_servicio
+productos ||--o| fotos_producto
+@enduml

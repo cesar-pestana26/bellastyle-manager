@@ -1,0 +1,41 @@
+@startuml Casos_de_Uso_Personal
+!include skin.iuml
+title Casos de Uso (2 de 2) — Estilista y Administradora
+left to right direction
+actor Estilista as E
+actor Administradora as A
+rectangle "BellaStyle Manager" {
+  usecase "Iniciar sesión" as UC1
+  usecase "Gestionar foto de perfil" as UC13
+  usecase "Chatear con la clienta\nde la cita" as UC11
+  usecase "Confirmar / finalizar\no cancelar cita" as UC14
+  usecase "Escribir notas del servicio" as UC15
+  usecase "Definir horario y ausencias" as UC16
+  usecase "Publicar trabajos en la vitrina" as UC17
+  usecase "Ver ingresos y comisiones" as UC22
+  usecase "Gestionar servicios, productos\ny sus fotos" as UC18
+  usecase "Gestionar estilistas\ny clientas" as UC19
+  usecase "Ver historial de servicios\nde una clienta" as UC20
+  usecase "Descargar comprobante PDF" as UC12
+  usecase "Responder chats\nde visitantes" as UC21
+}
+E --> UC1
+E --> UC13
+E --> UC11
+E --> UC14
+E --> UC15
+E --> UC16
+E --> UC17
+E --> UC22
+A --> UC1
+A --> UC13
+A --> UC14
+A --> UC15
+A --> UC17
+A --> UC22
+A --> UC18
+A --> UC19
+A --> UC20
+A --> UC12
+A --> UC21
+@enduml

@@ -1,0 +1,175 @@
+@startuml Diagrama_Clases
+!include skin.iuml
+title Diagrama de Clases — BellaStyle Manager
+skinparam classAttributeIconSize 0
+skinparam nodesep 40
+skinparam ranksep 60
+
+enum Rol <<enumeration>> {
+  Administradora
+  Estilista
+  Clienta
+}
+enum EstadoCita <<enumeration>> {
+  Pendiente
+  Confirmada
+  Finalizada
+  Cancelada
+}
+
+class Usuario {
+  -idUsuario : int
+  -nombre : String
+  -username : String
+  -password : String
+  -rol : Rol
+  +buscarPorUsername(username)
+  +crear(datos)
+  +actualizarPassword(username, hash)
+}
+class Perfil {
+  +guardarFotoPerfil(idUsuario, foto)
+  +cambiarNombre(idUsuario, nombre)
+  +agregarVitrina(idUsuario, foto)
+  +editarVitrina(id, descripcion)
+  +eliminarVitrina(id)
+}
+class Clienta {
+  -idClienta : int
+  -nombres : String
+  -apellidos : String
+  -telefono : String
+  -email : String
+  -profesion : String
+  +crear(datos)
+  +buscarPorUsuario(idUsuario)
+  +actualizar(idClienta, datos)
+  +historial(idClienta)
+}
+class Estilista {
+  -idEstilista : int
+  -nombres : String
+  -apellidos : String
+  -especialidad : String
+  -estado : String
+  +crear(datos)
+  +listarActivas()
+  +capacitadasPara(idServicio)
+  +cambiarEstado(id, estado)
+  +reemplazarServicios(id, servicios)
+}
+class Horario {
+  -diaSemana : int
+  -horaInicio : Time
+  -horaFin : Time
+  +horarioDelDia(idEstilista, dia)
+  +reemplazarHorario(idEstilista, dias)
+}
+class Ausencia {
+  -fechaInicio : Date
+  -fechaFin : Date
+  -motivo : String
+  +ausenteEn(idEstilista, fecha)
+  +crearAusencia(datos)
+}
+class Servicio {
+  -idServicio : int
+  -nombre : String
+  -precio : decimal
+  -duracionMin : int
+  -estado : String
+  +listarDisponibles()
+  +crear(datos)
+  +actualizar(id, datos)
+  +cambiarEstado(id, estado)
+}
+class FotoServicio {
+  -tipo : String
+  -datos : byte[]
+  +listar(idServicio)
+  +crear(idServicio, foto)
+  +eliminar(id)
+}
+class Producto {
+  -idProducto : int
+  -nombre : String
+  -precio : decimal
+  -stock : int
+  -estado : String
+  +listarActivos()
+  +crear(datos)
+  +guardarFoto(id, foto)
+}
+class Cita {
+  -idCita : int
+  -fecha : Date
+  -hora : Time
+  -precio : decimal
+  -estado : EstadoCita
+  -notasServicio : String
+  -reprogramaciones : int
+  +crear(datos)
+  +ocupadasDelDia(idEstilista, fecha)
+  +reprogramar(id, fecha, hora)
+  +cambiarEstado(id, estado)
+  +guardarNotas(id, notas)
+}
+class Calificacion {
+  -estrellas : int
+  -comentario : String
+  +crear(idCita, estrellas)
+  +listarPorEstilista(id)
+}
+class MensajeCita {
+  -autor : String
+  -texto : String
+  -leido : boolean
+  +agregar(idCita, autor, texto)
+  +mensajesDesde(idCita, desde)
+}
+class Conversacion {
+  -codigo : String
+  -nombre : String
+  -contacto : String
+  -estado : String
+  +crearConversacion(datos)
+  +listarConversaciones()
+}
+class Mensaje {
+  -autor : String
+  -texto : String
+  -leido : boolean
+  +agregarMensaje(id, autor, texto)
+  +mensajesDesde(id, desde)
+}
+class AsistenteIA <<utilidad>> {
+  +responder(mensajes)
+}
+class Asistente <<respaldo>> {
+  +responder(texto)
+}
+class Comprobante <<utilidad>> {
+  +generarPDF(idCita)
+}
+
+Rol -[hidden]- EstadoCita
+Usuario --> Rol
+Usuario "1" -- "0..1" Clienta : tiene perfil >
+Usuario "1" -- "0..1" Estilista : tiene perfil >
+Usuario "1" -- "1" Perfil : foto y vitrina >
+Estilista "1" *-- "0..7" Horario : trabaja >
+Estilista "1" *-- "0..*" Ausencia : registra >
+Estilista "0..*" -- "1..*" Servicio : sabe hacer >
+Servicio "1" *-- "0..6" FotoServicio
+Clienta "1" -- "0..*" Cita : pide >
+Estilista "1" -- "0..*" Cita : atiende >
+Servicio "1" -- "0..*" Cita : incluye >
+Cita --> EstadoCita
+Cita "1" *-- "0..1" Calificacion : recibe >
+Cita "1" *-- "0..*" MensajeCita : chat >
+Conversacion "1" *-- "1..*" Mensaje : contiene >
+AsistenteIA ..> Servicio : consulta precios
+AsistenteIA ..> Producto : consulta
+AsistenteIA ..> Asistente : si falla la IA
+Comprobante ..> Cita : lee detalle
+@enduml

@@ -1,0 +1,37 @@
+@startuml Casos_de_Uso_Clienta
+!include skin.iuml
+title Casos de Uso (1 de 2) — Visitante y Clienta
+left to right direction
+actor "Visitante\n(sin cuenta)" as V
+actor Clienta as C
+actor "Gemini API\n(Google)" as G <<sistema externo>>
+rectangle "BellaStyle Manager" {
+  usecase "Chatear con Bella\n(asistente IA)" as UC4
+  usecase "Ver servicios, fotos\ny productos" as UC5
+  usecase "Registrarse" as UC2
+  usecase "Iniciar sesión" as UC1
+  usecase "Recuperar contraseña" as UC3
+  usecase "Agendar cita\n(solo horas libres)" as UC6
+  usecase "Asignar estilista\nautomáticamente" as UC7
+  usecase "Reprogramar cita\n(una sola vez)" as UC8
+  usecase "Cancelar cita" as UC9
+  usecase "Calificar servicio\n(1 a 5 estrellas)" as UC10
+  usecase "Chatear con la estilista\nde la cita" as UC11
+  usecase "Descargar comprobante PDF" as UC12
+  usecase "Gestionar foto de perfil" as UC13
+}
+V --> UC4
+V --> UC5
+V --> UC2
+C --> UC1
+C --> UC3
+C --> UC6
+C --> UC8
+C --> UC9
+C --> UC10
+C --> UC11
+C --> UC12
+C --> UC13
+UC6 ..> UC7 : <<include>>
+UC4 --> G
+@enduml

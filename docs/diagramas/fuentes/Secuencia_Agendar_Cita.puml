@@ -1,0 +1,48 @@
+@startuml Secuencia_Agendar_Cita
+!include skin.iuml
+title Diagrama de Secuencia — Agendar cita (horas libres y asignación automática)
+autonumber
+actor Clienta
+participant "panel.js\n+ api.js" as UI
+participant "rutas.js" as R
+participant "citasController" as CC
+participant "utils/agenda.js" as AG
+participant "Modelos" as M
+database "MySQL\n(Aiven)" as DB
+
+Clienta -> UI : elige servicio y fecha
+UI -> R : GET /api/disponibilidad?idServicio&fecha
+R -> CC : disponibilidad(req, res)
+CC -> M : estilistas capacitadas, horario,\nausencias y citas del día
+M -> DB : SELECT
+DB --> M : filas
+M --> CC : agendas
+loop cada franja de 30 min (8:00 a 19:00)
+  CC -> AG : seCruzan(inicio, fin, ...)
+  AG --> CC : true / false
+end
+CC --> UI : 200 { horas libres }
+UI --> Clienta : muestra solo horas libres
+Clienta -> UI : escoge hora y pulsa "Agendar"
+UI -> R : POST /api/citas (JSON)
+R -> CC : crear(req, res)
+CC -> CC : validarFechaHora()\n(no pasada, no domingo)
+CC -> M : ¿la clienta tiene otra cita que se cruce?
+M --> CC : no
+loop por cada estilista capacitada
+  CC -> M : horario, ausencia y citas de ese día
+  M --> CC : agenda
+  CC -> CC : ¿está libre? ¿cuántas citas tiene?
+end
+CC -> CC : escoge la libre con menos citas
+alt hay estilista libre
+  CC -> M : crear cita (Pendiente, precio del día)
+  M -> DB : INSERT INTO citas
+  DB --> M : id de la cita
+  CC --> UI : 201 { success: true, "Te atenderá ..." }
+  UI --> Clienta : mensaje de éxito y tabla actualizada
+else ninguna libre
+  CC --> UI : 409 "No hay estilistas libres"
+  UI --> Clienta : mensaje de error
+end
+@enduml

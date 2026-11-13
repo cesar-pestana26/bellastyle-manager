@@ -1,0 +1,46 @@
+@startuml Secuencia_Chat
+!include skin.iuml
+title Diagrama de Secuencia — Chat de asesoría con Bella (IA)
+autonumber
+actor Visitante
+participant "chat.js" as CH
+participant "chatController" as CTL
+participant "chatModel" as CM
+participant "asistenteIA.js" as IA
+participant "Gemini API\n(Google)" as G
+participant "asistente.js\n(respaldo)" as AS
+database "MySQL\n(Aiven)" as DB
+actor Administradora
+
+Visitante -> CH : escribe la pregunta
+CH -> CTL : POST /api/chat/:codigo/mensajes
+CTL -> CM : agregarMensaje(Visitante, texto)
+CM -> DB : INSERT INTO mensajes
+CTL --> CH : 201 { asistenteResponde: true }
+CH --> Visitante : "Bella está escribiendo..."
+note over CTL : la respuesta se prepara en segundo plano
+CTL -> IA : responder(últimos 12 mensajes)
+IA -> DB : SELECT servicios, productos, estilistas
+IA -> G : POST generateContent\n(instrucciones + datos reales + conversación)
+alt la IA responde
+  G --> IA : texto de la respuesta
+  IA --> CTL : texto sin markdown
+else falla, tarda más de 20 s o se acaba el cupo
+  IA -> G : reintenta con el modelo de respaldo
+  G --> IA : error
+  IA --> CTL : null
+  CTL -> AS : responder(texto) por palabras clave
+  AS --> CTL : respuesta automática
+end
+CTL -> CM : agregarMensaje(Asistente, respuesta)
+CM -> DB : INSERT INTO mensajes
+loop polling cada 1 a 3 s
+  CH -> CTL : GET /api/chat/:codigo?desde=último
+  CTL --> CH : mensajes nuevos
+end
+CH --> Visitante : muestra la respuesta de Bella
+Administradora -> CTL : GET /api/conversaciones (pestaña Mensajes)
+CTL --> Administradora : conversaciones con mensajes sin leer
+Administradora -> CTL : POST /api/conversaciones/:id/responder
+note right of CTL : cuando el salón responde,\nel asistente deja de contestar
+@enduml
