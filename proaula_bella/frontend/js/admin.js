@@ -1,8 +1,9 @@
-// js/admin.js - Control Exclusivo del Panel de Administración
+// js/admin.js - Control Exclusivo del Panel de Administración y Caja
 
 let citasGlobales = [];
 let serviciosGlobales = [];
 let estilistasGlobales = [];
+let pagosGlobales = [];
 
 // Ejecución de seguridad antes de renderizar la vista
 verificarAccesoAdmin();
@@ -15,17 +16,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarDatosAdministrador();
   renderizarMetricasGanancias();
   renderizarTablaCitas();
+  renderizarTablaPagosAdmin();
   renderizarTablaGanancias();
   renderizarTablaServicios();
   poblarFiltroEstilistas();
 });
 
-/**
- * Control estricto de acceso para el rol de Administradora
- */
 function verificarAccesoAdmin() {
   let usuario = null;
-  
+
   if (typeof obtenerUsuarioActual === 'function') {
     usuario = obtenerUsuarioActual();
   } else {
@@ -36,7 +35,6 @@ function verificarAccesoAdmin() {
     }
   }
 
-  // Redirección si no hay sesión activa
   if (!usuario) {
     window.location.replace('index.html');
     return;
@@ -45,7 +43,6 @@ function verificarAccesoAdmin() {
   const rolNorm = String(usuario.rol || '').toLowerCase().trim();
   const esAdmin = rolNorm === 'admin' || rolNorm === 'administradora' || rolNorm.includes('admin');
 
-  // Redirección inmediata si el rol es Clienta o Estilista
   if (!esAdmin) {
     window.location.replace('panel.html?rol=' + encodeURIComponent(usuario.rol || 'cliente'));
     return;
@@ -79,6 +76,18 @@ async function cargarDatosAdministrador() {
     { id: 1, nombre: 'Diana Carmen' },
     { id: 2, nombre: 'Sofía Martínez' }
   ];
+
+  // Cargar pagos guardados desde js/pagos.js o inicializar registros base
+  const pagosLocales = typeof obtenerPagosLocales === 'function' ? obtenerPagosLocales() : [];
+  if (pagosLocales.length > 0) {
+    pagosGlobales = pagosLocales;
+  } else {
+    pagosGlobales = [
+      { id_pago: 'TXN-894210', id_cita: 101, cliente: 'Ana María López', servicio: 'Mechas / Balayage', estilista: 'Diana Carmen', metodo: 'Nequi', monto: 180000, estado_pago: 'Pagado', fecha_pago: obtenerFechaHoy() },
+      { id_pago: 'TXN-894215', id_cita: 102, cliente: 'Martina Flórez', servicio: 'Manicure', estilista: 'Sofía Martínez', metodo: 'Efectivo / Salón', monto: 45000, estado_pago: 'Pendiente en Salón', fecha_pago: obtenerFechaHoy() }
+    ];
+    localStorage.setItem('pagosBellaStyle', JSON.stringify(pagosGlobales));
+  }
 
   try {
     if (typeof pedir === 'function') {
@@ -249,7 +258,68 @@ window.modalReasignar = function(idCita) {
 };
 
 /* ==========================================================================
-   3. RENDIMIENTO Y LIQUIDACIÓN 60/40
+   3. CAJA Y AUDITORÍA DE PAGOS
+   ========================================================================== */
+
+function renderizarTablaPagosAdmin() {
+  const tabla = document.getElementById('tablaPagosAdmin');
+  if (!tabla) return;
+
+  const almacenados = typeof obtenerPagosLocales === 'function' ? obtenerPagosLocales() : [];
+  if (almacenados.length > 0) pagosGlobales = almacenados;
+
+  const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + Number(num).toLocaleString('es-CO');
+
+  if (pagosGlobales.length === 0) {
+    tabla.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-white/50">No hay pagos registrados todavía.</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = pagosGlobales.map(p => {
+    const pagado = p.estado_pago === 'Pagado';
+    const badge = pagado
+      ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pagado</span>`
+      : `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Pendiente en Salón</span>`;
+
+    return `
+      <tr class="hover:bg-white/5 transition border-b border-white/5">
+        <td class="p-3.5 font-mono text-pink-300">${p.id_pago}</td>
+        <td class="p-3.5 font-bold text-white">${escapar(p.cliente)}</td>
+        <td class="p-3.5 text-white/80">${escapar(p.servicio)}</td>
+        <td class="p-3.5 text-white/80">${escapar(p.metodo)}</td>
+        <td class="p-3.5 font-bold text-amber-300">${fmt(p.monto)}</td>
+        <td class="p-3.5">${badge}</td>
+        <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+          ${!pagado ? `<button onclick="aprobarPagoEnCaja('${p.id_pago}', ${p.id_cita})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Confirmar Cobro</button>` : ''}
+          <button onclick="verComprobantePago(${p.id_cita})" class="px-2.5 py-1 bg-white/10 text-white hover:bg-white/20 rounded text-[11px] font-semibold">Recibo</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.aprobarPagoEnCaja = function(idPago, idCita) {
+  const item = pagosGlobales.find(p => p.id_pago === idPago);
+  if (item) {
+    item.estado_pago = 'Pagado';
+    localStorage.setItem('pagosBellaStyle', JSON.stringify(pagosGlobales));
+  }
+
+  // Marcar la cita asociada como Finalizada para contabilizar ingresos
+  const cita = citasGlobales.find(c => c.id === idCita);
+  if (cita && cita.estado !== 'Finalizada') {
+    cita.estado = 'Finalizada';
+  }
+
+  notificarAdmin(`Cobro ${idPago} confirmado en caja`);
+  renderizarMetricasGanancias();
+  renderizarTablaCitas();
+  renderizarTablaGanancias();
+  renderizarTablaPagosAdmin();
+};
+
+/* ==========================================================================
+   4. RENDIMIENTO Y LIQUIDACIÓN 60/40
    ========================================================================== */
 
 function renderizarTablaGanancias() {
@@ -285,7 +355,7 @@ function renderizarTablaGanancias() {
 }
 
 /* ==========================================================================
-   4. GESTIÓN DE SERVICIOS
+   5. GESTIÓN DE SERVICIOS
    ========================================================================== */
 
 function renderizarTablaServicios() {
@@ -379,19 +449,22 @@ window.modalEditarServicio = function(idServicio) {
 };
 
 /* ==========================================================================
-   5. NAVEGACIÓN ENTRE PESTAÑAS
+   6. NAVEGACIÓN ENTRE PESTAÑAS
    ========================================================================== */
 
 window.switchTabAdmin = function(tab) {
   const secCitas = document.getElementById('secCitasAdmin');
+  const secPagos = document.getElementById('secPagosAdmin');
   const secGanancias = document.getElementById('secGananciasAdmin');
   const secServicios = document.getElementById('secServiciosAdmin');
 
   const tabCitas = document.getElementById('tabCitas');
+  const tabPagos = document.getElementById('tabPagos');
   const tabGanancias = document.getElementById('tabGanancias');
   const tabServicios = document.getElementById('tabServicios');
 
   if (secCitas) secCitas.classList.toggle('hidden', tab !== 'citas');
+  if (secPagos) secPagos.classList.toggle('hidden', tab !== 'pagos');
   if (secGanancias) secGanancias.classList.toggle('hidden', tab !== 'ganancias');
   if (secServicios) secServicios.classList.toggle('hidden', tab !== 'servicios');
 
@@ -399,12 +472,15 @@ window.switchTabAdmin = function(tab) {
   const estiloInactivo = 'px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5';
 
   if (tabCitas) tabCitas.className = tab === 'citas' ? estiloActivo : estiloInactivo;
+  if (tabPagos) tabPagos.className = tab === 'pagos' ? estiloActivo : estiloInactivo;
   if (tabGanancias) tabGanancias.className = tab === 'ganancias' ? estiloActivo : estiloInactivo;
   if (tabServicios) tabServicios.className = tab === 'servicios' ? estiloActivo : estiloInactivo;
+
+  if (tab === 'pagos') renderizarTablaPagosAdmin();
 };
 
 /* ==========================================================================
-   6. MODAL Y AUXILIARES
+   7. MODAL Y AUXILIARES
    ========================================================================== */
 
 let alGuardarModal = null;

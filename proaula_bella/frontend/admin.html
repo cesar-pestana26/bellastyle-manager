@@ -27,7 +27,7 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="css/estilos.css?v=130">
+  <link rel="stylesheet" href="css/estilos.css?v=160">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tema.js"></script>
 </head>
@@ -67,7 +67,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-3xl font-serif font-bold text-white">Centro de Control de Operaciones & Ganancias</h1>
-        <p class="text-xs text-white/70 mt-1">Supervisión exclusiva de citas, ingresos, distribución 40/60 y catálogo.</p>
+        <p class="text-xs text-white/70 mt-1">Supervisión exclusiva de citas, ingresos, caja, distribución 40/60 y catálogo.</p>
       </div>
       <div class="text-xs text-right text-white/60 bg-white/5 px-4 py-2.5 rounded-xl border border-white/10">
         <span>Fecha de reporte: </span><strong class="text-pink-300 font-bold" id="fechaHoyAdmin">-</strong>
@@ -82,12 +82,13 @@
       <div class="flex items-center justify-between border-b border-white/10 pb-4 overflow-x-auto">
         <div class="flex gap-2">
           <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">📋 Control Total de Citas</button>
+          <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">💳 Caja & Pagos</button>
           <button type="button" id="tabGanancias" onclick="switchTabAdmin('ganancias')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">💰 Liquidación & Comisiones (60/40)</button>
-          <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">✂️ Precios & Catálogo de Servicios</button>
+          <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">✂️ Precios & Catálogo</button>
         </div>
       </div>
 
-      <!-- SECCIÓN CITAS -->
+      <!-- PESTAÑA 1: CITAS -->
       <section id="secCitasAdmin" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
           <div>
@@ -131,7 +132,31 @@
         </div>
       </section>
 
-      <!-- SECCIÓN GANANCIAS -->
+      <!-- PESTAÑA 2: CAJA Y PAGOS -->
+      <section id="secPagosAdmin" class="space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <p class="text-xs text-white/70">Auditoría de transacciones electrónicas (Nequi, Tarjeta, PSE) y cobros presenciales en salón.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] uppercase tracking-wider text-emerald-300 border-b border-white/10 bg-white/5">
+              <tr>
+                <th class="p-3.5 rounded-l-xl">Transacción</th>
+                <th class="p-3.5">Clienta</th>
+                <th class="p-3.5">Servicio</th>
+                <th class="p-3.5">Método</th>
+                <th class="p-3.5">Monto</th>
+                <th class="p-3.5">Estado Pago</th>
+                <th class="p-3.5 text-right rounded-r-xl">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tablaPagosAdmin" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 3: GANANCIAS -->
       <section id="secGananciasAdmin" class="space-y-4 hidden">
         <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
           💡 Las ganancias brutas corresponden a citas <strong>Finalizadas</strong> (60% Estilista / 40% Salón).
@@ -152,7 +177,7 @@
         </div>
       </section>
 
-      <!-- SECCIÓN SERVICIOS -->
+      <!-- PESTAÑA 4: SERVICIOS -->
       <section id="secServiciosAdmin" class="space-y-4 hidden">
         <div class="flex justify-between items-center">
           <p class="text-xs text-white/70">Ajusta tarifas o registra nuevos servicios.</p>
@@ -190,7 +215,12 @@
     </form>
   </dialog>
 
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 bg-[#07060b]">
+    BellaStyle Manager · Sistema de Gestión Gerencial · Ingeniería de Sistemas
+  </footer>
+
   <script src="js/api.js"></script>
+  <script src="js/pagos.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

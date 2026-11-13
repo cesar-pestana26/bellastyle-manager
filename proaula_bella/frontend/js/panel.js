@@ -1,7 +1,8 @@
-// js/panel.js - Lógica del Panel Privado (Clientas y Estilistas)
+// js/panel.js - Lógica del Panel Privado (Clientas, Estilistas y Pagos)
 
 let usuarioSesion = null;
 let citasUsuario = [];
+let serviciosGlobales = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   obtenerSesionValida();
@@ -47,13 +48,13 @@ function configurarHeader() {
   }
 
   if (tituloSaludo) {
-    tituloSaludo.textContent = `Mi Panel de Usuario`;
+    tituloSaludo.textContent = `Hola, ${usuarioSesion.nombre || usuarioSesion.usuario}`;
   }
 
   if (subtituloPanel) {
     subtituloPanel.textContent = esEstilista 
       ? 'Consulta tu agenda de citas asignadas y métricas de desempeño.'
-      : 'Revisa tus citas agendadas y estado del servicio.';
+      : 'Revisa tus citas agendadas, realiza pagos y descarga tus comprobantes.';
   }
 
   const btnAgendar = document.getElementById('btnAgendarHeader');
@@ -63,6 +64,16 @@ function configurarHeader() {
 }
 
 async function cargarDatosIniciales() {
+  serviciosGlobales = [
+    { id_servicio: 1, nombre: 'Corte de Cabello', precio: 35000 },
+    { id_servicio: 2, nombre: 'Tinte / Coloración', precio: 90000 },
+    { id_servicio: 3, nombre: 'Mechas / Balayage', precio: 180000 },
+    { id_servicio: 4, nombre: 'Peinado para Evento', precio: 70000 },
+    { id_servicio: 5, nombre: 'Manicure', precio: 45000 },
+    { id_servicio: 6, nombre: 'Pedicure', precio: 40000 },
+    { id_servicio: 7, nombre: 'Tratamiento Capilar', precio: 150000 }
+  ];
+
   citasUsuario = [
     { id: 101, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Mechas / Balayage', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 180000 },
     { id: 102, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 45000 }
@@ -104,12 +115,11 @@ function renderizarDatosClienta() {
     <div><span class="text-white/50">Usuario:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.usuario)}</strong></div>
     <div><span class="text-white/50">Teléfono:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.telefono || '3001234567')}</strong></div>
     <div><span class="text-white/50">Correo:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.email || 'clienta@bellastyle.com')}</strong></div>
-    <div><span class="text-white/50">Profesión:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.profesion || 'Enfermera')}</strong></div>
+    <div><span class="text-white/50">Profesión:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.profesion || 'No especificada')}</strong></div>
   `;
 }
 
 function renderizarTablaCitasClienta() {
-  // Busca el elemento por tablaCitasClienta o por tablaCitasPanel como respaldo
   const tabla = document.getElementById('tablaCitasClienta') || document.getElementById('tablaCitasPanel');
   if (!tabla) return;
 
@@ -118,19 +128,48 @@ function renderizarTablaCitasClienta() {
     return;
   }
 
-  tabla.innerHTML = citasUsuario.map(c => `
-    <tr class="hover:bg-white/5 transition border-b border-white/5">
-      <td class="p-3.5 font-bold text-white">${escapar(c.servicio)}</td>
-      <td class="p-3.5 text-white/80">${escapar(c.estilista)}</td>
-      <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${c.fecha} · ${c.hora}</td>
-      <td class="p-3.5">${formatearEstadoBadge(c.estado)}</td>
-      <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
-        ${c.estado === 'Confirmada' || c.estado === 'Pendiente' ? `<button onclick="cancelarCitaClienta(${c.id})" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>` : ''}
-        ${c.estado === 'Finalizada' ? `<button onclick="calificarCitaModal(${c.id})" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Calificar</button>` : ''}
-      </td>
-    </tr>
-  `).join('');
+  tabla.innerHTML = citasUsuario.map(c => {
+    const pago = typeof obtenerPagoPorCita === 'function' ? obtenerPagoPorCita(c.id) : null;
+    const estaPagada = pago && pago.estado_pago === 'Pagado';
+    const pendienteSalon = pago && pago.estado_pago === 'Pendiente en Salón';
+
+    let badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-white/10 text-white/60">Sin pagar</span>`;
+    if (estaPagada) {
+      badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pagado</span>`;
+    } else if (pendienteSalon) {
+      badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">En Salón</span>`;
+    }
+
+    const botonPago = estaPagada
+      ? `<button onclick="verComprobantePago(${c.id})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Recibo</button>`
+      : (c.estado !== 'Cancelada'
+          ? `<button onclick="iniciarPagoCitaClienta(${c.id})" class="px-2.5 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600 shadow-sm">Pagar</button>`
+          : '');
+
+    return `
+      <tr class="hover:bg-white/5 transition border-b border-white/5">
+        <td class="p-3.5 font-bold text-white">${escapar(c.servicio)} ${badgePago}</td>
+        <td class="p-3.5 text-white/80">${escapar(c.estilista)}</td>
+        <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${c.fecha} · ${c.hora}</td>
+        <td class="p-3.5">${formatearEstadoBadge(c.estado)}</td>
+        <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+          ${botonPago}
+          ${c.estado === 'Confirmada' || c.estado === 'Pendiente' ? `<button onclick="cancelarCitaClienta(${c.id})" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
+
+window.iniciarPagoCitaClienta = function(idCita) {
+  const cita = citasUsuario.find(c => c.id === idCita);
+  if (!cita || typeof abrirPasarelaPago !== 'function') return;
+
+  abrirPasarelaPago(cita, () => {
+    mostrarToast('Pago registrado correctamente');
+    renderizarTablaCitasClienta();
+  });
+};
 
 window.cancelarCitaClienta = async function(idCita) {
   if (confirm('¿Deseas cancelar esta cita?')) {
@@ -191,6 +230,9 @@ function iniciarVistaEstilista() {
 
   renderizarMetricasEstilista();
   renderizarTablaCitasEstilista();
+
+  document.getElementById('btnEditarMisServicios')?.addEventListener('click', modalServiciosEstilista);
+  document.getElementById('btnEditarMiHorario')?.addEventListener('click', modalHorarioEstilista);
 }
 
 function renderizarMetricasEstilista() {
@@ -276,8 +318,45 @@ window.cambiarEstadoEstilista = async function(idCita, nuevoEstado) {
   renderizarTablaCitasEstilista();
 };
 
+function modalServiciosEstilista() {
+  abrirVentana('Mis Servicios de Especialidad',
+    `<p class="text-xs text-white/70 mb-3">Selecciona los servicios que puedes ofrecer:</p>
+     <div class="space-y-2 text-xs">
+       ${serviciosGlobales.map(s => `
+         <label class="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+           <input type="checkbox" checked class="accent-pink-500">
+           <span class="text-white">${s.nombre}</span>
+         </label>
+       `).join('')}
+     </div>`,
+    async () => {
+      mostrarToast('Especialidades guardadas');
+      return true;
+    }
+  );
+}
+
+function modalHorarioEstilista() {
+  abrirVentana('Mi Horario de Atención',
+    `<div class="space-y-3">
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Hora Inicio Jornada</label>
+        <input type="time" value="08:00" class="campo">
+      </div>
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Hora Cierre Jornada</label>
+        <input type="time" value="18:00" class="campo">
+      </div>
+    </div>`,
+    async () => {
+      mostrarToast('Horario actualizado');
+      return true;
+    }
+  );
+}
+
 /* ==========================================================================
-   AUXILIARES
+   AUXILIARES Y MODALES
    ========================================================================== */
 
 let alGuardarVentana = null;
