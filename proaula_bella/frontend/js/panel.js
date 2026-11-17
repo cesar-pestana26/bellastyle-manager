@@ -1,4 +1,4 @@
-// js/panel.js - Lógica del Panel Privado (Clientas, Estilistas y Pagos)
+// js/panel.js - Lógica del Panel Privado (Clientas, Estilistas, Pagos e Iconos SVG)
 
 let usuarioSesion = null;
 let citasUsuario = [];
@@ -65,19 +65,27 @@ function configurarHeader() {
 
 async function cargarDatosIniciales() {
   serviciosGlobales = [
-    { id_servicio: 1, nombre: 'Corte de Cabello', precio: 35000 },
-    { id_servicio: 2, nombre: 'Tinte / Coloración', precio: 90000 },
-    { id_servicio: 3, nombre: 'Mechas / Balayage', precio: 180000 },
-    { id_servicio: 4, nombre: 'Peinado para Evento', precio: 70000 },
-    { id_servicio: 5, nombre: 'Manicure', precio: 45000 },
-    { id_servicio: 6, nombre: 'Pedicure', precio: 40000 },
-    { id_servicio: 7, nombre: 'Tratamiento Capilar', precio: 150000 }
+    { id_servicio: 1, nombre: 'Corte Dama + Lavado y Cepillado', precio: 45000 },
+    { id_servicio: 2, nombre: 'Corte Caballero / Degradado (Fade)', precio: 28000 },
+    { id_servicio: 3, nombre: 'Balayage Completo + Matización', precio: 220000 },
+    { id_servicio: 4, nombre: 'Manicure Semipermanente (Gel)', precio: 48000 },
+    { id_servicio: 5, nombre: 'Pedicure Tradicional + Exfoliación', precio: 32000 },
+    { id_servicio: 6, nombre: 'Coloración Global (Tinte Completo)', precio: 95000 },
+    { id_servicio: 7, nombre: 'Alisado Progresivo / Keratina Orgánica', precio: 180000 }
   ];
 
-  citasUsuario = [
-    { id: 101, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Mechas / Balayage', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 180000 },
-    { id: 102, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 45000 }
+  // Cargar citas agendadas en localStorage y combinarlas con citas base
+  let citasLocales = [];
+  try {
+    citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
+  } catch (e) {}
+
+  const citasBase = [
+    { id: 101, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
+    { id: 102, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 48000 }
   ];
+
+  citasUsuario = [...citasLocales, ...citasBase];
 
   try {
     if (typeof pedir === 'function') {
@@ -88,10 +96,6 @@ async function cargarDatosIniciales() {
     }
   } catch (e) {}
 }
-
-/* ==========================================================================
-   VISTA CLIENTA
-   ========================================================================== */
 
 function iniciarVistaClienta() {
   const vClienta = document.getElementById('vistaClienta');
@@ -120,7 +124,7 @@ function renderizarDatosClienta() {
 }
 
 function renderizarTablaCitasClienta() {
-  const tabla = document.getElementById('tablaCitasClienta') || document.getElementById('tablaCitasPanel');
+  const tabla = document.getElementById('tablaCitasClienta');
   if (!tabla) return;
 
   if (citasUsuario.length === 0) {
@@ -162,7 +166,7 @@ function renderizarTablaCitasClienta() {
 }
 
 window.iniciarPagoCitaClienta = function(idCita) {
-  const cita = citasUsuario.find(c => c.id === idCita);
+  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
   if (!cita || typeof abrirPasarelaPago !== 'function') return;
 
   abrirPasarelaPago(cita, () => {
@@ -173,10 +177,16 @@ window.iniciarPagoCitaClienta = function(idCita) {
 
 window.cancelarCitaClienta = async function(idCita) {
   if (confirm('¿Deseas cancelar esta cita?')) {
-    const cita = citasUsuario.find(c => c.id === idCita);
+    const cita = citasUsuario.find(c => String(c.id) === String(idCita));
     if (cita) cita.estado = 'Cancelada';
 
     try {
+      const citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
+      const idx = citasLocales.findIndex(c => String(c.id) === String(idCita));
+      if (idx >= 0) {
+        citasLocales[idx].estado = 'Cancelada';
+        localStorage.setItem('citasBellaStyle', JSON.stringify(citasLocales));
+      }
       if (typeof pedir === 'function') {
         await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: 'Cancelada' });
       }
@@ -217,10 +227,6 @@ function modalEditarDatosClienta() {
   );
 }
 
-/* ==========================================================================
-   VISTA ESTILISTA
-   ========================================================================== */
-
 function iniciarVistaEstilista() {
   const vClienta = document.getElementById('vistaClienta');
   const vEstilista = document.getElementById('vistaEstilista');
@@ -246,31 +252,32 @@ function renderizarMetricasEstilista() {
   const miComision = ingresosBrutos * 0.60;
 
   const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + num.toLocaleString('es-CO');
+  const ico = (k) => typeof obtenerIcono === 'function' ? obtenerIcono(k, 'w-5 h-5') : '';
 
   contenedor.innerHTML = `
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-300 border border-pink-500/30 flex items-center justify-center font-bold text-xl">📅</div>
+      <div class="w-12 h-12 rounded-2xl bg-pink-500/15 text-pink-300 border border-pink-500/25 flex items-center justify-center">${ico('calendario')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Total Citas</span>
         <strong class="text-2xl font-serif text-white">${totalCitas}</strong>
       </div>
     </div>
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-xl">⏳</div>
+      <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-300 border border-amber-500/25 flex items-center justify-center">${ico('reloj')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Por Atender</span>
         <strong class="text-2xl font-serif text-amber-300">${pendientes}</strong>
       </div>
     </div>
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-xl">✅</div>
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 flex items-center justify-center">${ico('check')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Finalizadas</span>
         <strong class="text-2xl font-serif text-emerald-300">${finalizadas}</strong>
       </div>
     </div>
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center font-bold text-xl">💵</div>
+      <div class="w-12 h-12 rounded-2xl bg-purple-500/15 text-purple-300 border border-purple-500/25 flex items-center justify-center">${ico('dinero')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Mi Comisión (60%)</span>
         <strong class="text-2xl font-serif text-purple-300">${fmt(miComision)}</strong>
@@ -304,7 +311,7 @@ function renderizarTablaCitasEstilista() {
 }
 
 window.cambiarEstadoEstilista = async function(idCita, nuevoEstado) {
-  const cita = citasUsuario.find(c => c.id === idCita);
+  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
   if (cita) cita.estado = nuevoEstado;
 
   try {
@@ -354,10 +361,6 @@ function modalHorarioEstilista() {
     }
   );
 }
-
-/* ==========================================================================
-   AUXILIARES Y MODALES
-   ========================================================================== */
 
 let alGuardarVentana = null;
 

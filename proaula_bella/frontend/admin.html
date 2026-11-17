@@ -6,7 +6,6 @@
   <title>Panel Ejecutivo de Administración | BellaStyle</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
 
-  <!-- GUARDIÁN DE SEGURIDAD ADMIN -->
   <script>
     (function() {
       try {
@@ -27,7 +26,7 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="css/estilos.css?v=160">
+  <link rel="stylesheet" href="css/estilos.css?v=180">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tema.js"></script>
 </head>
@@ -66,7 +65,7 @@
 
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-serif font-bold text-white">Centro de Control de Operaciones & Ganancias</h1>
+        <h1 class="text-3xl font-serif font-bold text-white">Centro de Control de Operaciones y Ganancias</h1>
         <p class="text-xs text-white/70 mt-1">Supervisión exclusiva de citas, ingresos, caja, distribución 40/60 y catálogo.</p>
       </div>
       <div class="text-xs text-right text-white/60 bg-white/5 px-4 py-2.5 rounded-xl border border-white/10">
@@ -74,17 +73,15 @@
       </div>
     </div>
 
-    <!-- MÉTRICAS GERENCIALES -->
     <div id="metricasAdminPanel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
 
-    <!-- PESTAÑAS ADMINISTRATIVAS -->
     <div class="tarjeta p-6 sm:p-8 space-y-6">
       <div class="flex items-center justify-between border-b border-white/10 pb-4 overflow-x-auto">
         <div class="flex gap-2">
-          <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">📋 Control Total de Citas</button>
-          <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">💳 Caja & Pagos</button>
-          <button type="button" id="tabGanancias" onclick="switchTabAdmin('ganancias')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">💰 Liquidación & Comisiones (60/40)</button>
-          <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">✂️ Precios & Catálogo</button>
+          <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">Control Total de Citas</button>
+          <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Caja y Pagos</button>
+          <button type="button" id="tabGanancias" onclick="switchTabAdmin('ganancias')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Liquidación y Comisiones (60/40)</button>
+          <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Precios y Catálogo</button>
         </div>
       </div>
 
@@ -121,7 +118,7 @@
                 <th class="p-3.5">Clienta</th>
                 <th class="p-3.5">Servicio</th>
                 <th class="p-3.5">Estilista</th>
-                <th class="p-3.5">Fecha & Hora</th>
+                <th class="p-3.5">Fecha y Hora</th>
                 <th class="p-3.5">Monto ($)</th>
                 <th class="p-3.5">Estado</th>
                 <th class="p-3.5 text-right rounded-r-xl">Acciones</th>
@@ -159,7 +156,7 @@
       <!-- PESTAÑA 3: GANANCIAS -->
       <section id="secGananciasAdmin" class="space-y-4 hidden">
         <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
-          💡 Las ganancias brutas corresponden a citas <strong>Finalizadas</strong> (60% Estilista / 40% Salón).
+          Las ganancias brutas corresponden a citas <strong>Finalizadas</strong> (60% Estilista / 40% Salón).
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-white/80">
@@ -220,6 +217,7 @@
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/iconos.js"></script>
   <script src="js/pagos.js"></script>
   <script src="js/admin.js"></script>
 </body>

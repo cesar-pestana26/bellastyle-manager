@@ -1,11 +1,10 @@
-// js/admin.js - Control Exclusivo del Panel de Administración y Caja
+// js/admin.js - Control Exclusivo del Panel de Administración, Caja e Iconos SVG
 
 let citasGlobales = [];
 let serviciosGlobales = [];
 let estilistasGlobales = [];
 let pagosGlobales = [];
 
-// Ejecución de seguridad antes de renderizar la vista
 verificarAccesoAdmin();
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -55,21 +54,29 @@ function verificarAccesoAdmin() {
 }
 
 async function cargarDatosAdministrador() {
-  citasGlobales = [
-    { id: 101, cliente: 'Ana María López', servicio: 'Mechas / Balayage', id_servicio: 3, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '10:00 AM', valor: 180000, estado: 'Finalizada' },
-    { id: 102, cliente: 'Martina Flórez', servicio: 'Manicure', id_servicio: 5, estilista: 'Sofía Martínez', id_estilista: 2, fecha: obtenerFechaHoy(), hora: '11:30 AM', valor: 45000, estado: 'Confirmada' },
-    { id: 103, cliente: 'Laura Gómez', servicio: 'Corte de Cabello', id_servicio: 1, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '02:00 PM', valor: 35000, estado: 'Pendiente' },
-    { id: 104, cliente: 'Carolina Ruiz', servicio: 'Tinte / Coloración', id_servicio: 2, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '04:00 PM', valor: 90000, estado: 'Finalizada' }
+  let citasLocales = [];
+  try {
+    citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
+  } catch (e) {}
+
+  const citasBase = [
+    { id: 101, cliente: 'Ana María López', servicio: 'Balayage Completo + Matización', id_servicio: 3, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '10:00 AM', valor: 220000, estado: 'Finalizada' },
+    { id: 102, cliente: 'Martina Flórez', servicio: 'Manicure Semipermanente (Gel)', id_servicio: 5, estilista: 'Sofía Martínez', id_estilista: 2, fecha: obtenerFechaHoy(), hora: '11:30 AM', valor: 48000, estado: 'Confirmada' },
+    { id: 103, cliente: 'Laura Gómez', servicio: 'Corte Dama + Lavado y Cepillado', id_servicio: 1, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '02:00 PM', valor: 45000, estado: 'Pendiente' },
+    { id: 104, cliente: 'Carlos Mendoza', servicio: 'Corte Caballero + Ritual de Barba', id_servicio: 2, estilista: 'Diana Carmen', id_estilista: 1, fecha: obtenerFechaHoy(), hora: '04:00 PM', valor: 42000, estado: 'Finalizada' }
   ];
 
+  citasGlobales = [...citasLocales, ...citasBase];
+
   serviciosGlobales = [
-    { id_servicio: 1, nombre: 'Corte de Cabello', precio: 35000, duracion_min: 45 },
-    { id_servicio: 2, nombre: 'Tinte / Coloración', precio: 90000, duracion_min: 90 },
-    { id_servicio: 3, nombre: 'Mechas / Balayage', precio: 180000, duracion_min: 180 },
-    { id_servicio: 4, nombre: 'Peinado para Evento', precio: 70000, duracion_min: 60 },
-    { id_servicio: 5, nombre: 'Manicure', precio: 45000, duracion_min: 60 },
-    { id_servicio: 6, nombre: 'Pedicure', precio: 40000, duracion_min: 50 },
-    { id_servicio: 7, nombre: 'Tratamiento Capilar', precio: 150000, duracion_min: 120 }
+    { id_servicio: 1, nombre: 'Corte Dama + Lavado y Cepillado', precio: 45000, duracion_min: 60 },
+    { id_servicio: 2, nombre: 'Corte Caballero / Degradado (Fade)', precio: 28000, duracion_min: 40 },
+    { id_servicio: 3, nombre: 'Corte Caballero + Ritual de Barba', precio: 42000, duracion_min: 60 },
+    { id_servicio: 4, nombre: 'Manicure Semipermanente (Gel)', precio: 48000, duracion_min: 60 },
+    { id_servicio: 5, nombre: 'Balayage Completo + Matización', precio: 220000, duracion_min: 210 },
+    { id_servicio: 6, nombre: 'Pedicure Tradicional + Exfoliación', precio: 32000, duracion_min: 50 },
+    { id_servicio: 7, nombre: 'Coloración Global (Tinte Completo)', precio: 95000, duracion_min: 90 },
+    { id_servicio: 8, nombre: 'Alisado Progresivo / Keratina Orgánica', precio: 180000, duracion_min: 180 }
   ];
 
   estilistasGlobales = [
@@ -77,14 +84,13 @@ async function cargarDatosAdministrador() {
     { id: 2, nombre: 'Sofía Martínez' }
   ];
 
-  // Cargar pagos guardados desde js/pagos.js o inicializar registros base
   const pagosLocales = typeof obtenerPagosLocales === 'function' ? obtenerPagosLocales() : [];
   if (pagosLocales.length > 0) {
     pagosGlobales = pagosLocales;
   } else {
     pagosGlobales = [
-      { id_pago: 'TXN-894210', id_cita: 101, cliente: 'Ana María López', servicio: 'Mechas / Balayage', estilista: 'Diana Carmen', metodo: 'Nequi', monto: 180000, estado_pago: 'Pagado', fecha_pago: obtenerFechaHoy() },
-      { id_pago: 'TXN-894215', id_cita: 102, cliente: 'Martina Flórez', servicio: 'Manicure', estilista: 'Sofía Martínez', metodo: 'Efectivo / Salón', monto: 45000, estado_pago: 'Pendiente en Salón', fecha_pago: obtenerFechaHoy() }
+      { id_pago: 'TXN-894210', id_cita: 101, cliente: 'Ana María López', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', metodo: 'Nequi', monto: 220000, estado_pago: 'Pagado', fecha_pago: obtenerFechaHoy() },
+      { id_pago: 'TXN-894215', id_cita: 102, cliente: 'Martina Flórez', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', metodo: 'Efectivo / Salón', monto: 48000, estado_pago: 'Pendiente en Salón', fecha_pago: obtenerFechaHoy() }
     ];
     localStorage.setItem('pagosBellaStyle', JSON.stringify(pagosGlobales));
   }
@@ -104,10 +110,6 @@ async function cargarDatosAdministrador() {
   } catch (e) {}
 }
 
-/* ==========================================================================
-   1. MÉTRICAS FINANCIERAS Y DE CITAS
-   ========================================================================== */
-
 function renderizarMetricasGanancias() {
   const contenedor = document.getElementById('metricasAdminPanel');
   if (!contenedor) return;
@@ -123,10 +125,11 @@ function renderizarMetricasGanancias() {
   const pagoEstilistas = ingresosBrutos * 0.60;
 
   const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + num.toLocaleString('es-CO');
+  const ico = (k) => typeof obtenerIcono === 'function' ? obtenerIcono(k, 'w-5 h-5') : '';
 
   contenedor.innerHTML = `
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-pink-500/20 text-pink-300 border border-pink-500/30 flex items-center justify-center font-bold text-xl">📅</div>
+      <div class="w-12 h-12 rounded-2xl bg-pink-500/15 text-pink-300 border border-pink-500/25 flex items-center justify-center">${ico('calendario')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Total Citas</span>
         <strong class="text-2xl font-serif text-white">${totalCitas} <span class="text-xs text-pink-400 font-sans font-normal">(${citasHoy} hoy)</span></strong>
@@ -134,7 +137,7 @@ function renderizarMetricasGanancias() {
     </div>
 
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-xl">💵</div>
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 flex items-center justify-center">${ico('dinero')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Ingresos Brutos</span>
         <strong class="text-2xl font-serif text-emerald-300">${fmt(ingresosBrutos)}</strong>
@@ -142,7 +145,7 @@ function renderizarMetricasGanancias() {
     </div>
 
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-xl">🏢</div>
+      <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-300 border border-amber-500/25 flex items-center justify-center">${ico('salon')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Ganancia Salón (40%)</span>
         <strong class="text-2xl font-serif text-amber-300">${fmt(gananciaSalon)}</strong>
@@ -150,7 +153,7 @@ function renderizarMetricasGanancias() {
     </div>
 
     <div class="tarjeta p-5 flex items-center gap-4">
-      <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center justify-center font-bold text-xl">✂️</div>
+      <div class="w-12 h-12 rounded-2xl bg-purple-500/15 text-purple-300 border border-purple-500/25 flex items-center justify-center">${ico('corte')}</div>
       <div>
         <span class="text-xs uppercase text-white/50 font-semibold block">Comisiones Estilistas (60%)</span>
         <strong class="text-2xl font-serif text-purple-300">${fmt(pagoEstilistas)}</strong>
@@ -158,10 +161,6 @@ function renderizarMetricasGanancias() {
     </div>
   `;
 }
-
-/* ==========================================================================
-   2. CONTROL Y FILTRADO DE CITAS
-   ========================================================================== */
 
 function renderizarTablaCitas(lista = null) {
   const tabla = document.getElementById('tablaCitasAdmin');
@@ -218,7 +217,7 @@ function poblarFiltroEstilistas() {
 }
 
 window.actualizarEstado = async function(idCita, nuevoEstado) {
-  const cita = citasGlobales.find(c => c.id === idCita);
+  const cita = citasGlobales.find(c => String(c.id) === String(idCita));
   if (cita) cita.estado = nuevoEstado;
 
   try {
@@ -234,7 +233,7 @@ window.actualizarEstado = async function(idCita, nuevoEstado) {
 };
 
 window.modalReasignar = function(idCita) {
-  const cita = citasGlobales.find(c => c.id === idCita);
+  const cita = citasGlobales.find(c => String(c.id) === String(idCita));
   if (!cita) return;
 
   const opciones = estilistasGlobales.map(e => `<option value="${e.id}" ${e.nombre === cita.estilista ? 'selected' : ''}>${e.nombre}</option>`).join('');
@@ -256,10 +255,6 @@ window.modalReasignar = function(idCita) {
     }
   );
 };
-
-/* ==========================================================================
-   3. CAJA Y AUDITORÍA DE PAGOS
-   ========================================================================== */
 
 function renderizarTablaPagosAdmin() {
   const tabla = document.getElementById('tablaPagosAdmin');
@@ -305,8 +300,7 @@ window.aprobarPagoEnCaja = function(idPago, idCita) {
     localStorage.setItem('pagosBellaStyle', JSON.stringify(pagosGlobales));
   }
 
-  // Marcar la cita asociada como Finalizada para contabilizar ingresos
-  const cita = citasGlobales.find(c => c.id === idCita);
+  const cita = citasGlobales.find(c => String(c.id) === String(idCita));
   if (cita && cita.estado !== 'Finalizada') {
     cita.estado = 'Finalizada';
   }
@@ -317,10 +311,6 @@ window.aprobarPagoEnCaja = function(idPago, idCita) {
   renderizarTablaGanancias();
   renderizarTablaPagosAdmin();
 };
-
-/* ==========================================================================
-   4. RENDIMIENTO Y LIQUIDACIÓN 60/40
-   ========================================================================== */
 
 function renderizarTablaGanancias() {
   const tabla = document.getElementById('tablaGananciasAdmin');
@@ -353,10 +343,6 @@ function renderizarTablaGanancias() {
     </tr>
   `).join('');
 }
-
-/* ==========================================================================
-   5. GESTIÓN DE SERVICIOS
-   ========================================================================== */
 
 function renderizarTablaServicios() {
   const tabla = document.getElementById('tablaServiciosAdmin');
@@ -448,10 +434,6 @@ window.modalEditarServicio = function(idServicio) {
   );
 };
 
-/* ==========================================================================
-   6. NAVEGACIÓN ENTRE PESTAÑAS
-   ========================================================================== */
-
 window.switchTabAdmin = function(tab) {
   const secCitas = document.getElementById('secCitasAdmin');
   const secPagos = document.getElementById('secPagosAdmin');
@@ -478,10 +460,6 @@ window.switchTabAdmin = function(tab) {
 
   if (tab === 'pagos') renderizarTablaPagosAdmin();
 };
-
-/* ==========================================================================
-   7. MODAL Y AUXILIARES
-   ========================================================================== */
 
 let alGuardarModal = null;
 

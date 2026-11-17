@@ -3,53 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Servicios | BellaStyle</title>
+  <title>Nuestros Servicios | BellaStyle</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="css/estilos.css?v=40">
+  <link rel="stylesheet" href="css/estilos.css?v=180">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tema.js"></script>
 </head>
-<body data-sin-video class="bg-[#0a0810] text-white min-h-screen flex flex-col font-sans antialiased">
+<body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- Header Global -->
   <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/90 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="welcome.html" class="flex items-center gap-3 shrink-0">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <a href="welcome.html" class="flex items-center gap-2">
         <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
         <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
       </a>
-      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-white/80">
-        <a href="welcome.html" class="hover:text-pink-400 transition">Inicio</a>
-        <a href="servicios.html" class="text-pink-400 font-semibold">Servicios</a>
-        <a href="galeria.html" class="hover:text-pink-400 transition">Galería</a>
-        <a href="tienda.html" class="hover:text-pink-400 transition">Tienda</a>
+
+      <nav class="hidden md:flex items-center space-x-6 text-xs font-semibold">
+        <a href="welcome.html" class="text-white/70 hover:text-white transition">Inicio</a>
+        <a href="servicios.html" class="text-pink-400 font-bold">Servicios</a>
+        <a href="galeria.html" class="text-white/70 hover:text-white transition">Galería</a>
+        <a href="tienda.html" class="text-white/70 hover:text-white transition">Tienda</a>
       </nav>
-      <div class="flex items-center space-x-3">
-        <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
-        <a href="index.html" class="text-xs sm:text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
-        <a href="register.html?rol=cliente" class="px-4 py-2 text-xs sm:text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Crear cuenta</a>
+
+      <div class="flex items-center gap-3">
+        <button type="button" class="btn-toggle-tema p-2 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition"></button>
+        <a href="index.html" id="navLoginBtn" class="text-xs font-semibold text-white/80 hover:text-white px-3 py-2 transition">Iniciar sesión</a>
+        <a href="register.html" id="navRegistroBtn" class="px-4 py-2 rounded-full bg-white text-black text-xs font-bold hover:bg-pink-100 transition shadow">Crear cuenta</a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full">
-    <div class="text-center max-w-2xl mx-auto mb-10">
-      <span class="text-xs font-semibold tracking-widest text-pink-400 uppercase">Catálogo Profesional</span>
-      <h1 class="text-4xl font-serif font-bold mt-2">Nuestros Servicios</h1>
-      <p class="text-white/70 text-sm mt-2">Selecciona un servicio para agendar tu cita de inmediato con una estilista capacitada.</p>
+  <main class="max-w-6xl mx-auto px-6 py-12 flex-1 w-full space-y-8">
+
+    <div class="text-center space-y-2 max-w-2xl mx-auto">
+      <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-pink-400 block">Catálogo Profesional</span>
+      <h1 class="text-4xl sm:text-5xl font-serif font-bold text-white">Nuestros Servicios</h1>
+      <p class="text-xs sm:text-sm text-white/70">
+        Explora nuestras especialidades para dama y caballero, elige el estilo que deseas y agenda tu cita al instante.
+      </p>
     </div>
 
-    <!-- Contenedor cargado por js/servicios.js -->
-    <div data-menu-servicios class="w-full">
-      <div class="esqueleto h-12 w-full rounded-xl"></div>
+    <!-- Categorías Principales -->
+    <div id="tabsCategoriasServicios" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-2"></div>
+
+    <!-- Filtros por Público -->
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div class="flex items-center gap-2 text-xs">
+        <span class="text-white/50 font-semibold mr-1">Filtrar por:</span>
+        <button type="button" onclick="filtrarPublicoServicio('Todos')" data-publico="Todos" class="btn-filtro-publico px-3.5 py-1.5 rounded-full bg-white text-black font-bold transition">Todos</button>
+        <button type="button" onclick="filtrarPublicoServicio('Mujer')" data-publico="Mujer" class="btn-filtro-publico px-3.5 py-1.5 rounded-full bg-white/5 text-white/70 border border-white/10 hover:text-white font-semibold transition">Mujer</button>
+        <button type="button" onclick="filtrarPublicoServicio('Hombre')" data-publico="Hombre" class="btn-filtro-publico px-3.5 py-1.5 rounded-full bg-white/5 text-white/70 border border-white/10 hover:text-white font-semibold transition">Hombre</button>
+        <button type="button" onclick="filtrarPublicoServicio('Unisex')" data-publico="Unisex" class="btn-filtro-publico px-3.5 py-1.5 rounded-full bg-white/5 text-white/70 border border-white/10 hover:text-white font-semibold transition">Unisex</button>
+      </div>
+
+      <span class="text-xs text-white/50" id="contadorVariantesServicio">Mostrando 0 opciones</span>
     </div>
+
+    <!-- Lista de Variantes + Tarjeta de Detalle -->
+    <div class="tarjeta p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <div class="lg:col-span-6 space-y-3">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs uppercase tracking-wider text-pink-300 font-bold" id="tituloListaCategoria">Opciones disponibles</h2>
+          <span class="text-[11px] text-white/40">Selecciona una opción</span>
+        </div>
+
+        <div id="listaSubservicios" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <div class="lg:col-span-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-7 space-y-6 sticky top-24">
+        
+        <div class="grid grid-cols-3 gap-3 h-32">
+          <div class="col-span-2 rounded-2xl bg-gradient-to-br from-pink-500/15 via-purple-900/15 to-[#120f1d] border border-white/10 flex flex-col justify-between p-4">
+            <div id="detalleIconoGrande" class="w-10 h-10 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300 flex items-center justify-center"></div>
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-white/40 block">Especialidad</span>
+              <span id="detalleCategoriaTag" class="text-xs uppercase tracking-wider text-pink-300 font-bold">Corte de Cabello</span>
+            </div>
+          </div>
+          <div class="col-span-1 flex flex-col gap-3">
+            <div class="flex-1 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center p-2">
+              <span class="text-[10px] text-white/50 uppercase">Público</span>
+              <strong id="detallePublicoBox" class="text-xs text-pink-300 font-bold mt-0.5">Mujer</strong>
+            </div>
+            <div class="flex-1 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center p-2">
+              <span class="text-[10px] text-white/50 uppercase">Duración</span>
+              <strong id="detalleDuracionBox" class="text-xs text-white font-bold mt-0.5">45 min</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-pink-400">Detalle del Servicio</span>
+            <span id="detalleBadgePublico" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">Mujer</span>
+          </div>
+
+          <h3 id="detalleTituloServicio" class="text-2xl sm:text-3xl font-serif font-bold text-white leading-tight">
+            Corte Dama + Lavado y Cepillado
+          </h3>
+
+          <p id="detalleDescripcionServicio" class="text-xs sm:text-sm text-white/70 leading-relaxed">
+            Corte personalizado según la forma de tu rostro y textura capilar.
+          </p>
+
+          <div id="detalleIncluyeBox" class="p-3.5 rounded-xl bg-white/5 border border-white/10 text-xs text-white/80 space-y-1">
+            <span class="text-[10px] uppercase tracking-wider text-amber-300 font-bold block">Incluye en la sesión:</span>
+            <p id="detalleIncluyeTexto">Diagnóstico capilar, lavado con shampoo nutritivo, corte y cepillado.</p>
+          </div>
+        </div>
+
+        <div class="pt-3 flex flex-wrap items-center justify-between gap-4 border-t border-white/10">
+          <div class="flex items-center gap-3">
+            <strong id="detallePrecioServicio" class="text-3xl font-serif font-bold text-amber-300">$45.000</strong>
+            <span id="detalleDuracionPill" class="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-white/80 font-semibold">
+              60 min
+            </span>
+          </div>
+
+          <a id="btnAgendarSubservicio" href="agendar.html" class="px-6 py-3 rounded-full bg-white text-black text-xs font-bold hover:bg-pink-100 transition shadow-lg inline-flex items-center gap-2">
+            Agendar este servicio <span>&rarr;</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
   </main>
 
-  <footer class="border-t border-white/5 py-6 text-center text-xs text-white/40">
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 bg-[#07060b]">
     BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
   </footer>
 
   <script src="js/api.js"></script>
+  <script src="js/iconos.js"></script>
   <script src="js/servicios.js"></script>
 </body>
 </html>
