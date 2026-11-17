@@ -6,17 +6,29 @@ let serviciosGlobales = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   obtenerSesionValida();
-  configurarHeader();
-  await cargarDatosIniciales();
 
-  const rolNorm = String(usuarioSesion.rol || '').toLowerCase();
+  const rolNorm = normalizarRolPanel(usuarioSesion.rol);
+  if (rolNorm === 'admin') {
+    window.location.replace('admin.html');
+    return;
+  }
 
-  if (rolNorm.includes('estilista')) {
+  configurarHeader(rolNorm);
+  await cargarDatosIniciales(rolNorm);
+
+  if (rolNorm === 'estilista') {
     iniciarVistaEstilista();
   } else {
     iniciarVistaClienta();
   }
 });
+
+function normalizarRolPanel(rol) {
+  const r = String(rol || '').toLowerCase().trim();
+  if (r === 'admin' || r.includes('admin')) return 'admin';
+  if (r === 'estilista' || r.includes('estilista')) return 'estilista';
+  return 'cliente';
+}
 
 function obtenerSesionValida() {
   try {
@@ -27,17 +39,32 @@ function obtenerSesionValida() {
 
   if (!usuarioSesion) {
     window.location.replace('index.html');
+    return;
   }
+
+  // Verificar el rol real registrado en usuariosRegistrados para evitar inconsistencias
+  try {
+    const registrados = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
+    const uNorm = String(usuarioSesion.usuario || usuarioSesion.username || '').toLowerCase().trim();
+    const cuentaReal = registrados.find(
+      u => String(u.usuario || u.username || '').toLowerCase().trim() === uNorm
+    );
+    if (cuentaReal && cuentaReal.rol) {
+      usuarioSesion.rol = normalizarRolPanel(cuentaReal.rol);
+      localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
+    }
+  } catch (e) {}
 }
 
-function configurarHeader() {
+function configurarHeader(rolNorm) {
   const nombreEl = document.getElementById('nombreUsuarioPanel');
   const badgeEl = document.getElementById('badgeRolPanel');
   const tituloSaludo = document.getElementById('tituloSaludo');
   const subtituloPanel = document.getElementById('subtituloPanel');
 
-  const rolNorm = String(usuarioSesion.rol || '').toLowerCase();
-  const esEstilista = rolNorm.includes('estilista');
+  const esEstilista = rolNorm === 'estilista';
+
+  history.replaceState(null, '', `?rol=${rolNorm}`);
 
   if (nombreEl) nombreEl.textContent = usuarioSesion.nombre || usuarioSesion.usuario;
   if (badgeEl) {
@@ -52,18 +79,18 @@ function configurarHeader() {
   }
 
   if (subtituloPanel) {
-    subtituloPanel.textContent = esEstilista 
-      ? 'Consulta tu agenda de citas asignadas y métricas de desempeño.'
+    subtituloPanel.textContent = esEstilista
+      ? 'Consulta tu agenda de citas asignadas y tus comisiones acumuladas.'
       : 'Revisa tus citas agendadas, realiza pagos y descarga tus comprobantes.';
   }
 
   const btnAgendar = document.getElementById('btnAgendarHeader');
-  if (btnAgendar && esEstilista) {
-    btnAgendar.style.display = 'none';
+  if (btnAgendar) {
+    btnAgendar.style.display = esEstilista ? 'none' : 'inline-flex';
   }
 }
 
-async function cargarDatosIniciales() {
+async function cargarDatosIniciales(rolNorm) {
   serviciosGlobales = [
     { id_servicio: 1, nombre: 'Corte Dama + Lavado y Cepillado', precio: 45000 },
     { id_servicio: 2, nombre: 'Corte Caballero / Degradado (Fade)', precio: 28000 },
@@ -74,22 +101,47 @@ async function cargarDatosIniciales() {
     { id_servicio: 7, nombre: 'Alisado Progresivo / Keratina Orgánica', precio: 180000 }
   ];
 
-  // Cargar citas agendadas en localStorage y combinarlas con citas base
   let citasLocales = [];
   try {
     citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
   } catch (e) {}
 
-  const citasBase = [
-    { id: 101, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
-    { id: 102, cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 48000 }
-  ];
+  const nombreSesion = String(usuarioSesion.nombre || usuarioSesion.usuario || '').toLowerCase().trim();
+  const userSesion = String(usuarioSesion.usuario || '').toLowerCase().trim();
 
-  citasUsuario = [...citasLocales, ...citasBase];
+  if (rolNorm === 'estilista') {
+    // Citas base de demostración asignadas a estilistas (con clientas reales, no con su propio nombre)
+    const citasDemoEstilistas = [
+      { id: 201, cliente: 'Ana María López', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
+      { id: 202, cliente: 'Camila Restrepo', servicio: 'Corte Dama + Lavado y Cepillado', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '02:00 PM', estado: 'Pendiente', precio: 45000 },
+      { id: 203, cliente: 'Martina Flórez', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '11:00 AM', estado: 'Confirmada', precio: 48000 },
+      { id: 204, cliente: 'Valeria Gómez', servicio: 'Pedicure Tradicional + Exfoliación', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 32000 }
+    ];
+
+    const todas = [...citasLocales, ...citasDemoEstilistas];
+    citasUsuario = todas.filter(c => {
+      const est = String(c.estilista || '').toLowerCase().trim();
+      return est === nombreSesion || est === userSesion || est === 'cualquiera disponible';
+    });
+  } else {
+    // Vista Clienta: solo mostrar citas de esta clienta
+    const citasDemoClienta = [
+      { id: 101, id_cliente: 'cliente', cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
+      { id: 102, id_cliente: 'cliente', cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 48000 }
+    ];
+
+    const propiasLocales = citasLocales.filter(c => {
+      const idCli = String(c.id_cliente || '').toLowerCase().trim();
+      const nomCli = String(c.cliente || '').toLowerCase().trim();
+      return idCli === userSesion || idCli === String(usuarioSesion.id || '') || nomCli === nombreSesion;
+    });
+
+    citasUsuario = [...propiasLocales, ...citasDemoClienta];
+  }
 
   try {
     if (typeof pedir === 'function') {
-      const resp = await pedir(`/citas?idUsuario=${usuarioSesion.usuario || usuarioSesion.id}`, 'GET');
+      const resp = await pedir(`/citas?idUsuario=${usuarioSesion.usuario || usuarioSesion.id}&rol=${rolNorm}`, 'GET');
       if (resp && resp.success && Array.isArray(resp.data) && resp.data.length > 0) {
         citasUsuario = resp.data;
       }
@@ -101,8 +153,14 @@ function iniciarVistaClienta() {
   const vClienta = document.getElementById('vistaClienta');
   const vEstilista = document.getElementById('vistaEstilista');
 
-  if (vClienta) vClienta.classList.remove('hidden');
-  if (vEstilista) vEstilista.classList.add('hidden');
+  if (vClienta) {
+    vClienta.classList.remove('hidden');
+    vClienta.style.display = 'block';
+  }
+  if (vEstilista) {
+    vEstilista.classList.add('hidden');
+    vEstilista.style.display = 'none';
+  }
 
   renderizarDatosClienta();
   renderizarTablaCitasClienta();
@@ -219,7 +277,7 @@ function modalEditarDatosClienta() {
       usuarioSesion.email = document.getElementById('vEditEmail').value.trim();
 
       localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
-      configurarHeader();
+      configurarHeader('cliente');
       renderizarDatosClienta();
       mostrarToast('Datos actualizados correctamente');
       return true;
@@ -231,8 +289,14 @@ function iniciarVistaEstilista() {
   const vClienta = document.getElementById('vistaClienta');
   const vEstilista = document.getElementById('vistaEstilista');
 
-  if (vEstilista) vEstilista.classList.remove('hidden');
-  if (vClienta) vClienta.classList.add('hidden');
+  if (vClienta) {
+    vClienta.classList.add('hidden');
+    vClienta.style.display = 'none';
+  }
+  if (vEstilista) {
+    vEstilista.classList.remove('hidden');
+    vEstilista.style.display = 'block';
+  }
 
   renderizarMetricasEstilista();
   renderizarTablaCitasEstilista();
@@ -248,7 +312,9 @@ function renderizarMetricasEstilista() {
   const totalCitas = citasUsuario.length;
   const pendientes = citasUsuario.filter(c => c.estado === 'Pendiente' || c.estado === 'Confirmada').length;
   const finalizadas = citasUsuario.filter(c => c.estado === 'Finalizada').length;
-  const ingresosBrutos = citasUsuario.filter(c => c.estado === 'Finalizada').reduce((sum, c) => sum + (c.precio || 0), 0);
+  const ingresosBrutos = citasUsuario
+    .filter(c => c.estado === 'Finalizada')
+    .reduce((sum, c) => sum + (Number(c.precio) || Number(c.valor) || 0), 0);
   const miComision = ingresosBrutos * 0.60;
 
   const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + num.toLocaleString('es-CO');
@@ -291,7 +357,7 @@ function renderizarTablaCitasEstilista() {
   if (!tabla) return;
 
   if (citasUsuario.length === 0) {
-    tabla.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-white/50">No tienes citas asignadas en tu agenda.</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-white/50">No tienes citas asignadas en tu agenda todavía.</td></tr>`;
     return;
   }
 
@@ -312,9 +378,18 @@ function renderizarTablaCitasEstilista() {
 
 window.cambiarEstadoEstilista = async function(idCita, nuevoEstado) {
   const cita = citasUsuario.find(c => String(c.id) === String(idCita));
-  if (cita) cita.estado = nuevoEstado;
+  if (cita) {
+    cita.estado = nuevoEstado;
+    cita.estilista = usuarioSesion.nombre || cita.estilista;
+  }
 
   try {
+    const citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
+    const idx = citasLocales.findIndex(c => String(c.id) === String(idCita));
+    if (idx >= 0) {
+      citasLocales[idx].estado = nuevoEstado;
+      localStorage.setItem('citasBellaStyle', JSON.stringify(citasLocales));
+    }
     if (typeof pedir === 'function') {
       await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: nuevoEstado });
     }
