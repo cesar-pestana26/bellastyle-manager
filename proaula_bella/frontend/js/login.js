@@ -1,4 +1,4 @@
-// js/login.js - Selector de los 3 roles en #listaRoles y bloqueo estricto de rol cruzado
+// js/login.js - Autenticación real contra MySQL, selector de roles y bloqueo de rol cruzado
 
 const ROLES_LOGIN = typeof ROLES !== 'undefined' ? ROLES : {
   cliente: {
@@ -18,13 +18,6 @@ const ROLES_LOGIN = typeof ROLES !== 'undefined' ? ROLES : {
   }
 };
 
-const CUENTAS_BASE_LOGIN = [
-  { id: 1, nombre: 'Administradora Principal', usuario: 'admin', username: 'admin', email: 'admin@bellastyle.com', password: '123', rol: 'admin', telefono: '3000000001' },
-  { id: 2, nombre: 'Diana Carmen', usuario: 'diana', username: 'diana', email: 'diana@bellastyle.com', password: '123', rol: 'estilista', especialidad: 'Especialista en Balayage & Color', telefono: '3000000002' },
-  { id: 3, nombre: 'Sofía Martínez', usuario: 'sofia', username: 'sofia', email: 'sofia@bellastyle.com', password: '123', rol: 'estilista', especialidad: 'Manicura Rusa & Nail Art', telefono: '3000000003' },
-  { id: 4, nombre: 'Mariana Sofía', usuario: 'cliente', username: 'cliente', email: 'cliente@bellastyle.com', password: '123', rol: 'cliente', telefono: '3001234567' }
-];
-
 let rolLoginActual = new URLSearchParams(window.location.search).get('rol');
 if (!ROLES_LOGIN[rolLoginActual]) rolLoginActual = 'cliente';
 
@@ -39,31 +32,6 @@ function normalizarClaveRolLogin(rol) {
 function obtenerTituloRolLogin(rol) {
   const clave = normalizarClaveRolLogin(rol);
   return ROLES_LOGIN[clave]?.titulo || 'Clienta';
-}
-
-function asegurarCuentasBaseLogin() {
-  let lista = [];
-  try {
-    lista = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
-  } catch (e) {
-    lista = [];
-  }
-
-  let modificado = false;
-  CUENTAS_BASE_LOGIN.forEach(base => {
-    const existe = lista.some(
-      u => String(u.usuario || u.username || '').toLowerCase().trim() === base.usuario
-    );
-    if (!existe) {
-      lista.push(base);
-      modificado = true;
-    }
-  });
-
-  if (modificado) {
-    localStorage.setItem('usuariosRegistrados', JSON.stringify(lista));
-  }
-  return lista;
 }
 
 function dibujarSelectorRolLogin() {
@@ -123,7 +91,6 @@ function activarBotonMostrarPassword() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  asegurarCuentasBaseLogin();
   cambiarRolLogin(rolLoginActual);
   activarBotonMostrarPassword();
 
@@ -145,84 +112,94 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const rolSeleccionado = rolLoginActual;
-    const listaUsuarios = asegurarCuentasBaseLogin();
-    const identificadorNorm = userInput.toLowerCase();
-
-    let cuenta = listaUsuarios.find(u => {
-      const uUser = String(u.usuario || u.username || '').toLowerCase().trim();
-      const uEmail = String(u.email || '').toLowerCase().trim();
-      return uUser === identificadorNorm || (uEmail !== '' && uEmail === identificadorNorm);
-    });
-
     if (boton) boton.disabled = true;
 
     try {
+      let resp = null;
       if (typeof pedir === 'function') {
-        const resp = await pedir('/login', 'POST', {
+        resp = await pedir('/login', 'POST', {
           usuario: userInput,
           username: userInput,
           password: passInput,
           rol: rolSeleccionado
         });
-
-        if (resp && resp.success === false) {
-          mostrarAlertaLogin(alerta, resp.mensaje || resp.message || 'Credenciales o rol incorrectos.', 'error');
-          if (boton) boton.disabled = false;
-          return;
-        }
-
-        if (resp && resp.success && resp.usuario) {
-          cuenta = resp.usuario;
-          if (resp.token) localStorage.setItem('token', resp.token);
-        }
+      } else {
+        const resHttp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuario: userInput,
+            username: userInput,
+            password: passInput,
+            rol: rolSeleccionado
+          })
+        });
+        resp = await resHttp.json();
+        if (!resHttp.ok) resp.success = false;
       }
-    } catch (err) {}
 
-    if (!cuenta) {
-      mostrarAlertaLogin(alerta, 'No existe una cuenta registrada con ese usuario.', 'error');
-      if (boton) boton.disabled = false;
-      return;
-    }
+      if (!resp || resp.errorRed) {
+        mostrarAlertaLogin(alerta, 'No se pudo conectar con el servidor. Verifica que esté activo.', 'error');
+        if (boton) boton.disabled = false;
+        return;
+      }
 
-    if (cuenta.password && cuenta.password !== passInput) {
-      mostrarAlertaLogin(alerta, 'La contraseña ingresada es incorrecta.', 'error');
-      if (boton) boton.disabled = false;
-      return;
-    }
+      if (!resp.success) {
+        mostrarAlertaLogin(alerta, resp.mensaje || resp.message || 'Usuario o contraseña incorrectos.', 'error');
+        if (boton) boton.disabled = false;
+        return;
+      }
 
-    // BLOQUEO ESTRICTO: La cuenta solo puede entrar con el rol con el que fue creada
-    const rolRealCuenta = normalizarClaveRolLogin(cuenta.rol);
+      // El servidor responde "user" (con respaldo por compatibilidad)
+      const cuenta = resp.user || resp.usuario;
+      if (!cuenta) {
+        mostrarAlertaLogin(alerta, 'El servidor no devolvió los datos del usuario.', 'error');
+        if (boton) boton.disabled = false;
+        return;
+      }
 
-    if (rolSeleccionado !== rolRealCuenta) {
+      // BLOQUEO ESTRICTO: La cuenta solo puede entrar con el rol con el que fue creada
+      const rolRealCuenta = normalizarClaveRolLogin(cuenta.rol);
+
+      if (rolSeleccionado !== rolRealCuenta) {
+        mostrarAlertaLogin(
+          alerta,
+          `Acceso denegado: esta cuenta fue creada únicamente con el rol de ${obtenerTituloRolLogin(rolRealCuenta)}. No puedes iniciar sesión como ${obtenerTituloRolLogin(rolSeleccionado)}.`,
+          'error'
+        );
+        if (boton) boton.disabled = false;
+        return;
+      }
+
+      const sesion = { ...cuenta, rol: rolRealCuenta };
+      delete sesion.password;
+      if (resp.token) localStorage.setItem('token', resp.token);
+      localStorage.setItem('usuarioLogueado', JSON.stringify(sesion));
+
       mostrarAlertaLogin(
         alerta,
-        `Acceso denegado: esta cuenta fue creada únicamente con el rol de ${obtenerTituloRolLogin(rolRealCuenta)}. No puedes iniciar sesión como ${obtenerTituloRolLogin(rolSeleccionado)}.`,
-        'error'
+        `Bienvenido(a), ${sesion.nombre || sesion.usuario || sesion.username}. Ingresando como ${obtenerTituloRolLogin(rolRealCuenta)}...`,
+        'ok'
       );
+
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+
+      setTimeout(() => {
+        if (rolRealCuenta === 'admin') {
+          window.location.replace('admin.html');
+        } else if (rolRealCuenta === 'estilista') {
+          window.location.replace('panel.html?rol=estilista');
+        } else if (redirect) {
+          window.location.replace(redirect);
+        } else {
+          window.location.replace('panel.html?rol=cliente');
+        }
+      }, 850);
+    } catch (err) {
+      mostrarAlertaLogin(alerta, 'Error inesperado al iniciar sesión.', 'error');
       if (boton) boton.disabled = false;
-      return;
     }
-
-    const sesion = { ...cuenta, rol: rolRealCuenta };
-    delete sesion.password;
-    localStorage.setItem('usuarioLogueado', JSON.stringify(sesion));
-
-    mostrarAlertaLogin(alerta, `Bienvenido(a), ${sesion.nombre || sesion.usuario}. Ingresando como ${obtenerTituloRolLogin(rolRealCuenta)}...`, 'ok');
-
-    const params = new URLSearchParams(window.location.search);
-    const redirect = params.get('redirect');
-
-    setTimeout(() => {
-      if (rolRealCuenta === 'admin') {
-        window.location.replace('admin.html');
-      } else if (rolRealCuenta === 'estilista') {
-        window.location.replace('panel.html?rol=estilista');
-      } else if (redirect) {
-        window.location.replace(redirect);
-      } else {
-        window.location.replace('panel.html?rol=cliente');
-      }
-    }, 850);
   });
 });
 

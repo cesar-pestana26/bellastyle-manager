@@ -1,4 +1,4 @@
-// js/agendar.js - Gestor de Agendamiento con Catálogo Detallado, Iconos SVG y Estilistas Dinámicas
+// js/agendar.js - Agendamiento conectado a MySQL (POST /api/citas y GET /disponibilidad)
 
 let servicioSeleccionado = null;
 let estilistaSeleccionada = { id: 0, nombre: 'Cualquiera Disponible' };
@@ -9,60 +9,39 @@ let filtroPublico = 'Todos';
 let filtroCategoria = 'Todas';
 let textoBusqueda = '';
 
-const HORARIOS_JORNADA = [
-  '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
-  '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
-];
-
-const CATALOGO_DETALLADO_DEFAULT = [
-  { id: 'corte-dama-cepillado', categoria: 'Corte de Cabello', nombre: 'Corte Dama + Lavado y Cepillado', publico: 'Mujer', precio: 45000, duracion_min: 60, icono: 'corte' },
-  { id: 'corte-dama-cambio-look', categoria: 'Corte de Cabello', nombre: 'Corte Dama Cambio de Look / Capas', publico: 'Mujer', precio: 55000, duracion_min: 75, icono: 'corte' },
-  { id: 'corte-caballero-fade', categoria: 'Corte de Cabello', nombre: 'Corte Caballero / Degradado (Fade)', publico: 'Hombre', precio: 28000, duracion_min: 40, icono: 'corte' },
-  { id: 'corte-caballero-barba', categoria: 'Corte de Cabello', nombre: 'Corte Caballero + Ritual de Barba', publico: 'Hombre', precio: 42000, duracion_min: 60, icono: 'corte' },
-  { id: 'corte-infantil', categoria: 'Corte de Cabello', nombre: 'Corte Infantil (Niña / Niño)', publico: 'Unisex', precio: 22000, duracion_min: 30, icono: 'corte' },
-  { id: 'corte-flequillo-puntas', categoria: 'Corte de Cabello', nombre: 'Corte de Flequillo o Limpieza de Puntas', publico: 'Mujer', precio: 18000, duracion_min: 20, icono: 'corte' },
-  { id: 'mani-tradicional', categoria: 'Manicure', nombre: 'Manicure Tradicional + Esmaltado', publico: 'Mujer', precio: 25000, duracion_min: 45, icono: 'manicure' },
-  { id: 'mani-semipermanente', categoria: 'Manicure', nombre: 'Manicure Semipermanente (Gel)', publico: 'Mujer', precio: 48000, duracion_min: 60, icono: 'manicure' },
-  { id: 'mani-acrilicas-polygel', categoria: 'Manicure', nombre: 'Uñas Esculpidas en Acrílico o Polygel', publico: 'Mujer', precio: 95000, duracion_min: 120, icono: 'manicure' },
-  { id: 'mani-caballero', categoria: 'Manicure', nombre: 'Manicure Ejecutivo / Spa Caballero', publico: 'Hombre', precio: 25000, duracion_min: 40, icono: 'manicure' },
-  { id: 'mechas-balayage', categoria: 'Mechas / Balayage', nombre: 'Balayage Completo + Matización', publico: 'Mujer', precio: 220000, duracion_min: 210, icono: 'mechas' },
-  { id: 'mechas-babylights', categoria: 'Mechas / Balayage', nombre: 'Babylights / Iluminaciones Finas', publico: 'Mujer', precio: 190000, duracion_min: 180, icono: 'mechas' },
-  { id: 'mechas-contorno', categoria: 'Mechas / Balayage', nombre: 'Iluminación de Contorno (Money Piece)', publico: 'Mujer', precio: 120000, duracion_min: 120, icono: 'mechas' },
-  { id: 'mechas-caballero', categoria: 'Mechas / Balayage', nombre: 'Reflejos / Mechas Platinadas Caballero', publico: 'Hombre', precio: 110000, duracion_min: 120, icono: 'mechas' },
-  { id: 'pedi-tradicional', categoria: 'Pedicure', nombre: 'Pedicure Tradicional + Exfoliación', publico: 'Unisex', precio: 32000, duracion_min: 50, icono: 'pedicure' },
-  { id: 'pedi-semipermanente', categoria: 'Pedicure', nombre: 'Pedicure Semipermanente en Gel', publico: 'Mujer', precio: 55000, duracion_min: 65, icono: 'pedicure' },
-  { id: 'pedi-spa-clinico', categoria: 'Pedicure', nombre: 'Pedicure Spa Profundo / Caballero', publico: 'Hombre', precio: 45000, duracion_min: 60, icono: 'pedicure' },
-  { id: 'peinado-ondas-cepillado', categoria: 'Peinado para Evento', nombre: 'Cepillado Profesional + Ondas de Salón', publico: 'Mujer', precio: 45000, duracion_min: 50, icono: 'peinado' },
-  { id: 'peinado-recogido-gala', categoria: 'Peinado para Evento', nombre: 'Recogido o Semirecogido de Gala / Grado', publico: 'Mujer', precio: 85000, duracion_min: 90, icono: 'peinado' },
-  { id: 'peinado-trenzas', categoria: 'Peinado para Evento', nombre: 'Trenzas de Diseño / Boxeadoras', publico: 'Unisex', precio: 55000, duracion_min: 75, icono: 'peinado' },
-  { id: 'peinado-styling-hombre', categoria: 'Peinado para Evento', nombre: 'Styling & Peinado Evento Caballero', publico: 'Hombre', precio: 25000, duracion_min: 30, icono: 'peinado' },
-  { id: 'tinte-completo', categoria: 'Tinte / Coloración', nombre: 'Coloración Global (Tinte Completo)', publico: 'Mujer', precio: 95000, duracion_min: 90, icono: 'tinte' },
-  { id: 'tinte-retoque-raiz', categoria: 'Tinte / Coloración', nombre: 'Retoque de Raíz (Cobertura de Canas)', publico: 'Mujer', precio: 65000, duracion_min: 60, icono: 'tinte' },
-  { id: 'tinte-bano-color', categoria: 'Tinte / Coloración', nombre: 'Baño de Color / Matización Sin Amoníaco', publico: 'Unisex', precio: 55000, duracion_min: 45, icono: 'tinte' },
-  { id: 'tinte-camuflaje-hombre', categoria: 'Tinte / Coloración', nombre: 'Camuflaje Natural de Canas Caballero', publico: 'Hombre', precio: 48000, duracion_min: 40, icono: 'tinte' },
-  { id: 'trat-hidratacion-profunda', categoria: 'Tratamiento Capilar', nombre: 'Hidratación Profunda + Vapor de Ozono', publico: 'Mujer', precio: 75000, duracion_min: 60, icono: 'tratamiento' },
-  { id: 'trat-keratina-organica', categoria: 'Tratamiento Capilar', nombre: 'Alisado Progresivo / Keratina Orgánica', publico: 'Mujer', precio: 180000, duracion_min: 180, icono: 'tratamiento' },
-  { id: 'trat-botox-capilar', categoria: 'Tratamiento Capilar', nombre: 'Botox Capilar Reconstructor', publico: 'Unisex', precio: 110000, duracion_min: 90, icono: 'tratamiento' },
-  { id: 'trat-anticaida-hombre', categoria: 'Tratamiento Capilar', nombre: 'Terapia Anticaída & Control Grasa', publico: 'Hombre', precio: 60000, duracion_min: 45, icono: 'tratamiento' }
-];
-
 document.addEventListener('DOMContentLoaded', async () => {
   verificarSesionUsuario();
   establecerFechaMinima();
-  generarGridHorarios();
   await cargarServicios();
   await cargarEstilistas();
+  await actualizarDisponibilidadHorarios();
   procesarParametrosURL();
 });
 
-function verificarSesionUsuario() {
+function convertirHoraA24(horaStr) {
+  const txt = String(horaStr || '').trim().toUpperCase();
+  const match = txt.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/);
+  if (!match) return txt.slice(0, 5);
+  let horas = parseInt(match[1], 10);
+  const minutos = match[2];
+  const periodo = match[3];
+  if (periodo === 'PM' && horas < 12) horas += 12;
+  if (periodo === 'AM' && horas === 12) horas = 0;
+  return `${String(horas).padStart(2, '0')}:${minutos}`;
+}
+
+function obtenerUsuarioLogueado() {
   let usuario = typeof obtenerUsuarioActual === 'function' ? obtenerUsuarioActual() : null;
   if (!usuario) {
     try {
       usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
     } catch (e) {}
   }
+  return usuario;
+}
 
+function verificarSesionUsuario() {
+  const usuario = obtenerUsuarioLogueado();
   const label = document.getElementById('labelUsuario');
   const btnHeader = document.getElementById('btnAccesoHeader');
 
@@ -86,7 +65,11 @@ function establecerFechaMinima() {
   const hoyLocal = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().split('T')[0];
   inputFecha.min = hoyLocal;
   inputFecha.value = hoyLocal;
-  inputFecha.addEventListener('change', actualizarResumen);
+  inputFecha.addEventListener('change', async () => {
+    horaSeleccionada = null;
+    actualizarResumen();
+    await actualizarDisponibilidadHorarios();
+  });
 }
 
 function obtenerClaveIconoCategoria(categoria) {
@@ -104,54 +87,32 @@ async function cargarServicios() {
   const contenedor = document.getElementById('contenedorServiciosAgendar');
   if (!contenedor) return;
 
-  let catalogoLS = [];
-  try {
-    catalogoLS = JSON.parse(localStorage.getItem('catalogoServiciosBellaStyle')) || [];
-  } catch (e) {}
-
-  if (Array.isArray(catalogoLS) && catalogoLS.length > 0) {
-    const planificados = [];
-    catalogoLS.forEach((cat) => {
-      (cat.subservicios || []).forEach((sub) => {
-        planificados.push({
-          id: sub.id,
-          categoria: cat.nombre,
-          nombre: sub.nombre,
-          publico: sub.publico || 'Unisex',
-          precio: Number(sub.precio) || 0,
-          duracion_min: Number(sub.duracion) || 45,
-          icono: obtenerClaveIconoCategoria(cat.nombre)
-        });
-      });
-    });
-    todosLosServicios = planificados;
-  } else {
-    todosLosServicios = [...CATALOGO_DETALLADO_DEFAULT];
-  }
+  todosLosServicios = [];
 
   try {
+    let resp = null;
     if (typeof pedir === 'function') {
-      const resp = await pedir('/servicios', 'GET');
-      if (resp && resp.success && Array.isArray(resp.data) && resp.data.length > 0) {
-        resp.data.forEach(srvApi => {
-          const existe = todosLosServicios.some(
-            s => s.nombre.toLowerCase() === String(srvApi.nombre || '').toLowerCase()
-          );
-          if (!existe) {
-            todosLosServicios.push({
-              id: srvApi.id_servicio || srvApi.id,
-              categoria: srvApi.categoria || 'General',
-              nombre: srvApi.nombre,
-              publico: srvApi.publico || 'Unisex',
-              precio: Number(srvApi.precio) || 0,
-              duracion_min: Number(srvApi.duracion_min) || 45,
-              icono: obtenerClaveIconoCategoria(srvApi.categoria || srvApi.nombre)
-            });
-          }
-        });
-      }
+      resp = await pedir('/servicios', 'GET');
+    } else {
+      const r = await fetch('/api/servicios');
+      resp = await r.json();
     }
-  } catch (e) {}
+
+    const lista = Array.isArray(resp) ? resp : (resp?.data || resp?.servicios || []);
+    if (Array.isArray(lista) && lista.length > 0) {
+      todosLosServicios = lista.map(srv => ({
+        id: Number(srv.id_servicio || srv.id),
+        categoria: srv.categoria || srv.nombre || 'General',
+        nombre: srv.nombre,
+        publico: srv.publico || 'Unisex',
+        precio: Number(srv.precio) || 0,
+        duracion_min: Number(srv.duracion_min || srv.duracion) || 45,
+        icono: obtenerClaveIconoCategoria(srv.categoria || srv.nombre)
+      }));
+    }
+  } catch (e) {
+    console.error('Error al cargar servicios:', e);
+  }
 
   inyectarControlesFiltroServicios(contenedor);
   renderizarTarjetasServicios();
@@ -225,7 +186,7 @@ function renderizarTarjetasServicios() {
   if (filtrados.length === 0) {
     contenedor.innerHTML = `
       <div class="col-span-full p-6 rounded-xl bg-white/5 border border-white/10 text-center text-xs text-white/60">
-        No hay servicios que coincidan con el filtro seleccionado.
+        No hay servicios disponibles con el filtro seleccionado.
       </div>
     `;
     return;
@@ -272,7 +233,7 @@ function renderizarTarjetasServicios() {
   contenedor.querySelectorAll('.card-servicio-item').forEach(card => {
     card.addEventListener('click', () => {
       seleccionarServicio(
-        card.dataset.id,
+        Number(card.dataset.id),
         card.dataset.nombre,
         Number(card.dataset.precio),
         Number(card.dataset.duracion),
@@ -290,37 +251,21 @@ async function cargarEstilistas(idServicio = null) {
 
   try {
     if (typeof pedir === 'function') {
-      const url = idServicio ? `/estilistas?servicio=${encodeURIComponent(idServicio)}` : '/estilistas';
-      const resp = await pedir(url, 'GET');
-      if (resp && resp.success && Array.isArray(resp.data) && resp.data.length > 0) {
+      const resp = await pedir('/estilistas', 'GET');
+      if (resp && resp.success && Array.isArray(resp.data)) {
         estilistas = resp.data;
+      } else if (Array.isArray(resp)) {
+        estilistas = resp;
       }
     }
   } catch (e) {}
 
-  if (estilistas.length === 0) {
-    try {
-      const usuariosLocales = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
-      const deLS = usuariosLocales.filter(u => String(u.rol || '').toLowerCase().includes('estilista'));
-      if (deLS.length > 0) {
-        estilistas = deLS.map((e, index) => ({
-          id: e.id || index + 1,
-          nombre: e.nombre || e.nombres || e.usuario,
-          especialidad: e.especialidad || e.profesion || 'Estilista Profesional'
-        }));
-      }
-    } catch (e) {}
+  if (idServicio) {
+    const filtradas = estilistas.filter(e =>
+      (e.ids_servicios || '').split(',').includes(String(idServicio))
+    );
+    if (filtradas.length > 0) estilistas = filtradas;
   }
-
-  const estilistasBase = [
-    { id: 101, nombre: 'Diana Carmen', especialidad: 'Especialista en Balayage & Color' },
-    { id: 102, nombre: 'Sofía Martínez', especialidad: 'Manicura Rusa & Nail Art' }
-  ];
-
-  estilistasBase.forEach(base => {
-    const yaEsta = estilistas.some(e => String(e.nombre || '').toLowerCase() === base.nombre.toLowerCase());
-    if (!yaEsta) estilistas.push(base);
-  });
 
   const listaCompleta = [
     { id: 0, nombre: 'Cualquiera Disponible', especialidad: 'Asignación automática' },
@@ -330,7 +275,8 @@ async function cargarEstilistas(idServicio = null) {
   contenedor.innerHTML = listaCompleta.map(e => {
     const idEst = e.id_estilista ?? e.id;
     const nombreEst = e.nombres ? `${e.nombres} ${e.apellidos || ''}`.trim() : (e.nombre || e.usuario);
-    const especEst = e.especialidades || e.especialidad || 'Estilista Profesional';
+    const nota = e.num_calificaciones ? ` · ★ ${Number(e.promedio).toFixed(1)}` : '';
+    const especEst = (e.servicios || e.especialidades || e.especialidad || 'Estilista Profesional') + nota;
     const seleccionada = String(estilistaSeleccionada.id) === String(idEst);
 
     return `
@@ -348,48 +294,107 @@ async function cargarEstilistas(idServicio = null) {
 
   contenedor.querySelectorAll('.card-estilista-item').forEach(card => {
     card.addEventListener('click', () => {
-      seleccionarEstilista(card.dataset.id, card.dataset.nombre, card);
+      seleccionarEstilista(Number(card.dataset.id), card.dataset.nombre, card);
     });
   });
 }
 
-function generarGridHorarios() {
+async function actualizarDisponibilidadHorarios() {
   const grid = document.getElementById('gridHorarios');
   if (!grid) return;
 
-  grid.innerHTML = HORARIOS_JORNADA.map(hora => `
-    <button type="button" onclick="seleccionarHora('${hora}', this)"
-      class="btn-hora-item py-2 px-3 rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/15 hover:text-white transition font-semibold text-center">
-      ${hora}
-    </button>
-  `).join('');
+  const fechaVal = document.getElementById('fechaCita')?.value;
+  if (!fechaVal || !servicioSeleccionado) {
+    grid.innerHTML = `<p class="col-span-full text-xs text-white/60">Selecciona un servicio y una fecha para consultar las horas disponibles.</p>`;
+    return;
+  }
+
+  if (new Date(fechaVal + 'T12:00:00').getDay() === 0) {
+    grid.innerHTML = `<p class="col-span-full text-xs text-amber-300">El salón no atiende los domingos. Selecciona otro día.</p>`;
+    return;
+  }
+
+  grid.innerHTML = `<p class="col-span-full text-xs text-white/60">Consultando disponibilidad en el servidor...</p>`;
+
+  try {
+    const usuario = obtenerUsuarioLogueado();
+    const idUsuario = usuario ? (usuario.id ?? usuario.id_usuario ?? '') : '';
+    const params = new URLSearchParams({
+      idServicio: servicioSeleccionado.id,
+      fecha: fechaVal
+    });
+    if (idUsuario) params.set('idUsuario', idUsuario);
+    if (estilistaSeleccionada.id) params.set('idEstilista', estilistaSeleccionada.id);
+
+    let resp = null;
+    if (typeof pedir === 'function') {
+      resp = await pedir(`/disponibilidad?${params.toString()}`, 'GET');
+    } else {
+      const r = await fetch(`/api/disponibilidad?${params.toString()}`);
+      resp = await r.json();
+    }
+
+    const horas = (resp && resp.success && resp.data && Array.isArray(resp.data.horas))
+      ? resp.data.horas.map(convertirHoraA24)
+      : [];
+
+    if (horas.length === 0) {
+      grid.innerHTML = `<p class="col-span-full text-xs text-rose-300">${escapar(resp?.message || 'No hay horas libres ese día. Prueba otra fecha u otra estilista.')}</p>`;
+      return;
+    }
+
+    generarGridHorarios(horas);
+  } catch (e) {
+    grid.innerHTML = `<p class="col-span-full text-xs text-rose-300">No se pudo consultar la disponibilidad.</p>`;
+  }
 }
 
-window.seleccionarServicio = function(id, nombre, precio, duracion, el) {
+function generarGridHorarios(horas = []) {
+  const grid = document.getElementById('gridHorarios');
+  if (!grid) return;
+
+  grid.innerHTML = horas.map(hora => {
+    const hora24 = convertirHoraA24(hora);
+    const esElegida = horaSeleccionada === hora24;
+
+    return `
+      <button type="button" onclick="seleccionarHora('${hora24}', this)"
+        class="btn-hora-item py-2 px-3 rounded-lg border ${esElegida ? 'bg-white text-black border-white' : 'border-white/10 bg-white/5 text-white/80 hover:bg-white/15 hover:text-white'} transition font-semibold text-center">
+        ${hora24}
+      </button>
+    `;
+  }).join('');
+}
+
+window.seleccionarServicio = async function(id, nombre, precio, duracion, el) {
   document.querySelectorAll('.card-servicio-item').forEach(c => c.classList.remove('border-pink-400', 'bg-white/15'));
   if (el) el.classList.add('border-pink-400', 'bg-white/15');
 
-  servicioSeleccionado = { id, nombre, precio: Number(precio), duracion: Number(duracion) || 45 };
+  servicioSeleccionado = { id: Number(id), nombre, precio: Number(precio), duracion: Number(duracion) || 45 };
+  horaSeleccionada = null;
   const btnPaso1 = document.getElementById('btnSiguientePaso1');
   if (btnPaso1) btnPaso1.disabled = false;
 
-  cargarEstilistas(id);
+  await cargarEstilistas(id);
   actualizarResumen();
+  await actualizarDisponibilidadHorarios();
 };
 
-window.seleccionarEstilista = function(id, nombre, el) {
+window.seleccionarEstilista = async function(id, nombre, el) {
   document.querySelectorAll('.card-estilista-item').forEach(c => c.classList.remove('border-pink-400', 'bg-white/10'));
   if (el) el.classList.add('border-pink-400', 'bg-white/10');
 
-  estilistaSeleccionada = { id, nombre };
+  estilistaSeleccionada = { id: Number(id) || 0, nombre };
+  horaSeleccionada = null;
   actualizarResumen();
+  await actualizarDisponibilidadHorarios();
 };
 
 window.seleccionarHora = function(hora, el) {
   document.querySelectorAll('.btn-hora-item').forEach(b => b.classList.remove('bg-white', 'text-black', 'border-white'));
   if (el) el.classList.add('bg-white', 'text-black', 'border-white');
 
-  horaSeleccionada = hora;
+  horaSeleccionada = convertirHoraA24(hora);
   actualizarResumen();
 };
 
@@ -418,7 +423,7 @@ function actualizarResumen() {
   }
 }
 
-window.irAPaso = function(paso) {
+window.irAPaso = async function(paso) {
   document.getElementById('paso1').classList.toggle('hidden', paso !== 1);
   document.getElementById('paso2').classList.toggle('hidden', paso !== 2);
   document.getElementById('paso3').classList.toggle('hidden', paso !== 3);
@@ -430,6 +435,10 @@ window.irAPaso = function(paso) {
   if (ind1) ind1.className = `flex items-center gap-2 px-3 py-1.5 rounded-full ${paso >= 1 ? 'bg-white text-black' : 'bg-white/10 text-white/60'}`;
   if (ind2) ind2.className = `flex items-center gap-2 px-3 py-1.5 rounded-full ${paso >= 2 ? 'bg-white text-black' : 'bg-white/10 text-white/60'}`;
   if (ind3) ind3.className = `flex items-center gap-2 px-3 py-1.5 rounded-full ${paso >= 3 ? 'bg-white text-black' : 'bg-white/10 text-white/60'}`;
+
+  if (paso === 3) {
+    await actualizarDisponibilidadHorarios();
+  }
 };
 
 document.getElementById('btnSiguientePaso1')?.addEventListener('click', () => irAPaso(2));
@@ -437,12 +446,8 @@ document.getElementById('btnSiguientePaso2')?.addEventListener('click', () => ir
 
 document.getElementById('btnConfirmarCita')?.addEventListener('click', async () => {
   const alerta = document.getElementById('alertaAgendamiento');
-  let usuario = typeof obtenerUsuarioActual === 'function' ? obtenerUsuarioActual() : null;
-  if (!usuario) {
-    try {
-      usuario = JSON.parse(localStorage.getItem('usuarioLogueado'));
-    } catch (e) {}
-  }
+  const btnConfirmar = document.getElementById('btnConfirmarCita');
+  const usuario = obtenerUsuarioLogueado();
 
   if (!usuario) {
     mostrarAlertaAgendamiento(alerta, 'Debes iniciar sesión para confirmar tu cita. Redirigiendo...', false);
@@ -450,8 +455,14 @@ document.getElementById('btnConfirmarCita')?.addEventListener('click', async () 
     return;
   }
 
-  if (!servicioSeleccionado) {
-    mostrarAlertaAgendamiento(alerta, 'Selecciona un servicio antes de continuar.', false);
+  const idUsuario = Number(usuario.id ?? usuario.id_usuario ?? usuario.idUsuario);
+  if (!idUsuario) {
+    mostrarAlertaAgendamiento(alerta, 'No se identificó el ID de tu cuenta. Inicia sesión con una cuenta registrada en MySQL.', false);
+    return;
+  }
+
+  if (!servicioSeleccionado || !Number(servicioSeleccionado.id)) {
+    mostrarAlertaAgendamiento(alerta, 'Selecciona un servicio válido antes de continuar.', false);
     return;
   }
 
@@ -461,39 +472,54 @@ document.getElementById('btnConfirmarCita')?.addEventListener('click', async () 
     return;
   }
 
+  const horaFormateada = convertirHoraA24(horaSeleccionada);
+  const observaciones = document.getElementById('notasCita')?.value.trim() || '';
+
   const payload = {
-    id_cliente: usuario.id || usuario.usuario,
-    cliente: usuario.nombre || usuario.usuario,
-    id_servicio: servicioSeleccionado.id,
-    servicio: servicioSeleccionado.nombre,
-    id_estilista: estilistaSeleccionada.id,
-    estilista: estilistaSeleccionada.nombre,
+    idUsuario: idUsuario,
+    idServicio: Number(servicioSeleccionado.id),
+    idEstilista: estilistaSeleccionada.id ? Number(estilistaSeleccionada.id) : null,
     fecha: fechaVal,
-    hora: horaSeleccionada,
-    precio: servicioSeleccionado.precio,
-    valor: servicioSeleccionado.precio,
-    notas: document.getElementById('notasCita')?.value.trim() || ''
+    hora: horaFormateada,
+    observaciones
   };
 
-  mostrarAlertaAgendamiento(alerta, 'Procesando tu reserva...', true);
+  if (btnConfirmar) btnConfirmar.disabled = true;
+  mostrarAlertaAgendamiento(alerta, 'Guardando tu cita en el servidor...', true);
 
   try {
+    let resp = null;
     if (typeof pedir === 'function') {
-      await pedir('/citas', 'POST', payload);
+      resp = await pedir('/citas', 'POST', payload);
+    } else {
+      const resHttp = await fetch('/api/citas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      resp = await resHttp.json();
+      if (!resHttp.ok) resp.success = false;
     }
-  } catch (e) {}
 
-  try {
-    const citasGuardadas = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
-    citasGuardadas.unshift({ id: Date.now(), ...payload, estado: 'Confirmada' });
-    localStorage.setItem('citasBellaStyle', JSON.stringify(citasGuardadas));
-  } catch (e) {}
+    // Revisar la respuesta del servidor ANTES de decir "éxito"
+    if (!resp || resp.errorRed || !resp.success) {
+      const msgError = (resp && (resp.message || resp.mensaje || resp.error)) || 'El servidor no pudo guardar la cita.';
+      mostrarAlertaAgendamiento(alerta, msgError, false);
+      if (btnConfirmar) btnConfirmar.disabled = false;
+      await actualizarDisponibilidadHorarios();
+      return;
+    }
 
-  mostrarAlertaAgendamiento(alerta, 'Cita agendada con éxito. Redirigiendo a tu panel...', true);
-  setTimeout(() => {
-    const esAdmin = String(usuario.rol || '').toLowerCase().includes('admin');
-    window.location.href = esAdmin ? 'admin.html' : 'panel.html';
-  }, 1500);
+    mostrarAlertaAgendamiento(alerta, resp.message || 'Cita agendada con éxito. Redirigiendo a tu panel...', true);
+    setTimeout(() => {
+      const esAdmin = String(usuario.rol || '').toLowerCase().includes('admin');
+      window.location.href = esAdmin ? 'admin.html' : 'panel.html';
+    }, 1200);
+  } catch (error) {
+    console.error('Error al agendar cita:', error);
+    mostrarAlertaAgendamiento(alerta, 'Error de conexión al intentar agendar la cita.', false);
+    if (btnConfirmar) btnConfirmar.disabled = false;
+  }
 });
 
 function procesarParametrosURL() {

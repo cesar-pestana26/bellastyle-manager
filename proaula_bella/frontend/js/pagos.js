@@ -13,6 +13,10 @@ function formatearMonedaPago(valor) {
   return '$' + Number(valor || 0).toLocaleString('es-CO');
 }
 
+function escaparTextoPago(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function inyectarModalesPago() {
   if (document.getElementById('modalPasarelaPago')) return;
 
@@ -119,7 +123,7 @@ window.abrirPasarelaPago = function(cita, onSuccess = null) {
 
   const monto = Number(cita.precio || cita.valor || 45000);
   document.getElementById('pagoResumenServicio').textContent = cita.servicio;
-  document.getElementById('pagoResumenEstilista').textContent = cita.estilista;
+  document.getElementById('pagoResumenEstilista').textContent = cita.estilista || 'Por asignar';
   document.getElementById('pagoResumenFecha').textContent = `${cita.fecha} · ${cita.hora}`;
   document.getElementById('pagoResumenMonto').textContent = formatearMonedaPago(monto);
 
@@ -216,27 +220,22 @@ async function procesarTransaccionPago() {
     btn.textContent = 'Procesando...';
   }
 
+  const idCitaReal = citaEnProcesoPago.id_cita || citaEnProcesoPago.id;
   const monto = Number(citaEnProcesoPago.precio || citaEnProcesoPago.valor || 45000);
   const esSalon = metodoPagoSeleccionado === 'Salon';
   const codigoTx = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
 
   const registroPago = {
     id_pago: codigoTx,
-    id_cita: citaEnProcesoPago.id,
+    id_cita: idCitaReal,
     cliente: citaEnProcesoPago.cliente || 'Clienta BellaStyle',
     servicio: citaEnProcesoPago.servicio,
-    estilista: citaEnProcesoPago.estilista,
+    estilista: citaEnProcesoPago.estilista || 'Por asignar',
     metodo: esSalon ? 'Efectivo / Salón' : metodoPagoSeleccionado,
     monto,
     estado_pago: esSalon ? 'Pendiente en Salón' : 'Pagado',
     fecha_pago: new Date().toISOString().slice(0, 10)
   };
-
-  try {
-    if (typeof pedir === 'function') {
-      await pedir('/pagos', 'POST', registroPago);
-    }
-  } catch (e) {}
 
   guardarPagoLocal(registroPago);
 
@@ -251,7 +250,7 @@ async function procesarTransaccionPago() {
     callbackPagoCompletado(registroPago);
   }
 
-  verComprobantePago(citaEnProcesoPago.id);
+  verComprobantePago(idCitaReal);
 }
 
 function guardarPagoLocal(pago) {
@@ -296,16 +295,16 @@ window.verComprobantePago = function(idCita) {
       <p class="text-[11px] text-white/50">Comprobante Electrónico de Servicio</p>
       <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase ${
         pagado ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-      }">${pago.estado_pago}</span>
+      }">${escaparTextoPago(pago.estado_pago)}</span>
     </div>
 
     <div class="space-y-2">
-      <div class="flex justify-between"><span class="text-white/50">Referencia:</span><strong class="font-mono text-pink-300">${pago.id_pago}</strong></div>
-      <div class="flex justify-between"><span class="text-white/50">Fecha:</span><span class="text-white">${pago.fecha_pago}</span></div>
-      <div class="flex justify-between"><span class="text-white/50">Clienta:</span><span class="text-white font-semibold">${pago.cliente}</span></div>
-      <div class="flex justify-between"><span class="text-white/50">Servicio:</span><span class="text-white">${pago.servicio}</span></div>
-      <div class="flex justify-between"><span class="text-white/50">Especialista:</span><span class="text-white">${pago.estilista}</span></div>
-      <div class="flex justify-between"><span class="text-white/50">Método de Pago:</span><span class="text-white font-semibold">${pago.metodo}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Referencia:</span><strong class="font-mono text-pink-300">${escaparTextoPago(pago.id_pago)}</strong></div>
+      <div class="flex justify-between"><span class="text-white/50">Fecha:</span><span class="text-white">${escaparTextoPago(pago.fecha_pago)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Clienta:</span><span class="text-white font-semibold">${escaparTextoPago(pago.cliente)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Servicio:</span><span class="text-white">${escaparTextoPago(pago.servicio)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Especialista:</span><span class="text-white">${escaparTextoPago(pago.estilista)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Método de Pago:</span><span class="text-white font-semibold">${escaparTextoPago(pago.metodo)}</span></div>
     </div>
 
     <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center">

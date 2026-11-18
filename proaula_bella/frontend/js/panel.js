@@ -1,11 +1,15 @@
-// js/panel.js - Lógica del Panel Privado (Clientas, Estilistas, Pagos e Iconos SVG)
+// js/panel.js - Panel Privado conectado a MySQL con Reprogramar, Calificaciones, Foto de Perfil, Vitrina e Historial
 
 let usuarioSesion = null;
 let citasUsuario = [];
 let serviciosGlobales = [];
+let miPerfilClienta = null;
+let miPerfilEstilista = null;
+let versionFoto = Date.now();
 
 document.addEventListener('DOMContentLoaded', async () => {
   obtenerSesionValida();
+  if (!usuarioSesion) return;
 
   const rolNorm = normalizarRolPanel(usuarioSesion.rol);
   if (rolNorm === 'admin') {
@@ -14,14 +18,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   configurarHeader(rolNorm);
+  inicializarFotoPerfil();
   await cargarDatosIniciales(rolNorm);
 
   if (rolNorm === 'estilista') {
-    iniciarVistaEstilista();
+    await iniciarVistaEstilista();
   } else {
-    iniciarVistaClienta();
+    await iniciarVistaClienta();
   }
 });
+
+function obtenerIdUsuarioActual() {
+  return usuarioSesion?.id ?? usuarioSesion?.id_usuario ?? usuarioSesion?.idUsuario;
+}
 
 function normalizarRolPanel(rol) {
   const r = String(rol || '').toLowerCase().trim();
@@ -39,21 +48,7 @@ function obtenerSesionValida() {
 
   if (!usuarioSesion) {
     window.location.replace('index.html');
-    return;
   }
-
-  // Verificar el rol real registrado en usuariosRegistrados para evitar inconsistencias
-  try {
-    const registrados = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
-    const uNorm = String(usuarioSesion.usuario || usuarioSesion.username || '').toLowerCase().trim();
-    const cuentaReal = registrados.find(
-      u => String(u.usuario || u.username || '').toLowerCase().trim() === uNorm
-    );
-    if (cuentaReal && cuentaReal.rol) {
-      usuarioSesion.rol = normalizarRolPanel(cuentaReal.rol);
-      localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
-    }
-  } catch (e) {}
 }
 
 function configurarHeader(rolNorm) {
@@ -63,10 +58,9 @@ function configurarHeader(rolNorm) {
   const subtituloPanel = document.getElementById('subtituloPanel');
 
   const esEstilista = rolNorm === 'estilista';
-
   history.replaceState(null, '', `?rol=${rolNorm}`);
 
-  if (nombreEl) nombreEl.textContent = usuarioSesion.nombre || usuarioSesion.usuario;
+  if (nombreEl) nombreEl.textContent = usuarioSesion.nombre || usuarioSesion.usuario || usuarioSesion.username;
   if (badgeEl) {
     badgeEl.textContent = esEstilista ? 'Estilista' : 'Clienta';
     badgeEl.className = `text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
@@ -75,13 +69,13 @@ function configurarHeader(rolNorm) {
   }
 
   if (tituloSaludo) {
-    tituloSaludo.textContent = `Hola, ${usuarioSesion.nombre || usuarioSesion.usuario}`;
+    tituloSaludo.textContent = `Hola, ${usuarioSesion.nombre || usuarioSesion.usuario || usuarioSesion.username}`;
   }
 
   if (subtituloPanel) {
     subtituloPanel.textContent = esEstilista
-      ? 'Consulta tu agenda de citas asignadas y tus comisiones acumuladas.'
-      : 'Revisa tus citas agendadas, realiza pagos y descarga tus comprobantes.';
+      ? 'Gestiona tus citas asignadas, tus notas de servicio, tus calificaciones y tu vitrina.'
+      : 'Revisa tus citas, reprograma, califica a tu estilista y descarga tus comprobantes.';
   }
 
   const btnAgendar = document.getElementById('btnAgendarHeader');
@@ -90,66 +84,141 @@ function configurarHeader(rolNorm) {
   }
 }
 
-async function cargarDatosIniciales(rolNorm) {
-  serviciosGlobales = [
-    { id_servicio: 1, nombre: 'Corte Dama + Lavado y Cepillado', precio: 45000 },
-    { id_servicio: 2, nombre: 'Corte Caballero / Degradado (Fade)', precio: 28000 },
-    { id_servicio: 3, nombre: 'Balayage Completo + Matización', precio: 220000 },
-    { id_servicio: 4, nombre: 'Manicure Semipermanente (Gel)', precio: 48000 },
-    { id_servicio: 5, nombre: 'Pedicure Tradicional + Exfoliación', precio: 32000 },
-    { id_servicio: 6, nombre: 'Coloración Global (Tinte Completo)', precio: 95000 },
-    { id_servicio: 7, nombre: 'Alisado Progresivo / Keratina Orgánica', precio: 180000 }
-  ];
+// ---------------------------------------------------------------
+// FOTO DE PERFIL (/api/usuarios/:id/foto)
+// ---------------------------------------------------------------
 
-  let citasLocales = [];
-  try {
-    citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
-  } catch (e) {}
-
-  const nombreSesion = String(usuarioSesion.nombre || usuarioSesion.usuario || '').toLowerCase().trim();
-  const userSesion = String(usuarioSesion.usuario || '').toLowerCase().trim();
-
-  if (rolNorm === 'estilista') {
-    // Citas base de demostración asignadas a estilistas (con clientas reales, no con su propio nombre)
-    const citasDemoEstilistas = [
-      { id: 201, cliente: 'Ana María López', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
-      { id: 202, cliente: 'Camila Restrepo', servicio: 'Corte Dama + Lavado y Cepillado', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '02:00 PM', estado: 'Pendiente', precio: 45000 },
-      { id: 203, cliente: 'Martina Flórez', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '11:00 AM', estado: 'Confirmada', precio: 48000 },
-      { id: 204, cliente: 'Valeria Gómez', servicio: 'Pedicure Tradicional + Exfoliación', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 32000 }
-    ];
-
-    const todas = [...citasLocales, ...citasDemoEstilistas];
-    citasUsuario = todas.filter(c => {
-      const est = String(c.estilista || '').toLowerCase().trim();
-      return est === nombreSesion || est === userSesion || est === 'cualquiera disponible';
-    });
-  } else {
-    // Vista Clienta: solo mostrar citas de esta clienta
-    const citasDemoClienta = [
-      { id: 101, id_cliente: 'cliente', cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Balayage Completo + Matización', estilista: 'Diana Carmen', fecha: obtenerFechaHoy(), hora: '10:00 AM', estado: 'Confirmada', precio: 220000 },
-      { id: 102, id_cliente: 'cliente', cliente: usuarioSesion.nombre || 'Mariana Sofía', servicio: 'Manicure Semipermanente (Gel)', estilista: 'Sofía Martínez', fecha: obtenerFechaHoy(), hora: '03:00 PM', estado: 'Pendiente', precio: 48000 }
-    ];
-
-    const propiasLocales = citasLocales.filter(c => {
-      const idCli = String(c.id_cliente || '').toLowerCase().trim();
-      const nomCli = String(c.cliente || '').toLowerCase().trim();
-      return idCli === userSesion || idCli === String(usuarioSesion.id || '') || nomCli === nombreSesion;
-    });
-
-    citasUsuario = [...propiasLocales, ...citasDemoClienta];
-  }
-
-  try {
-    if (typeof pedir === 'function') {
-      const resp = await pedir(`/citas?idUsuario=${usuarioSesion.usuario || usuarioSesion.id}&rol=${rolNorm}`, 'GET');
-      if (resp && resp.success && Array.isArray(resp.data) && resp.data.length > 0) {
-        citasUsuario = resp.data;
-      }
-    }
-  } catch (e) {}
+function fotoDe(idUsuario) {
+  return `/api/usuarios/${idUsuario}/foto?v=${versionFoto}`;
 }
 
-function iniciarVistaClienta() {
+function mostrarFotoPerfil() {
+  const idU = obtenerIdUsuarioActual();
+  if (!idU) return;
+  const imgHeader = document.getElementById('fotoUsuario');
+  const imgPerfil = document.getElementById('fotoPerfil');
+  if (imgHeader) imgHeader.src = fotoDe(idU);
+  if (imgPerfil) imgPerfil.src = fotoDe(idU);
+}
+
+function inicializarFotoPerfil() {
+  mostrarFotoPerfil();
+
+  document.getElementById('btnCambiarFoto')?.addEventListener('click', () => {
+    document.getElementById('archivoFotoPerfil')?.click();
+  });
+
+  document.getElementById('archivoFotoPerfil')?.addEventListener('change', async (e) => {
+    const archivo = e.target.files[0];
+    e.target.value = '';
+    if (!archivo) return;
+
+    const idU = obtenerIdUsuarioActual();
+    if (!idU) return mostrarToast('No se identificó el ID de tu cuenta.');
+
+    let imagen;
+    try {
+      imagen = await comprimirImagenWebp(archivo, 500);
+    } catch (err) {
+      return mostrarToast(err.message || 'No se pudo procesar la imagen.');
+    }
+
+    const resp = await pedir(`/usuarios/${idU}/foto`, 'PUT', { imagen });
+    mostrarToast(resp.message || resp.mensaje || 'Foto actualizada');
+    if (resp.success) {
+      versionFoto = Date.now();
+      mostrarFotoPerfil();
+    }
+  });
+
+  document.getElementById('btnQuitarFoto')?.addEventListener('click', async () => {
+    const idU = obtenerIdUsuarioActual();
+    if (!idU) return;
+    const resp = await pedir(`/usuarios/${idU}/foto`, 'DELETE');
+    mostrarToast(resp.message || resp.mensaje || 'Foto eliminada');
+    versionFoto = Date.now();
+    mostrarFotoPerfil();
+  });
+}
+
+function comprimirImagenWebp(archivo, maxLado = 1200) {
+  if (typeof reducirImagen === 'function') return reducirImagen(archivo, maxLado);
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * escala);
+        canvas.height = Math.round(img.height * escala);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/webp', 0.85));
+      };
+      img.onerror = () => reject(new Error('Imagen no válida'));
+      img.src = lector.result;
+    };
+    lector.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    lector.readAsDataURL(archivo);
+  });
+}
+
+// ---------------------------------------------------------------
+// CARGA DE CITAS DESDE MYSQL
+// ---------------------------------------------------------------
+
+function normalizarCitaServidor(c) {
+  return {
+    id: c.id_cita ?? c.id,
+    id_clienta: c.id_clienta,
+    id_servicio: c.id_servicio ?? c.idServicio,
+    id_estilista: c.id_estilista ?? c.idEstilista,
+    cliente: c.cliente || c.nombre_cliente || 'Clienta',
+    servicio: c.servicio || c.nombre_servicio || 'Servicio',
+    estilista: c.estilista || c.nombre_estilista || 'Por asignar',
+    fecha: String(c.fecha || '').slice(0, 10),
+    hora: String(c.hora || '').slice(0, 5),
+    estado: c.estado || 'Pendiente',
+    precio: Number(c.precio ?? c.valor ?? 0),
+    reprogramaciones: Number(c.reprogramaciones || 0),
+    calificacion: c.calificacion ? Number(c.calificacion) : null,
+    notas_servicio: c.notas_servicio || '',
+    observaciones: c.observaciones || ''
+  };
+}
+
+async function cargarDatosIniciales(rolNorm) {
+  serviciosGlobales = [];
+  citasUsuario = [];
+
+  try {
+    const respSrv = await pedir('/servicios', 'GET');
+    const listaSrv = Array.isArray(respSrv) ? respSrv : (respSrv?.data || []);
+    if (Array.isArray(listaSrv)) serviciosGlobales = listaSrv;
+  } catch (e) {}
+
+  await recargarCitas(rolNorm);
+}
+
+async function recargarCitas(rolNorm) {
+  const idUsuario = obtenerIdUsuarioActual();
+  const rolApi = rolNorm === 'estilista' ? 'Estilista' : 'Clienta';
+
+  try {
+    const resp = await pedir(`/citas?rol=${encodeURIComponent(rolApi)}&idUsuario=${encodeURIComponent(idUsuario)}`, 'GET');
+    const listaCruda = Array.isArray(resp) ? resp : (resp?.data || resp?.citas || []);
+    citasUsuario = Array.isArray(listaCruda) ? listaCruda.map(normalizarCitaServidor) : [];
+  } catch (e) {
+    console.error('Error al cargar citas desde MySQL:', e);
+    citasUsuario = [];
+  }
+}
+
+// ---------------------------------------------------------------
+// VISTA CLIENTA (Datos, Citas, Reprogramar, Calificar, PDF, Vitrina Estilistas)
+// ---------------------------------------------------------------
+
+async function iniciarVistaClienta() {
   const vClienta = document.getElementById('vistaClienta');
   const vEstilista = document.getElementById('vistaEstilista');
 
@@ -162,23 +231,42 @@ function iniciarVistaClienta() {
     vEstilista.style.display = 'none';
   }
 
-  renderizarDatosClienta();
+  await cargarMisDatosClienta();
   renderizarTablaCitasClienta();
+  await cargarEstilistasClienta();
 
   document.getElementById('btnEditarMisDatos')?.addEventListener('click', modalEditarDatosClienta);
 }
 
-function renderizarDatosClienta() {
+async function cargarMisDatosClienta() {
+  const idU = obtenerIdUsuarioActual();
+  try {
+    const resp = await pedir(`/clientas/usuario/${idU}`, 'GET');
+    if (resp && resp.success && resp.data) {
+      miPerfilClienta = resp.data;
+    }
+  } catch (e) {}
+
   const contenedor = document.getElementById('misDatosClienta');
   if (!contenedor) return;
 
-  contenedor.innerHTML = `
-    <div><span class="text-white/50">Nombre:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.nombre || usuarioSesion.usuario)}</strong></div>
-    <div><span class="text-white/50">Usuario:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.usuario)}</strong></div>
-    <div><span class="text-white/50">Teléfono:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.telefono || '3001234567')}</strong></div>
-    <div><span class="text-white/50">Correo:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.email || 'clienta@bellastyle.com')}</strong></div>
-    <div><span class="text-white/50">Profesión:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.profesion || 'No especificada')}</strong></div>
-  `;
+  if (miPerfilClienta) {
+    const c = miPerfilClienta;
+    contenedor.innerHTML = `
+      <div><span class="text-white/50">Nombre:</span> <strong class="text-white ml-1">${escapar(`${c.nombres} ${c.apellidos}`.trim())}</strong></div>
+      <div><span class="text-white/50">Usuario:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.usuario || usuarioSesion.username || '')}</strong></div>
+      <div><span class="text-white/50">Teléfono:</span> <strong class="text-white ml-1">${escapar(c.telefono || 'Sin registrar')}</strong></div>
+      <div><span class="text-white/50">Correo:</span> <strong class="text-white ml-1">${escapar(c.email || 'Sin registrar')}</strong></div>
+      <div><span class="text-white/50">Profesión:</span> <strong class="text-white ml-1">${escapar(c.profesion || 'No especificada')}</strong></div>
+    `;
+  } else {
+    contenedor.innerHTML = `
+      <div><span class="text-white/50">Nombre:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.nombre || usuarioSesion.usuario)}</strong></div>
+      <div><span class="text-white/50">Usuario:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.usuario || usuarioSesion.username || '')}</strong></div>
+      <div><span class="text-white/50">Teléfono:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.telefono || 'Sin registrar')}</strong></div>
+      <div><span class="text-white/50">Correo:</span> <strong class="text-white ml-1">${escapar(usuarioSesion.email || 'Sin registrar')}</strong></div>
+    `;
+  }
 }
 
 function renderizarTablaCitasClienta() {
@@ -191,37 +279,152 @@ function renderizarTablaCitasClienta() {
   }
 
   tabla.innerHTML = citasUsuario.map(c => {
+    const activa = c.estado === 'Pendiente' || c.estado === 'Confirmada';
     const pago = typeof obtenerPagoPorCita === 'function' ? obtenerPagoPorCita(c.id) : null;
     const estaPagada = pago && pago.estado_pago === 'Pagado';
-    const pendienteSalon = pago && pago.estado_pago === 'Pendiente en Salón';
 
-    let badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-white/10 text-white/60">Sin pagar</span>`;
-    if (estaPagada) {
-      badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pagado</span>`;
-    } else if (pendienteSalon) {
-      badgePago = `<span class="ml-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">En Salón</span>`;
+    let acciones = '';
+    if (activa) {
+      const btnPago = estaPagada
+        ? `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Recibo</button>`
+        : `<button type="button" onclick="iniciarPagoCitaClienta(${c.id})" class="px-2 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600">Pagar</button>`;
+
+      const btnReprog = c.reprogramaciones >= 1
+        ? `<span class="px-2 py-1 text-[10px] text-white/40" title="Cada cita se puede reprogramar una sola vez">Ya reprogramada</span>`
+        : `<button type="button" onclick="reprogramarCita(${c.id})" class="px-2 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[11px] font-semibold hover:bg-amber-500/30">Reprogramar</button>`;
+
+      const btnCancelar = `<button type="button" onclick="cancelarCitaClienta(${c.id})" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>`;
+
+      acciones = `${btnPago} ${btnReprog} ${btnCancelar}`;
+    } else if (c.estado === 'Finalizada') {
+      const btnPdf = `<a href="/api/citas/${c.id}/comprobante" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>`;
+      const btnCalificar = c.calificacion
+        ? `<span class="px-2 py-1 text-amber-300 font-bold text-xs" title="Tu calificación">${'★'.repeat(c.calificacion)}</span>`
+        : `<button type="button" onclick="calificarCita(${c.id})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Calificar</button>`;
+
+      acciones = `${btnPdf} ${btnCalificar}`;
     }
-
-    const botonPago = estaPagada
-      ? `<button onclick="verComprobantePago(${c.id})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Recibo</button>`
-      : (c.estado !== 'Cancelada'
-          ? `<button onclick="iniciarPagoCitaClienta(${c.id})" class="px-2.5 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600 shadow-sm">Pagar</button>`
-          : '');
 
     return `
       <tr class="hover:bg-white/5 transition border-b border-white/5">
-        <td class="p-3.5 font-bold text-white">${escapar(c.servicio)} ${badgePago}</td>
+        <td class="p-3.5 font-bold text-white">${escapar(c.servicio)}</td>
         <td class="p-3.5 text-white/80">${escapar(c.estilista)}</td>
-        <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${c.fecha} · ${c.hora}</td>
+        <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${escapar(c.fecha)} · ${escapar(c.hora)}</td>
         <td class="p-3.5">${formatearEstadoBadge(c.estado)}</td>
-        <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
-          ${botonPago}
-          ${c.estado === 'Confirmada' || c.estado === 'Pendiente' ? `<button onclick="cancelarCitaClienta(${c.id})" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>` : ''}
-        </td>
+        <td class="p-3.5 text-right space-x-1 whitespace-nowrap">${acciones}</td>
       </tr>
     `;
   }).join('');
 }
+
+// Reprogramar cita (1 sola vez, consultando /disponibilidad de la misma estilista)
+window.reprogramarCita = function(idCita) {
+  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
+  if (!cita) return;
+
+  abrirVentana(`Reprogramar: ${cita.servicio}`,
+    `<p class="text-xs text-white/70">Se mantiene la misma estilista (<strong class="text-pink-300">${escapar(cita.estilista)}</strong>). La cita vuelve a quedar pendiente.</p>
+     <p class="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Recuerda: cada cita se puede reprogramar <b>una sola vez</b>.</p>
+     <div>
+       <label for="vFechaReprog" class="text-xs text-white/70 block mb-1">Nueva fecha</label>
+       <input id="vFechaReprog" type="date" value="${escapar(cita.fecha)}" min="${obtenerFechaHoy()}" class="campo" required>
+     </div>
+     <div>
+       <label for="vHoraReprog" class="text-xs text-white/70 block mb-1">Nueva hora disponible (${escapar(cita.estilista)})</label>
+       <select id="vHoraReprog" class="campo bg-[#120f1d]" required></select>
+     </div>`,
+    async () => {
+      const nuevaFecha = document.getElementById('vFechaReprog')?.value;
+      const nuevaHora = document.getElementById('vHoraReprog')?.value;
+      if (!nuevaHora) {
+        mostrarToast('Escoge una hora libre antes de guardar');
+        return false;
+      }
+
+      const resp = await pedir(`/citas/${idCita}/reprogramar`, 'PUT', {
+        fecha: nuevaFecha,
+        hora: nuevaHora
+      });
+
+      mostrarToast(resp.message || resp.mensaje || (resp.success ? 'Cita reprogramada' : 'No se pudo reprogramar'));
+      if (resp.success) {
+        await recargarCitas('cliente');
+        renderizarTablaCitasClienta();
+        return true;
+      }
+      return false;
+    }
+  );
+
+  async function cargarHorasReprogramar() {
+    const select = document.getElementById('vHoraReprog');
+    const fechaVal = document.getElementById('vFechaReprog')?.value;
+    if (!select || !fechaVal) return;
+
+    select.innerHTML = '<option value="">Buscando horas libres...</option>';
+    const parametros = new URLSearchParams({
+      idServicio: cita.id_servicio,
+      idEstilista: cita.id_estilista,
+      fecha: fechaVal,
+      excluirCita: cita.id,
+      idUsuario: obtenerIdUsuarioActual()
+    });
+
+    const resp = await pedir('/disponibilidad?' + parametros.toString(), 'GET');
+    const horas = resp && resp.success && resp.data && Array.isArray(resp.data.horas)
+      ? resp.data.horas
+      : [];
+
+    select.innerHTML = horas.length === 0
+      ? '<option value="">No hay horas libres ese día</option>'
+      : horas.map(h => `<option value="${escapar(h)}" ${h === cita.hora ? 'selected' : ''}>${escapar(h)}</option>`).join('');
+  }
+
+  document.getElementById('vFechaReprog')?.addEventListener('change', cargarHorasReprogramar);
+  cargarHorasReprogramar();
+};
+
+// Calificar cita finalizada (POST /api/citas/:id/calificacion)
+window.calificarCita = function(idCita) {
+  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
+  if (!cita) return;
+
+  const opciones = [5, 4, 3, 2, 1].map(n => `
+    <label class="flex cursor-pointer items-center gap-3 rounded-xl bg-white/5 border border-white/10 px-3 py-2 hover:bg-white/10">
+      <input type="radio" name="vEstrellas" value="${n}" class="accent-pink-500" ${n === 5 ? 'checked' : ''}>
+      <span class="text-amber-400 text-sm">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>
+      <span class="text-xs text-white/70">(${n} ${n === 1 ? 'estrella' : 'estrellas'})</span>
+    </label>
+  `).join('');
+
+  abrirVentana(`Califica tu ${cita.servicio}`,
+    `<p class="text-xs text-white/70">Te atendió <strong class="text-pink-300">${escapar(cita.estilista)}</strong> el ${escapar(cita.fecha)}.</p>
+     <div class="space-y-2">${opciones}</div>
+     <div>
+       <label for="vComentarioCal" class="text-xs text-white/70 block mb-1">Comentario (opcional)</label>
+       <textarea id="vComentarioCal" rows="2" maxlength="300" class="campo" placeholder="Ej: Me encantó el resultado y la atención"></textarea>
+     </div>`,
+    async () => {
+      const marcada = document.querySelector('input[name="vEstrellas"]:checked');
+      const comentario = document.getElementById('vComentarioCal')?.value.trim() || '';
+
+      const resp = await pedir(`/citas/${idCita}/calificacion`, 'POST', {
+        idUsuario: obtenerIdUsuarioActual(),
+        estrellas: Number(marcada?.value || 5),
+        comentario
+      });
+
+      mostrarToast(resp.message || resp.mensaje || (resp.success ? '¡Gracias por tu calificación!' : 'No se pudo guardar'));
+      if (resp.success) {
+        await recargarCitas('cliente');
+        renderizarTablaCitasClienta();
+        await cargarEstilistasClienta();
+        return true;
+      }
+      return false;
+    }
+  );
+};
 
 window.iniciarPagoCitaClienta = function(idCita) {
   const cita = citasUsuario.find(c => String(c.id) === String(idCita));
@@ -234,58 +437,127 @@ window.iniciarPagoCitaClienta = function(idCita) {
 };
 
 window.cancelarCitaClienta = async function(idCita) {
-  if (confirm('¿Deseas cancelar esta cita?')) {
-    const cita = citasUsuario.find(c => String(c.id) === String(idCita));
-    if (cita) cita.estado = 'Cancelada';
+  if (!confirm('¿Deseas cancelar esta cita?')) return;
 
-    try {
-      const citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
-      const idx = citasLocales.findIndex(c => String(c.id) === String(idCita));
-      if (idx >= 0) {
-        citasLocales[idx].estado = 'Cancelada';
-        localStorage.setItem('citasBellaStyle', JSON.stringify(citasLocales));
-      }
-      if (typeof pedir === 'function') {
-        await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: 'Cancelada' });
-      }
-    } catch (e) {}
-
-    mostrarToast('Cita cancelada correctamente');
-    renderizarTablaCitasClienta();
+  const resp = await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: 'Cancelada' });
+  if (!resp || resp.errorRed || !resp.success) {
+    mostrarToast((resp && (resp.message || resp.mensaje)) || 'No se pudo cancelar la cita en el servidor');
+    return;
   }
+
+  mostrarToast('Cita cancelada correctamente');
+  await recargarCitas('cliente');
+  renderizarTablaCitasClienta();
 };
 
 function modalEditarDatosClienta() {
+  const c = miPerfilClienta || {};
   abrirVentana('Editar Mis Datos',
     `<div class="space-y-3">
       <div>
-        <label class="text-xs text-white/70 block mb-1">Nombre Completo</label>
-        <input id="vEditNombre" type="text" value="${usuarioSesion.nombre || ''}" class="campo">
+        <label class="text-xs text-white/70 block mb-1">Nombres</label>
+        <input id="vEditNombres" type="text" value="${escapar(c.nombres || usuarioSesion.nombre || '')}" class="campo" required>
+      </div>
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Apellidos</label>
+        <input id="vEditApellidos" type="text" value="${escapar(c.apellidos || '')}" class="campo">
       </div>
       <div>
         <label class="text-xs text-white/70 block mb-1">Teléfono</label>
-        <input id="vEditTel" type="text" value="${usuarioSesion.telefono || '3001234567'}" class="campo">
+        <input id="vEditTel" type="text" value="${escapar(c.telefono || usuarioSesion.telefono || '')}" class="campo">
       </div>
       <div>
         <label class="text-xs text-white/70 block mb-1">Correo Electrónico</label>
-        <input id="vEditEmail" type="email" value="${usuarioSesion.email || ''}" class="campo">
+        <input id="vEditEmail" type="email" value="${escapar(c.email || usuarioSesion.email || '')}" class="campo">
+      </div>
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Profesión</label>
+        <input id="vEditProf" type="text" value="${escapar(c.profesion || usuarioSesion.profesion || '')}" class="campo">
       </div>
     </div>`,
     async () => {
-      usuarioSesion.nombre = document.getElementById('vEditNombre').value.trim();
-      usuarioSesion.telefono = document.getElementById('vEditTel').value.trim();
-      usuarioSesion.email = document.getElementById('vEditEmail').value.trim();
+      const nombres = document.getElementById('vEditNombres').value.trim();
+      const apellidos = document.getElementById('vEditApellidos').value.trim();
+      const telefono = document.getElementById('vEditTel').value.trim();
+      const email = document.getElementById('vEditEmail').value.trim();
+      const profesion = document.getElementById('vEditProf').value.trim();
 
+      if (miPerfilClienta?.id_clienta) {
+        const resp = await pedir(`/clientas/${miPerfilClienta.id_clienta}`, 'PUT', {
+          nombres, apellidos, telefono, email, profesion
+        });
+        if (!resp.success) {
+          mostrarToast(resp.message || 'No se pudieron actualizar los datos');
+          return false;
+        }
+      }
+
+      usuarioSesion.nombre = `${nombres} ${apellidos}`.trim();
+      usuarioSesion.telefono = telefono;
+      usuarioSesion.email = email;
+      usuarioSesion.profesion = profesion;
       localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
+
       configurarHeader('cliente');
-      renderizarDatosClienta();
+      await cargarMisDatosClienta();
       mostrarToast('Datos actualizados correctamente');
       return true;
     }
   );
 }
 
-function iniciarVistaEstilista() {
+// Tarjetas de estilistas con foto de perfil, calificación y su vitrina de trabajos
+async function cargarEstilistasClienta() {
+  const lista = document.getElementById('listaEstilistasClienta');
+  if (!lista) return;
+
+  const respEst = await pedir('/estilistas', 'GET');
+  const estilistas = respEst && respEst.success && Array.isArray(respEst.data) ? respEst.data : [];
+
+  if (estilistas.length === 0) {
+    lista.innerHTML = `<p class="col-span-full text-xs text-white/60">Pronto conocerás a nuestro equipo de especialistas.</p>`;
+    return;
+  }
+
+  const vitrinas = await Promise.all(estilistas.map(e => pedir(`/vitrina?idUsuario=${e.id_usuario}`, 'GET')));
+
+  lista.innerHTML = estilistas.map((e, i) => {
+    const fotos = (vitrinas[i]?.data || []).slice(0, 4);
+    const trabajos = fotos.length === 0
+      ? `<p class="text-[11px] text-white/50">Aún no ha subido fotos de sus trabajos.</p>`
+      : `<div class="grid grid-cols-4 gap-2">${fotos.map(f => `
+          <button type="button" data-ver="${escapar(f.url)}" data-texto="${escapar((f.descripcion ? f.descripcion + ' · ' : '') + e.nombres)}"
+            class="aspect-square overflow-hidden rounded-xl bg-white/5 border border-white/10">
+            <img src="${escapar(f.url)}" alt="" loading="lazy" class="h-full w-full object-cover transition hover:scale-105">
+          </button>`).join('')}</div>`;
+
+    return `
+      <article class="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+        <div class="flex items-center gap-3">
+          <img src="${fotoDe(e.id_usuario)}" alt="" class="h-12 w-12 shrink-0 rounded-2xl object-cover border border-white/15 bg-white/5">
+          <div class="min-w-0 flex-1">
+            <h4 class="font-bold text-sm text-white truncate">${escapar(`${e.nombres} ${e.apellidos || ''}`.trim())}</h4>
+            <p class="truncate text-[11px] text-white/60">${escapar(e.servicios || 'Especialista BellaStyle')}</p>
+          </div>
+          <span class="shrink-0 text-xs font-bold ${e.num_calificaciones ? 'text-amber-300' : 'text-white/40'}">
+            ${e.num_calificaciones ? `★ ${Number(e.promedio).toFixed(1)}` : 'Nueva'}
+          </span>
+        </div>
+        <div>${trabajos}</div>
+      </article>
+    `;
+  }).join('');
+
+  lista.querySelectorAll('[data-ver]').forEach(b => {
+    b.addEventListener('click', () => verFotoGrande(b.dataset.ver, b.dataset.texto));
+  });
+}
+
+// ---------------------------------------------------------------
+// VISTA ESTILISTA (Agenda, Notas, Historial Clienta, Calificaciones y Vitrina)
+// ---------------------------------------------------------------
+
+async function iniciarVistaEstilista() {
   const vClienta = document.getElementById('vistaClienta');
   const vEstilista = document.getElementById('vistaEstilista');
 
@@ -298,11 +570,66 @@ function iniciarVistaEstilista() {
     vEstilista.style.display = 'block';
   }
 
+  await cargarMiPerfilEstilista();
   renderizarMetricasEstilista();
   renderizarTablaCitasEstilista();
+  await cargarMiVitrina();
 
+  document.getElementById('btnAgregarVitrina')?.addEventListener('click', () => {
+    agregarAVitrina(obtenerIdUsuarioActual(), cargarMiVitrina);
+  });
+  document.getElementById('btnMisOpiniones')?.addEventListener('click', () => {
+    if (miPerfilEstilista) verOpinionesEstilista(miPerfilEstilista.id_estilista);
+  });
   document.getElementById('btnEditarMisServicios')?.addEventListener('click', modalServiciosEstilista);
   document.getElementById('btnEditarMiHorario')?.addEventListener('click', modalHorarioEstilista);
+}
+
+async function cargarMiPerfilEstilista() {
+  const idU = obtenerIdUsuarioActual();
+  try {
+    const resp = await pedir(`/estilistas/usuario/${idU}`, 'GET');
+    if (resp && resp.success) miPerfilEstilista = resp.data;
+  } catch (e) {}
+
+  const contCal = document.getElementById('miCalificacion');
+  if (!contCal) return;
+
+  if (miPerfilEstilista && Number(miPerfilEstilista.num_calificaciones) > 0) {
+    const prom = Number(miPerfilEstilista.promedio).toFixed(1);
+    const num = Number(miPerfilEstilista.num_calificaciones);
+    contCal.innerHTML = `
+      <div class="flex items-end gap-3 pt-1">
+        <span class="text-4xl font-bold font-serif text-white">${prom}</span>
+        <div>
+          <p class="text-amber-400 text-base">${'★'.repeat(Math.round(Number(prom)))}</p>
+          <p class="text-xs text-white/60">${num} ${num === 1 ? 'opinión' : 'opiniones'} recibidas</p>
+        </div>
+      </div>
+    `;
+  } else {
+    contCal.innerHTML = `<p class="text-xs text-white/60 pt-1">Aún no tienes calificaciones de clientas.</p>`;
+  }
+}
+
+async function verOpinionesEstilista(idEstilista) {
+  const resp = await pedir(`/estilistas/${idEstilista}/calificaciones`, 'GET');
+  const opiniones = (resp && resp.data) || [];
+
+  const html = opiniones.length === 0
+    ? '<p class="text-xs text-white/60">Todavía no has recibido opiniones.</p>'
+    : `<div class="max-h-72 overflow-y-auto space-y-2.5">${opiniones.map(o => `
+        <div class="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <strong class="text-white">${escapar(o.cliente || 'Clienta')}</strong>
+            <span class="text-amber-400">${'★'.repeat(Number(o.estrellas || 5))}</span>
+          </div>
+          <p class="text-[11px] text-pink-300">${escapar(o.servicio || '')} · ${escapar(String(o.fecha || '').slice(0, 10))}</p>
+          ${o.comentario ? `<p class="text-xs text-white/80">"${escapar(o.comentario)}"</p>` : ''}
+        </div>
+      `).join('')}</div>`;
+
+  abrirVentana('Mis Opiniones y Calificaciones', html, null);
 }
 
 function renderizarMetricasEstilista() {
@@ -314,7 +641,7 @@ function renderizarMetricasEstilista() {
   const finalizadas = citasUsuario.filter(c => c.estado === 'Finalizada').length;
   const ingresosBrutos = citasUsuario
     .filter(c => c.estado === 'Finalizada')
-    .reduce((sum, c) => sum + (Number(c.precio) || Number(c.valor) || 0), 0);
+    .reduce((sum, c) => sum + (Number(c.precio) || 0), 0);
   const miComision = ingresosBrutos * 0.60;
 
   const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + num.toLocaleString('es-CO');
@@ -364,57 +691,200 @@ function renderizarTablaCitasEstilista() {
   tabla.innerHTML = citasUsuario.map(c => `
     <tr class="hover:bg-white/5 transition border-b border-white/5">
       <td class="p-3.5 font-mono text-white/50">BS-${c.id}</td>
-      <td class="p-3.5 font-bold text-white">${escapar(c.cliente)}</td>
+      <td class="p-3.5 font-bold text-white">
+        ${escapar(c.cliente)}
+        ${c.id_clienta ? `<button type="button" onclick="verHistorialClienta(${c.id_clienta})" class="ml-1.5 text-[10px] text-pink-400 hover:underline font-normal">Historial</button>` : ''}
+      </td>
       <td class="p-3.5 text-white/80">${escapar(c.servicio)}</td>
-      <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${c.fecha} · ${c.hora}</td>
+      <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${escapar(c.fecha)} · ${escapar(c.hora)}</td>
       <td class="p-3.5">${formatearEstadoBadge(c.estado)}</td>
       <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
-        ${c.estado === 'Pendiente' ? `<button onclick="cambiarEstadoEstilista(${c.id}, 'Confirmada')" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Confirmar</button>` : ''}
-        ${c.estado === 'Confirmada' ? `<button onclick="cambiarEstadoEstilista(${c.id}, 'Finalizada')" class="px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded text-[11px] font-semibold">Finalizar</button>` : ''}
+        ${c.estado === 'Pendiente' ? `<button type="button" onclick="cambiarEstadoEstilista(${c.id}, 'Confirmada')" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Confirmar</button>` : ''}
+        ${c.estado === 'Confirmada' ? `<button type="button" onclick="cambiarEstadoEstilista(${c.id}, 'Finalizada')" class="px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded text-[11px] font-semibold">Finalizar</button>` : ''}
+        ${c.estado === 'Finalizada' ? `<button type="button" onclick="editarNotasServicio(${c.id})" class="px-2 py-1 bg-white/10 text-white/80 border border-white/15 rounded text-[11px] font-semibold hover:bg-white/20">Notas</button>` : ''}
       </td>
     </tr>
   `).join('');
 }
 
 window.cambiarEstadoEstilista = async function(idCita, nuevoEstado) {
-  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
-  if (cita) {
-    cita.estado = nuevoEstado;
-    cita.estilista = usuarioSesion.nombre || cita.estilista;
+  const resp = await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: nuevoEstado });
+  if (!resp || resp.errorRed || !resp.success) {
+    mostrarToast((resp && (resp.message || resp.mensaje)) || 'No se pudo actualizar el estado en el servidor');
+    return;
   }
 
-  try {
-    const citasLocales = JSON.parse(localStorage.getItem('citasBellaStyle')) || [];
-    const idx = citasLocales.findIndex(c => String(c.id) === String(idCita));
-    if (idx >= 0) {
-      citasLocales[idx].estado = nuevoEstado;
-      localStorage.setItem('citasBellaStyle', JSON.stringify(citasLocales));
-    }
-    if (typeof pedir === 'function') {
-      await pedir(`/citas/${idCita}/estado`, 'PUT', { estado: nuevoEstado });
-    }
-  } catch (e) {}
-
   mostrarToast(`Cita marcada como ${nuevoEstado}`);
+  await recargarCitas('estilista');
   renderizarMetricasEstilista();
   renderizarTablaCitasEstilista();
 };
 
-function modalServiciosEstilista() {
-  abrirVentana('Mis Servicios de Especialidad',
-    `<p class="text-xs text-white/70 mb-3">Selecciona los servicios que puedes ofrecer:</p>
-     <div class="space-y-2 text-xs">
-       ${serviciosGlobales.map(s => `
-         <label class="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
-           <input type="checkbox" checked class="accent-pink-500">
-           <span class="text-white">${s.nombre}</span>
-         </label>
-       `).join('')}
+// Historial de clienta (GET /clientas/:id/historial)
+window.verHistorialClienta = async function(idClienta) {
+  const resp = await pedir(`/clientas/${idClienta}/historial`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) return mostrarToast('No se pudo cargar el historial.');
+
+  const lista = datos.servicios.length === 0
+    ? '<p class="text-xs text-white/60">Todavía no tiene servicios finalizados. Es su primera visita.</p>'
+    : `<ol class="max-h-72 space-y-2.5 overflow-y-auto">${datos.servicios.map((s, i) => `
+        <li class="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs">
+          <div class="flex justify-between gap-2">
+            <strong class="text-white">${escapar(s.servicio)}</strong>
+            <span class="text-white/50">${escapar(s.fecha)} · ${escapar(s.estilista)}</span>
+          </div>
+          ${i === 0 ? '<span class="text-[10px] font-bold text-pink-400">Última visita</span>' : ''}
+          <p class="mt-1 text-white/80">${s.notas_servicio ? escapar(s.notas_servicio) : '<span class="text-white/40">Sin notas de la estilista</span>'}</p>
+          ${s.calificacion ? `<p class="mt-1 text-amber-400">${'★'.repeat(Number(s.calificacion))}</p>` : ''}
+        </li>
+      `).join('')}</ol>`;
+
+  abrirVentana(`Historial de ${datos.clienta.nombre}`,
+    `<p class="text-xs text-white/70">Profesión: <strong class="text-white">${escapar(datos.clienta.profesion || 'No registrada')}</strong></p>${lista}`,
+    null
+  );
+};
+
+// Notas del servicio (PUT /citas/:id/notas)
+window.editarNotasServicio = function(idCita) {
+  const c = citasUsuario.find(x => String(x.id) === String(idCita));
+  abrirVentana(`Notas del servicio · ${c ? c.cliente : ''}`,
+    `<p class="text-xs text-white/70">Anota productos, tono o técnica usada para la próxima visita de la clienta.</p>
+     <div>
+       <label for="vNotasServicio" class="text-xs text-white/70 block mb-1">Notas</label>
+       <textarea id="vNotasServicio" rows="4" maxlength="500" class="campo" placeholder="Ej: Tinte 7.1 rubio ceniza, mascarilla de keratina.">${escapar(c?.notas_servicio || '')}</textarea>
      </div>`,
     async () => {
-      mostrarToast('Especialidades guardadas');
-      return true;
+      const notas = document.getElementById('vNotasServicio')?.value.trim() || '';
+      const resp = await pedir(`/citas/${idCita}/notas`, 'PUT', { notas });
+      mostrarToast(resp.message || (resp.success ? 'Notas guardadas' : 'Error al guardar notas'));
+      if (resp.success) {
+        await recargarCitas('estilista');
+        renderizarTablaCitasEstilista();
+        return true;
+      }
+      return false;
     }
+  );
+};
+
+// ---------------------------------------------------------------
+// VITRINA DE TRABAJOS (/vitrina)
+// ---------------------------------------------------------------
+
+function verFotoGrande(url, texto) {
+  const visor = document.getElementById('visorFoto');
+  if (!visor) return;
+  document.getElementById('visorImagen').src = url;
+  document.getElementById('visorTexto').textContent = texto || '';
+  if (!visor.open) visor.showModal();
+}
+
+async function cargarMiVitrina() {
+  const contenedor = document.getElementById('miVitrina');
+  if (!contenedor) return;
+
+  const idU = obtenerIdUsuarioActual();
+  const resp = await pedir(`/vitrina?idUsuario=${idU}`, 'GET');
+  const fotos = (resp && resp.data) || [];
+
+  if (fotos.length === 0) {
+    contenedor.innerHTML = `
+      <div class="rounded-2xl border border-dashed border-white/15 p-6 text-center text-xs text-white/60">
+        Todavía no has subido fotos a tu vitrina. Haz clic en <strong>+ Agregar foto</strong> para mostrar tus trabajos.
+      </div>`;
+    return;
+  }
+
+  contenedor.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">${fotos.map(f => `
+    <figure class="group relative aspect-square overflow-hidden rounded-2xl bg-white/5 border border-white/10">
+      <button type="button" data-ver="${escapar(f.url)}" data-texto="${escapar(f.descripcion || '')}" class="h-full w-full">
+        <img src="${escapar(f.url)}" alt="${escapar(f.descripcion || 'Trabajo')}" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+      </button>
+      ${f.descripcion ? `<figcaption class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-2 pt-6 text-[11px] text-white">${escapar(f.descripcion)}</figcaption>` : ''}
+      <div class="absolute right-2 top-2 flex gap-1">
+        <button type="button" data-editar-vitrina="${f.id_foto}" data-descripcion="${escapar(f.descripcion || '')}" class="px-2 py-0.5 rounded bg-black/75 text-white text-[10px] font-semibold">Editar</button>
+        <button type="button" data-quitar-vitrina="${f.id_foto}" class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-semibold">Quitar</button>
+      </div>
+    </figure>
+  `).join('')}</div>`;
+
+  contenedor.querySelectorAll('[data-ver]').forEach(b => b.addEventListener('click', () => verFotoGrande(b.dataset.ver, b.dataset.texto)));
+  contenedor.querySelectorAll('[data-quitar-vitrina]').forEach(b => b.addEventListener('click', async () => {
+    const r = await pedir(`/vitrina/${b.dataset.quitarVitrina}?idUsuario=${idU}`, 'DELETE');
+    mostrarToast(r.message || 'Foto eliminada');
+    await cargarMiVitrina();
+  }));
+  contenedor.querySelectorAll('[data-editar-vitrina]').forEach(b => b.addEventListener('click', () => {
+    abrirVentana('Editar descripción',
+      `<div>
+        <label for="vDescVitrina" class="text-xs text-white/70 block mb-1">Descripción</label>
+        <input id="vDescVitrina" type="text" maxlength="120" value="${escapar(b.dataset.descripcion)}" class="campo">
+      </div>`,
+      async () => {
+        const desc = document.getElementById('vDescVitrina').value.trim();
+        const r = await pedir(`/vitrina/${b.dataset.editarVitrina}`, 'PUT', { idUsuario: idU, descripcion: desc });
+        mostrarToast(r.message || 'Descripción actualizada');
+        if (r.success) {
+          await cargarMiVitrina();
+          return true;
+        }
+        return false;
+      }
+    );
+  }));
+}
+
+function agregarAVitrina(idUsuario, recargar) {
+  abrirVentana('Agregar a mi vitrina',
+    `<div>
+      <label for="vDescNuevaVitrina" class="text-xs text-white/70 block mb-1">Descripción (opcional, escríbela antes de escoger fotos)</label>
+      <input id="vDescNuevaVitrina" type="text" maxlength="120" placeholder="Ej: Balayage miel en cabello largo" class="campo">
+    </div>
+    <div>
+      <label for="vArchivosVitrina" class="text-xs text-white/70 block mb-1">Selecciona fotos (JPG, PNG o WEBP)</label>
+      <input id="vArchivosVitrina" type="file" accept="image/jpeg,image/png,image/webp" multiple class="campo">
+      <p class="mt-1.5 text-[11px] text-white/50">Se suben automáticamente apenas las seleccionas.</p>
+    </div>`,
+    null
+  );
+
+  document.getElementById('vArchivosVitrina')?.addEventListener('change', async (e) => {
+    const archivos = [...e.target.files];
+    if (!archivos.length) return;
+    const descripcion = document.getElementById('vDescNuevaVitrina')?.value.trim() || '';
+
+    let subidas = 0;
+    for (const archivo of archivos) {
+      mostrarToast(`Subiendo ${subidas + 1} de ${archivos.length}...`);
+      const imagen = await comprimirImagenWebp(archivo, 1200);
+      const r = await pedir('/vitrina', 'POST', { idUsuario, imagen, descripcion });
+      if (!r.success) {
+        mostrarToast(r.message || 'Error al subir foto');
+        break;
+      }
+      subidas++;
+    }
+
+    cerrarVentana();
+    if (subidas > 0) mostrarToast(subidas === 1 ? 'Foto agregada a tu vitrina' : `${subidas} fotos agregadas`);
+    await recargar();
+  });
+}
+
+function modalServiciosEstilista() {
+  abrirVentana('Mis Servicios de Especialidad',
+    `<p class="text-xs text-white/70 mb-3">Servicios registrados en el salón:</p>
+     <div class="space-y-2 text-xs max-h-64 overflow-y-auto">
+       ${serviciosGlobales.map(s => `
+         <div class="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10">
+           <span class="text-white">${escapar(s.nombre)}</span>
+           <span class="text-white/50">${s.duracion_min || 45} min</span>
+         </div>
+       `).join('')}
+     </div>`,
+    null
   );
 }
 
@@ -437,15 +907,24 @@ function modalHorarioEstilista() {
   );
 }
 
+// ---------------------------------------------------------------
+// UTILIDADES DE VENTANA Y FORMATO
+// ---------------------------------------------------------------
+
 let alGuardarVentana = null;
 
 function abrirVentana(titulo, html, alGuardar) {
   const tit = document.getElementById('tituloVentana');
   const camp = document.getElementById('camposVentana');
+  const btnGuardar = document.getElementById('btnGuardarVentana');
+
   if (tit) tit.textContent = titulo;
   if (camp) camp.innerHTML = html;
-
   alGuardarVentana = alGuardar;
+
+  if (btnGuardar) {
+    btnGuardar.style.display = alGuardar ? 'inline-flex' : 'none';
+  }
 
   const ventana = document.getElementById('ventana');
   if (ventana && !ventana.open) ventana.showModal();
@@ -461,7 +940,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!alGuardarVentana) return;
+      if (!alGuardarVentana) {
+        cerrarVentana();
+        return;
+      }
       const ok = await alGuardarVentana();
       if (ok) cerrarVentana();
     });
@@ -476,7 +958,7 @@ function formatearEstadoBadge(estado) {
     Cancelada: 'bg-rose-500/20 text-rose-300 border-rose-500/30'
   };
   const cls = estilos[estado] || 'bg-white/10 text-white/80 border-white/20';
-  return `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${cls}">${estado}</span>`;
+  return `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${cls}">${escapar(estado)}</span>`;
 }
 
 function mostrarToast(msj) {

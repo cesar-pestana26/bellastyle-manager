@@ -1,19 +1,10 @@
-// js/registro.js - Registro de usuarios con unicidad estricta de cuenta y rol
-
-const CODIGO_ADMIN_VALIDO = 'BELLA2026';
+// js/registro.js - Registro real en MySQL sin cuentas quemadas ni usuarios ficticios en localStorage
 
 const ROLES_REGISTRO = typeof ROLES !== 'undefined' ? ROLES : {
   cliente: { titulo: 'Clienta', imagen: 'img/rol_clienta.svg' },
   estilista: { titulo: 'Estilista', imagen: 'img/logo.webp' },
   admin: { titulo: 'Administradora', imagen: 'img/logo.webp' }
 };
-
-const CUENTAS_BASE_SISTEMA = [
-  { id: 1, nombre: 'Administradora Principal', usuario: 'admin', username: 'admin', email: 'admin@bellastyle.com', password: '123', rol: 'admin', telefono: '3000000001' },
-  { id: 2, nombre: 'Diana Carmen', usuario: 'diana', username: 'diana', email: 'diana@bellastyle.com', password: '123', rol: 'estilista', especialidad: 'Especialista en Balayage & Color', telefono: '3000000002' },
-  { id: 3, nombre: 'Sofía Martínez', usuario: 'sofia', username: 'sofia', email: 'sofia@bellastyle.com', password: '123', rol: 'estilista', especialidad: 'Manicura Rusa & Nail Art', telefono: '3000000003' },
-  { id: 4, nombre: 'Mariana Sofía', usuario: 'cliente', username: 'cliente', email: 'cliente@bellastyle.com', password: '123', rol: 'cliente', telefono: '3001234567' }
-];
 
 let rolActual = new URLSearchParams(window.location.search).get('rol');
 if (!ROLES_REGISTRO[rolActual]) rolActual = 'cliente';
@@ -28,32 +19,6 @@ function normalizarClaveRol(rol) {
 function obtenerNombreLegibleRol(rol) {
   const clave = normalizarClaveRol(rol);
   return ROLES_REGISTRO[clave]?.titulo || 'Clienta';
-}
-
-function obtenerUsuariosRegistrados() {
-  let listaUsuarios = [];
-  try {
-    listaUsuarios = JSON.parse(localStorage.getItem('usuariosRegistrados')) || [];
-  } catch (e) {
-    listaUsuarios = [];
-  }
-
-  let huboCambios = false;
-  CUENTAS_BASE_SISTEMA.forEach(base => {
-    const yaExiste = listaUsuarios.some(
-      u => String(u.usuario || u.username || '').toLowerCase().trim() === base.usuario
-    );
-    if (!yaExiste) {
-      listaUsuarios.push(base);
-      huboCambios = true;
-    }
-  });
-
-  if (huboCambios) {
-    localStorage.setItem('usuariosRegistrados', JSON.stringify(listaUsuarios));
-  }
-
-  return listaUsuarios;
 }
 
 function dibujarSelector() {
@@ -133,8 +98,6 @@ async function cargarServicios() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  obtenerUsuariosRegistrados();
-
   const form = document.getElementById('formRegistro');
   if (!form) return;
 
@@ -158,38 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // REGLA DE UNICIDAD: Bloquear si el usuario o el correo ya existen en CUALQUIER rol
-    const listaUsuarios = obtenerUsuariosRegistrados();
-    const userNorm = userVal.toLowerCase();
-    const emailNorm = emailVal.toLowerCase();
-
-    const cuentaExistente = listaUsuarios.find(u => {
-      const uUser = String(u.usuario || u.username || '').toLowerCase().trim();
-      const uEmail = String(u.email || '').toLowerCase().trim();
-      const coincideUsuario = uUser === userNorm;
-      const coincideCorreo = emailNorm !== '' && uEmail !== '' && uEmail === emailNorm;
-      return coincideUsuario || coincideCorreo;
-    });
-
-    if (cuentaExistente) {
-      const rolYaRegistrado = obtenerNombreLegibleRol(cuentaExistente.rol);
-      const rolIntentado = obtenerNombreLegibleRol(rolActual);
-      const datoDuplicado = String(cuentaExistente.usuario || cuentaExistente.username || '').toLowerCase().trim() === userNorm
-        ? `el usuario "${userVal}"`
-        : `el correo "${emailVal}"`;
-
-      mostrarMensajeAlerta(
-        alerta,
-        `No es posible completar el registro: ${datoDuplicado} ya pertenece a una cuenta con rol de ${rolYaRegistrado}. No se permite registrarlo nuevamente como ${rolIntentado} ni en otro rol.`,
-        'error'
-      );
-      return;
-    }
-
     const rolNormalizado = normalizarClaveRol(rolActual);
 
     const datos = {
-      id: Date.now(),
       rol: rolNormalizado,
       nombre: nombre,
       usuario: userVal,
@@ -222,43 +156,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (boton) boton.disabled = true;
 
-    let respuesta = null;
     try {
+      let respuesta = null;
       if (typeof pedir === 'function') {
         respuesta = await pedir('/register', 'POST', datos);
-        if (!respuesta || (!respuesta.success && !respuesta.errorRed)) {
+        const esRutaNoEncontrada = respuesta && !respuesta.success && !respuesta.errorRed &&
+          /no encontrada|not found|cannot post/i.test(respuesta.mensaje || respuesta.message || '');
+        if (esRutaNoEncontrada) {
           respuesta = await pedir('/registro', 'POST', datos);
         }
+      } else {
+        const resHttp = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos)
+        });
+        respuesta = await resHttp.json();
+        if (!resHttp.ok) respuesta.success = false;
       }
-    } catch (err) {}
 
-    if ((!respuesta || respuesta.errorRed) && rolNormalizado === 'admin' && datos.codigo !== CODIGO_ADMIN_VALIDO) {
-      mostrarMensajeAlerta(alerta, 'Código de autorización de Administradora incorrecto.', 'error');
-      if (boton) boton.disabled = false;
-      return;
-    }
-
-    const destinoRedireccion = rolNormalizado === 'admin'
-      ? 'admin.html'
-      : `panel.html?rol=${rolNormalizado}`;
-
-    if ((respuesta && respuesta.success) || !respuesta || respuesta.errorRed) {
-      const registradoOk = guardarEnUsuariosRegistrados(datos);
-      if (!registradoOk) {
-        mostrarMensajeAlerta(alerta, 'Este usuario ya se encuentra registrado en otro rol.', 'error');
+      if (!respuesta || respuesta.errorRed) {
+        mostrarMensajeAlerta(alerta, 'No se pudo conectar con el servidor. Verifica que esté activo.', 'error');
         if (boton) boton.disabled = false;
         return;
       }
 
-      const usuarioSesion = (respuesta && respuesta.usuario)
-        ? { ...respuesta.usuario, rol: rolNormalizado }
+      if (!respuesta.success) {
+        mostrarMensajeAlerta(alerta, respuesta.mensaje || respuesta.message || 'No se pudo completar el registro.', 'error');
+        if (boton) boton.disabled = false;
+        return;
+      }
+
+      const usuarioServidor = respuesta.user || respuesta.usuario;
+      const usuarioSesion = usuarioServidor
+        ? { ...usuarioServidor, rol: normalizarClaveRol(usuarioServidor.rol || rolNormalizado) }
         : crearSesionSinClave(datos);
 
+      delete usuarioSesion.password;
+      if (respuesta.token) localStorage.setItem('token', respuesta.token);
       localStorage.setItem('usuarioLogueado', JSON.stringify(usuarioSesion));
+
+      const destinoRedireccion = rolNormalizado === 'admin'
+        ? 'admin.html'
+        : `panel.html?rol=${rolNormalizado}`;
+
       mostrarMensajeAlerta(alerta, `Cuenta registrada como ${obtenerNombreLegibleRol(rolNormalizado)}. Redirigiendo a tu panel...`, 'ok');
       setTimeout(() => { window.location.replace(destinoRedireccion); }, 1100);
-    } else {
-      mostrarMensajeAlerta(alerta, respuesta.mensaje || respuesta.message || 'Error al procesar el registro.', 'error');
+    } catch (err) {
+      mostrarMensajeAlerta(alerta, 'Error inesperado al procesar el registro.', 'error');
       if (boton) boton.disabled = false;
     }
   });
@@ -273,28 +218,6 @@ function crearSesionSinClave(datos) {
   delete copia.codigoAdmin;
   delete copia.codigo;
   return copia;
-}
-
-function guardarEnUsuariosRegistrados(nuevoUsuario) {
-  try {
-    const listaUsuarios = obtenerUsuariosRegistrados();
-    const userNorm = String(nuevoUsuario.usuario || nuevoUsuario.username || '').toLowerCase().trim();
-    const emailNorm = String(nuevoUsuario.email || '').toLowerCase().trim();
-
-    const yaExiste = listaUsuarios.some(u => {
-      const uUser = String(u.usuario || u.username || '').toLowerCase().trim();
-      const uEmail = String(u.email || '').toLowerCase().trim();
-      return uUser === userNorm || (emailNorm !== '' && uEmail !== '' && uEmail === emailNorm);
-    });
-
-    if (yaExiste) return false;
-
-    listaUsuarios.push(nuevoUsuario);
-    localStorage.setItem('usuariosRegistrados', JSON.stringify(listaUsuarios));
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 function mostrarMensajeAlerta(el, msj, tipo = 'error') {
