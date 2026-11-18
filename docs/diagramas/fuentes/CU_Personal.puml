@@ -2,6 +2,7 @@
 !include skin.iuml
 title Casos de Uso (2 de 2) — Estilista y Administradora
 left to right direction
+skinparam linetype polyline
 actor Estilista as E
 actor Administradora as A
 rectangle "BellaStyle Manager" {
@@ -19,23 +20,23 @@ rectangle "BellaStyle Manager" {
   usecase "Descargar comprobante PDF" as UC12
   usecase "Responder chats\nde visitantes" as UC21
 }
-E --> UC1
-E --> UC13
-E --> UC11
-E --> UC14
-E --> UC15
-E --> UC16
-E --> UC17
-E --> UC22
-A --> UC1
-A --> UC13
-A --> UC14
-A --> UC15
-A --> UC17
-A --> UC22
-A --> UC18
-A --> UC19
-A --> UC20
-A --> UC12
-A --> UC21
+E -- UC1
+E -- UC13
+E -- UC11
+E -- UC14
+E -- UC15
+E -- UC16
+E -- UC17
+E -- UC22
+A -- UC1
+A -- UC13
+A -- UC14
+A -- UC15
+A -- UC17
+A -- UC22
+A -- UC18
+A -- UC19
+A -- UC20
+A -- UC12
+A -- UC21
 @enduml

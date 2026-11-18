@@ -2,6 +2,7 @@
 !include skin.iuml
 title Casos de Uso (1 de 2) — Visitante y Clienta
 left to right direction
+skinparam linetype polyline
 actor "Visitante\n(sin cuenta)" as V
 actor Clienta as C
 actor "Gemini API\n(Google)" as G <<sistema externo>>
@@ -20,18 +21,18 @@ rectangle "BellaStyle Manager" {
   usecase "Descargar comprobante PDF" as UC12
   usecase "Gestionar foto de perfil" as UC13
 }
-V --> UC4
-V --> UC5
-V --> UC2
-C --> UC1
-C --> UC3
-C --> UC6
-C --> UC8
-C --> UC9
-C --> UC10
-C --> UC11
-C --> UC12
-C --> UC13
+V -- UC4
+V -- UC5
+V -- UC2
+C -- UC1
+C -- UC3
+C -- UC6
+C -- UC8
+C -- UC9
+C -- UC10
+C -- UC11
+C -- UC12
+C -- UC13
 UC6 ..> UC7 : <<include>>
-UC4 --> G
+UC4 ---- G
 @enduml

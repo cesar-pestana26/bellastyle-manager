@@ -156,3 +156,69 @@ def detallado():
 if __name__ == '__main__':
     open('comp_general.svg', 'w').write(general().svg())
     open('comp_detallado.svg', 'w').write(detallado().svg())
+
+
+def nodo(L, x, y, w, h, estereo, nombre, sub=None, fondo='#F9F9F9'):
+    d = 16
+    L.add(f'<path d="M{x},{y} l{d},-{d} h{w} v{h} l-{d},{d}" fill="#EDEDED" stroke="{GRIS}" stroke-width="1.6"/>')
+    L.add(f'<path d="M{x+w},{y} l{d},-{d}" fill="none" stroke="{GRIS}" stroke-width="1.6"/>')
+    L.add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{fondo}" stroke="{GRIS}" stroke-width="1.6"/>')
+    L.texto(x + w / 2, y + 26, '«' + estereo + '»', 14, 'normal', '#333', 'middle', True)
+    L.texto(x + w / 2, y + 48, nombre, 17, 'bold', '#222')
+    if sub: L.texto(x + w / 2, y + 70, sub, 14, 'normal', '#444')
+
+def artefacto(L, x, y, w, h, lineas, estereo='artifact'):
+    L.add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" fill="{FONDO}" stroke="{ROSA}" stroke-width="1.6"/>')
+    ix, iy = x + w - 30, y + 10
+    L.add(f'<path d="M{ix},{iy} h12 l6,6 v16 h-18 z M{ix+12},{iy} v6 h6" fill="white" stroke="{ROSA}" stroke-width="1.3"/>')
+    L.texto(x + w / 2, y + 24, '«' + estereo + '»', 13, 'normal', '#333', 'middle', True)
+    for i, t in enumerate(lineas):
+        L.texto(x + w / 2, y + 46 + i * 20, t, 14.5, 'normal', '#222')
+
+def cilindro(L, x, y, w, h, lineas):
+    e = 14
+    L.add(f'<path d="M{x},{y+e} a{w/2},{e} 0 0 1 {w},0 v{h-2*e} a{w/2},{e} 0 0 1 -{w},0 z" fill="#EAF6EC" stroke="#2E8B57" stroke-width="1.6"/>')
+    L.add(f'<path d="M{x},{y+e} a{w/2},{e} 0 0 0 {w},0" fill="none" stroke="#2E8B57" stroke-width="1.6"/>')
+    L.texto(x + w / 2, y + 2 * e + 20, '«schema»', 13, 'normal', '#333', 'middle', True)
+    for i, t in enumerate(lineas):
+        L.texto(x + w / 2, y + 2 * e + 42 + i * 20, t, 14.5, 'normal', '#222')
+
+def despliegue():
+    L = Lienzo(2200, 1180)
+    L.texto(1100, 50, 'Diagrama de Despliegue (UML 2.5) — BellaStyle Manager en producción', 30, 'bold')
+    L.texto(1100, 82, 'Nodos físicos o en la nube («device»), entornos de ejecución («executionEnvironment») y artefactos desplegados', 16, 'normal', '#555')
+    # Usuario
+    nodo(L, 60, 210, 500, 400, 'device', 'PC o celular del usuario')
+    nodo(L, 100, 310, 420, 270, 'executionEnvironment', 'Navegador web', fondo='#FFFFFF')
+    artefacto(L, 140, 410, 340, 120, ['index.html · panel.html', 'estilos.css · js/*.js'])
+    # Render
+    nodo(L, 760, 160, 680, 600, 'device', 'Servidor Render', 'servicio web «bellastyle»')
+    nodo(L, 800, 270, 600, 460, 'executionEnvironment', 'Node.js 20', fondo='#FFFFFF')
+    nodo(L, 840, 370, 520, 330, 'executionEnvironment', 'Express 4', fondo='#F9F9F9')
+    artefacto(L, 880, 460, 440, 100, ['app.js · routes/ · controllers/', 'models/ · utils/ · config/'])
+    artefacto(L, 880, 580, 440, 100, ['frontend/ (HTML, CSS, JS, img)', 'archivos estáticos'])
+    # Aiven
+    nodo(L, 1640, 210, 500, 400, 'device', 'Servidor Aiven', 'servicio «bellastyle-mysql»')
+    nodo(L, 1680, 320, 420, 260, 'executionEnvironment', 'MySQL Server 8.4', fondo='#FFFFFF')
+    cilindro(L, 1770, 410, 240, 140, ['bellastylemanager', '(17 tablas)'])
+    # Google
+    nodo(L, 1640, 830, 500, 300, 'device', 'Google Cloud')
+    nodo(L, 1680, 900, 420, 200, 'executionEnvironment', 'Gemini API', fondo='#FFFFFF')
+    artefacto(L, 1720, 980, 340, 100, ['gemma-4-26b-a4b-it', 'respaldo: gemini-flash-lite-latest'])
+    # Rutas de comunicación
+    L.linea([(560, 420), (760, 420)])
+    L.texto(660, 404, '«HTTPS»', 15, 'bold', ROSA); L.texto(660, 446, 'puerto 443', 14, 'normal', '#444')
+    L.texto(575, 404, '0..*', 14, 'normal', '#222', 'start'); L.texto(745, 404, '1', 14, 'normal', '#222', 'end')
+    L.linea([(1440, 420), (1640, 420)])
+    L.texto(1540, 404, '«TCP/IP + SSL»', 15, 'bold', ROSA); L.texto(1540, 446, 'protocolo MySQL', 14, 'normal', '#444')
+    L.texto(1455, 404, '1', 14, 'normal', '#222', 'start'); L.texto(1625, 404, '1', 14, 'normal', '#222', 'end')
+    L.linea([(1100, 760), (1100, 980), (1640, 980)])
+    L.texto(1370, 964, '«HTTPS»', 15, 'bold', ROSA); L.texto(1370, 1006, 'JSON + API key', 14, 'normal', '#444')
+    L.nota(60, 820, 940, ['Las claves llegan como variables de entorno: DB_HOST, DB_PORT, DB_USER,',
+                         'DB_PASSWORD, DB_NAME, DB_SSL, GEMINI_API_KEY y CODIGO_ADMIN.',
+                         'El código llega desde GitHub (rama main): Render ejecuta npm install y node app.js.',
+                         'En el computador de desarrollo: http://localhost:3000 y MySQL en el puerto 3306.'], 'Notas')
+    return L
+
+if __name__ == '__main__':
+    open('despliegue.svg', 'w').write(despliegue().svg())
