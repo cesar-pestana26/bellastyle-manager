@@ -38,6 +38,7 @@ async function armarInstrucciones() {
     const listaServicios = servicios.map((s) => `- ${s.nombre}: ${pesos(s.precio)} (${s.duracion_min} min)`).join('\n');
     const listaProductos = productos.map((p) => `- ${p.nombre}: ${pesos(p.precio)}`).join('\n') || '- (ninguno por ahora)';
     const listaEstilistas = estilistas.map((e) => `- ${e.nombres}: ${e.servicios || 'varios servicios'}`).join('\n');
+    const contacto = config.salon || {};
 
     return `Eres "Bella", la asistente virtual de BellaStyle, un salón de belleza en Cartagena, Colombia.
 Hablas con visitantes de la página web. Responde en español, con calidez y naturalidad, como una recepcionista amable.
@@ -52,6 +53,10 @@ REGLAS:
 - Para agendar: la persona crea su cuenta con el botón "Crear cuenta", entra a su panel, escoge servicio, fecha y una hora libre, y pulsa "Agendar". El sistema le asigna una estilista disponible y se abre un chat con ella.
 
 DATOS DEL SALÓN:
+Ciudad: Cartagena, Colombia.
+Dirección: ${contacto.direccion || '(no registrada)'}
+Teléfono o WhatsApp: ${contacto.telefono || '(no registrado)'}
+Instagram: ${contacto.instagram || '(no registrado)'}
 Horario: lunes a sábado de 8:00 a. m. a 7:00 p. m. Los domingos no se atiende.
 Servicios:
 ${listaServicios}

@@ -45,35 +45,24 @@
           </p>
           <div class="mt-8 flex flex-wrap items-center gap-4">
             <a href="register.html?rol=cliente" class="btn-primario px-7 py-3 text-base">Agendar mi cita &rarr;</a>
-            <a href="#servicios" class="text-sm font-semibold text-tinta/80 hover:text-tinta">Ver servicios</a>
+            <a href="welcome.html#servicios" class="text-sm font-semibold text-tinta/80 hover:text-tinta">Ver servicios</a>
           </div>
 
-          <!-- Cómo funciona: llena el espacio junto al login con información útil -->
+          <!-- Cómo funciona: 3 pasos cortos -->
           <ol class="mt-10 max-w-md space-y-5 border-l-2 border-bella-200 pl-5">
-            <li class="flex items-start gap-4">
+            <li class="flex items-center gap-4">
               <span class="icono h-11 w-11 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></svg></span>
-              <div><p class="font-semibold text-tinta">Elige tu servicio</p><p class="text-sm text-tinta/75">Corte, color, uñas, peinados y tratamientos.</p></div>
+              <p class="font-semibold text-tinta">Elige tu servicio</p>
             </li>
-            <li class="flex items-start gap-4">
+            <li class="flex items-center gap-4">
               <span class="icono h-11 w-11 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-              <div><p class="font-semibold text-tinta">Escoge día y hora</p><p class="text-sm text-tinta/75">Solo ves las horas que de verdad están libres.</p></div>
+              <p class="font-semibold text-tinta">Escoge un día y una hora libre</p>
             </li>
-            <li class="flex items-start gap-4">
+            <li class="flex items-center gap-4">
               <span class="icono h-11 w-11 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-              <div><p class="font-semibold text-tinta">Te asignamos estilista</p><p class="text-sm text-tinta/75">La que domina el servicio y tiene espacio ese día.</p></div>
-            </li>
-            <li class="flex items-start gap-4">
-              <span class="icono h-11 w-11 shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10h8M8 14h5m-9 6 3-3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v13Z"/></svg></span>
-              <div><p class="font-semibold text-tinta">Habla con ella</p><p class="text-sm text-tinta/75">Al agendar se abre un chat con tu estilista.</p></div>
+              <p class="font-semibold text-tinta">Te asignamos tu estilista</p>
             </li>
           </ol>
-
-          <!-- Datos rápidos del salón -->
-          <div class="mt-8 flex max-w-md flex-wrap gap-2 text-sm">
-            <span class="rounded-full border border-tinta/10 px-3 py-1.5 text-tinta/80">🕗 Lun a sáb · 8:00 a. m. – 7:00 p. m.</span>
-            <span class="rounded-full border border-tinta/10 px-3 py-1.5 text-tinta/80">📍 Cartagena</span>
-            <span class="rounded-full border border-tinta/10 px-3 py-1.5 text-tinta/80">💬 Asistente 24/7</span>
-          </div>
         </section>
 
     <!-- ===================== DERECHA: iniciar sesión ===================== -->
@@ -114,14 +103,7 @@
     </section>
       </div>
 
-      <!-- ===================== MENÚ DE SERVICIOS (js/servicios.js) ===================== -->
-      <section id="servicios" class="mt-16 scroll-mt-6">
-        <p class="text-sm font-semibold uppercase tracking-[.25em] text-bella-700">Nuestros servicios</p>
-        <h2 class="mt-2 text-4xl font-bold">Toca un servicio para verlo</h2>
-        <div data-menu-servicios class="mt-6"><div class="esqueleto h-10 w-2/3"></div></div>
-      </section>
-
-      <footer class="mt-16 border-t border-tinta/10 py-6 text-center text-xs text-tinta/60">
+      <footer class="mt-12 border-t border-tinta/10 py-6 text-center text-xs text-tinta/60">
         BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
       </footer>
     </main>
@@ -129,7 +111,6 @@
 
   <script src="js/api.js"></script>
   <script src="js/login.js"></script>
-  <script src="js/servicios.js"></script>
   <script src="js/chat.js"></script>
 </body>
 </html>

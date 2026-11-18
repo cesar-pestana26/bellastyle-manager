@@ -42,6 +42,16 @@ module.exports = {
     // Sin clave, el chat usa el asistente de palabras clave.
     ia: {
         clave: process.env.GEMINI_API_KEY || '',
-        modelo: process.env.GEMINI_MODELO || 'gemma-4-26b-a4b-it'
+        // Flash-Lite responde en pocos segundos; Gemma 4 tardaba más de 20 s en el cupo gratis
+        modelo: process.env.GEMINI_MODELO || 'gemini-flash-lite-latest'
+    },
+
+    // Datos de contacto del salón que usa el asistente del chat.
+    // Se configuran en Render (Environment) o en backend/.env; si están vacíos,
+    // el asistente dice que no los tiene y que una asesora responderá.
+    salon: {
+        direccion: process.env.SALON_DIRECCION || '',
+        telefono: process.env.SALON_TELEFONO || '',
+        instagram: process.env.SALON_INSTAGRAM || ''
     }
 };

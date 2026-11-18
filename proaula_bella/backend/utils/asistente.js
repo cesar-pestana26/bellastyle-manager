@@ -1,6 +1,7 @@
 // Asistente del chat: responde solo las preguntas frecuentes.
 // Busca palabras clave en el mensaje; si no entiende, avisa que
 // una asesora (la administradora) responderá.
+const config = require('../config/config');
 const servicioModel = require('../models/servicioModel');
 const productoModel = require('../models/productoModel');
 
@@ -42,6 +43,18 @@ const REGLAS = [
             const servicios = await servicioModel.listarDisponibles();
             const lista = servicios.map((s) => `• ${s.nombre} (${s.duracion_min} min)`).join('\n');
             return `Ofrecemos estos servicios:\n${lista}\nSi buscas algo que no está en la lista, una asesora te responderá por aquí.`;
+        }
+    },
+    {
+        palabras: ['direccion', 'ubicacion', 'ubicados', 'ubicadas', 'queda', 'quedan', 'telefono', 'celular', 'whatsapp', 'instagram', 'contacto'],
+        responder: async () => {
+            const s = config.salon || {};
+            const datos = [];
+            if (s.direccion) datos.push(`Dirección: ${s.direccion}, Cartagena.`);
+            if (s.telefono) datos.push(`Teléfono o WhatsApp: ${s.telefono}.`);
+            if (s.instagram) datos.push(`Instagram: ${s.instagram}.`);
+            if (datos.length === 0) return 'Estamos en Cartagena. Una asesora del salón te dará la dirección y el contacto por este mismo chat.';
+            return datos.join('\n');
         }
     },
     {
