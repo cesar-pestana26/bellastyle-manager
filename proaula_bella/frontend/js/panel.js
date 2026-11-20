@@ -1,11 +1,14 @@
-// js/panel.js - Panel Privado conectado a MySQL con Reprogramar, Calificaciones, Foto de Perfil, Vitrina e Historial
+// js/panel.js - Panel Privado conectado a MySQL con Chat por Cita, Horario/Ausencias, Reprogramar, Calificaciones, Foto y Vitrina
 
 let usuarioSesion = null;
+let rolApiActual = 'Clienta';
 let citasUsuario = [];
 let serviciosGlobales = [];
 let miPerfilClienta = null;
 let miPerfilEstilista = null;
 let versionFoto = Date.now();
+
+const DIAS_SEMANA = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 document.addEventListener('DOMContentLoaded', async () => {
   obtenerSesionValida();
@@ -17,8 +20,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  rolApiActual = rolNorm === 'estilista' ? 'Estilista' : 'Clienta';
+
   configurarHeader(rolNorm);
   inicializarFotoPerfil();
+  inicializarChatCitaEventos();
   await cargarDatosIniciales(rolNorm);
 
   if (rolNorm === 'estilista') {
@@ -74,8 +80,8 @@ function configurarHeader(rolNorm) {
 
   if (subtituloPanel) {
     subtituloPanel.textContent = esEstilista
-      ? 'Gestiona tus citas asignadas, tus notas de servicio, tus calificaciones y tu vitrina.'
-      : 'Revisa tus citas, reprograma, califica a tu estilista y descarga tus comprobantes.';
+      ? 'Gestiona tus citas asignadas, chatea con tus clientas, define tu horario, ausencias y vitrina.'
+      : 'Revisa tus citas, chatea con tu estilista, reprograma, califica y descarga tus comprobantes PDF.';
   }
 
   const btnAgendar = document.getElementById('btnAgendarHeader');
@@ -183,7 +189,9 @@ function normalizarCitaServidor(c) {
     reprogramaciones: Number(c.reprogramaciones || 0),
     calificacion: c.calificacion ? Number(c.calificacion) : null,
     notas_servicio: c.notas_servicio || '',
-    observaciones: c.observaciones || ''
+    observaciones: c.observaciones || '',
+    sin_leer_clienta: Number(c.sin_leer_clienta || 0),
+    sin_leer_estilista: Number(c.sin_leer_estilista || 0)
   };
 }
 
@@ -214,8 +222,15 @@ async function recargarCitas(rolNorm) {
   }
 }
 
+function botonChatCita(idCita, sinLeer = 0) {
+  const badge = Number(sinLeer) > 0
+    ? `<span class="ml-1 rounded-full bg-pink-500 px-1.5 py-0.2 text-[10px] font-bold text-white">${sinLeer}</span>`
+    : '';
+  return `<button type="button" onclick="abrirChatCita(${idCita})" class="px-2 py-1 bg-white/10 text-white border border-white/15 rounded text-[11px] font-semibold hover:bg-white/20">Chat${badge}</button>`;
+}
+
 // ---------------------------------------------------------------
-// VISTA CLIENTA (Datos, Citas, Reprogramar, Calificar, PDF, Vitrina Estilistas)
+// VISTA CLIENTA (Datos, Citas, Chat, Reprogramar, Calificar, PDF, Vitrina)
 // ---------------------------------------------------------------
 
 async function iniciarVistaClienta() {
@@ -236,6 +251,11 @@ async function iniciarVistaClienta() {
   await cargarEstilistasClienta();
 
   document.getElementById('btnEditarMisDatos')?.addEventListener('click', modalEditarDatosClienta);
+
+  setInterval(async () => {
+    await recargarCitas('cliente');
+    renderizarTablaCitasClienta();
+  }, 15000);
 }
 
 async function cargarMisDatosClienta() {
@@ -280,29 +300,23 @@ function renderizarTablaCitasClienta() {
 
   tabla.innerHTML = citasUsuario.map(c => {
     const activa = c.estado === 'Pendiente' || c.estado === 'Confirmada';
-    const pago = typeof obtenerPagoPorCita === 'function' ? obtenerPagoPorCita(c.id) : null;
-    const estaPagada = pago && pago.estado_pago === 'Pagado';
+    let acciones = botonChatCita(c.id, c.sin_leer_clienta) + ' ';
 
-    let acciones = '';
     if (activa) {
-      const btnPago = estaPagada
-        ? `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Recibo</button>`
-        : `<button type="button" onclick="iniciarPagoCitaClienta(${c.id})" class="px-2 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600">Pagar</button>`;
-
       const btnReprog = c.reprogramaciones >= 1
         ? `<span class="px-2 py-1 text-[10px] text-white/40" title="Cada cita se puede reprogramar una sola vez">Ya reprogramada</span>`
         : `<button type="button" onclick="reprogramarCita(${c.id})" class="px-2 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[11px] font-semibold hover:bg-amber-500/30">Reprogramar</button>`;
 
       const btnCancelar = `<button type="button" onclick="cancelarCitaClienta(${c.id})" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>`;
 
-      acciones = `${btnPago} ${btnReprog} ${btnCancelar}`;
+      acciones += `${btnReprog} ${btnCancelar}`;
     } else if (c.estado === 'Finalizada') {
       const btnPdf = `<a href="/api/citas/${c.id}/comprobante" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>`;
       const btnCalificar = c.calificacion
         ? `<span class="px-2 py-1 text-amber-300 font-bold text-xs" title="Tu calificación">${'★'.repeat(c.calificacion)}</span>`
         : `<button type="button" onclick="calificarCita(${c.id})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Calificar</button>`;
 
-      acciones = `${btnPdf} ${btnCalificar}`;
+      acciones += `${btnPdf} ${btnCalificar}`;
     }
 
     return `
@@ -317,7 +331,6 @@ function renderizarTablaCitasClienta() {
   }).join('');
 }
 
-// Reprogramar cita (1 sola vez, consultando /disponibilidad de la misma estilista)
 window.reprogramarCita = function(idCita) {
   const cita = citasUsuario.find(c => String(c.id) === String(idCita));
   if (!cita) return;
@@ -384,7 +397,6 @@ window.reprogramarCita = function(idCita) {
   cargarHorasReprogramar();
 };
 
-// Calificar cita finalizada (POST /api/citas/:id/calificacion)
 window.calificarCita = function(idCita) {
   const cita = citasUsuario.find(c => String(c.id) === String(idCita));
   if (!cita) return;
@@ -424,16 +436,6 @@ window.calificarCita = function(idCita) {
       return false;
     }
   );
-};
-
-window.iniciarPagoCitaClienta = function(idCita) {
-  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
-  if (!cita || typeof abrirPasarelaPago !== 'function') return;
-
-  abrirPasarelaPago(cita, () => {
-    mostrarToast('Pago registrado correctamente');
-    renderizarTablaCitasClienta();
-  });
 };
 
 window.cancelarCitaClienta = async function(idCita) {
@@ -506,7 +508,6 @@ function modalEditarDatosClienta() {
   );
 }
 
-// Tarjetas de estilistas con foto de perfil, calificación y su vitrina de trabajos
 async function cargarEstilistasClienta() {
   const lista = document.getElementById('listaEstilistasClienta');
   if (!lista) return;
@@ -554,7 +555,123 @@ async function cargarEstilistasClienta() {
 }
 
 // ---------------------------------------------------------------
-// VISTA ESTILISTA (Agenda, Notas, Historial Clienta, Calificaciones y Vitrina)
+// CHAT DE LA CITA (CLIENTA <-> ESTILISTA)
+// ---------------------------------------------------------------
+
+const chatCita = { id: null, ultimo: 0, temporizador: null };
+
+function inicializarChatCitaEventos() {
+  document.getElementById('btnCerrarChat')?.addEventListener('click', cerrarChatCita);
+
+  document.getElementById('ventanaChat')?.addEventListener('close', async () => {
+    clearInterval(chatCita.temporizador);
+    chatCita.id = null;
+    if (rolApiActual === 'Clienta') {
+      await recargarCitas('cliente');
+      renderizarTablaCitasClienta();
+    } else {
+      await recargarCitas('estilista');
+      renderizarTablaCitasEstilista();
+    }
+  });
+
+  document.getElementById('formChatCita')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const campoTexto = document.getElementById('textoChatCita');
+    const texto = campoTexto.value.trim();
+    if (!texto || !chatCita.id) return;
+
+    const resp = await pedir(`/citas/${chatCita.id}/mensajes`, 'POST', {
+      rol: rolApiActual,
+      idUsuario: obtenerIdUsuarioActual(),
+      texto
+    });
+
+    if (!resp.success) {
+      mostrarToast(resp.message || 'No se pudo enviar el mensaje');
+      return;
+    }
+
+    campoTexto.value = '';
+    if (chatCita.ultimo === 0) document.getElementById('mensajesCita').innerHTML = '';
+    await cargarMensajesCita();
+  });
+}
+
+window.abrirChatCita = function(idCita) {
+  chatCita.id = idCita;
+  chatCita.ultimo = 0;
+
+  document.getElementById('mensajesCita').innerHTML = '';
+  document.getElementById('tituloChat').textContent = 'Chat de la cita';
+  document.getElementById('detalleChat').textContent = 'Cargando mensajes...';
+
+  const modal = document.getElementById('ventanaChat');
+  if (modal && !modal.open) modal.showModal();
+
+  cargarMensajesCita();
+  clearInterval(chatCita.temporizador);
+  chatCita.temporizador = setInterval(cargarMensajesCita, 4000);
+};
+
+function cerrarChatCita() {
+  const modal = document.getElementById('ventanaChat');
+  if (modal) modal.close();
+}
+
+function dibujarMensajeCita(m) {
+  const mio = m.autor === rolApiActual;
+  document.getElementById('mensajesCita').insertAdjacentHTML('beforeend', `
+    <div class="max-w-[82%] ${mio ? 'ml-auto text-right' : ''}">
+      <p class="mb-1 text-[10px] text-white/50">${mio ? 'Tú' : escapar(m.autor)} · ${escapar(m.hora)}</p>
+      <p class="inline-block whitespace-pre-line rounded-2xl px-3.5 py-2 text-left text-xs ${
+        mio
+          ? 'bg-pink-500 text-white'
+          : 'border border-white/10 bg-white/10 text-white/90'
+      }">${escapar(m.texto)}</p>
+    </div>
+  `);
+}
+
+async function cargarMensajesCita() {
+  if (!chatCita.id) return;
+  const params = new URLSearchParams({
+    rol: rolApiActual,
+    idUsuario: obtenerIdUsuarioActual(),
+    desde: chatCita.ultimo
+  });
+
+  const resp = await pedir(`/citas/${chatCita.id}/mensajes?` + params.toString(), 'GET');
+  if (!resp || !resp.success) {
+    mostrarToast((resp && resp.message) || 'No se pudo cargar el chat');
+    return cerrarChatCita();
+  }
+
+  const { cita, mensajes } = resp.data;
+  const otraPersona = rolApiActual === 'Clienta' ? cita.estilista : cita.cliente;
+  document.getElementById('tituloChat').textContent = `Chat con ${otraPersona}`;
+  document.getElementById('detalleChat').textContent = `${cita.servicio} · ${cita.fecha} · ${cita.hora} · ${cita.estado}`;
+
+  const caja = document.getElementById('mensajesCita');
+  if (chatCita.ultimo === 0 && mensajes.length === 0) {
+    caja.innerHTML = `<p class="text-center text-xs text-white/50 py-8">Todavía no hay mensajes en esta cita. Escribe el primero abajo.</p>`;
+  } else if (mensajes.length > 0) {
+    if (chatCita.ultimo === 0) caja.innerHTML = '';
+    mensajes.forEach((m) => {
+      dibujarMensajeCita(m);
+      chatCita.ultimo = m.id;
+    });
+    caja.scrollTop = caja.scrollHeight;
+  }
+
+  document.getElementById('formChatCita').classList.toggle('hidden', !cita.abierto);
+  const cerrado = document.getElementById('chatCerrado');
+  cerrado.classList.toggle('hidden', cita.abierto);
+  cerrado.textContent = `La cita quedó ${cita.estado.toLowerCase()}: el chat es solo de lectura.`;
+}
+
+// ---------------------------------------------------------------
+// VISTA ESTILISTA (Agenda, Chat, Horario/Ausencias, Notas, Historial, Calificaciones, Vitrina)
 // ---------------------------------------------------------------
 
 async function iniciarVistaEstilista() {
@@ -573,6 +690,7 @@ async function iniciarVistaEstilista() {
   await cargarMiPerfilEstilista();
   renderizarMetricasEstilista();
   renderizarTablaCitasEstilista();
+  await cargarMiHorario();
   await cargarMiVitrina();
 
   document.getElementById('btnAgregarVitrina')?.addEventListener('click', () => {
@@ -581,8 +699,19 @@ async function iniciarVistaEstilista() {
   document.getElementById('btnMisOpiniones')?.addEventListener('click', () => {
     if (miPerfilEstilista) verOpinionesEstilista(miPerfilEstilista.id_estilista);
   });
+  document.getElementById('btnEditarMiHorario')?.addEventListener('click', () => {
+    if (miPerfilEstilista) editarHorarioEstilista(miPerfilEstilista.id_estilista);
+  });
+  document.getElementById('btnMisAusencias')?.addEventListener('click', () => {
+    if (miPerfilEstilista) verAusenciasEstilista(miPerfilEstilista.id_estilista);
+  });
   document.getElementById('btnEditarMisServicios')?.addEventListener('click', modalServiciosEstilista);
-  document.getElementById('btnEditarMiHorario')?.addEventListener('click', modalHorarioEstilista);
+
+  setInterval(async () => {
+    await recargarCitas('estilista');
+    renderizarMetricasEstilista();
+    renderizarTablaCitasEstilista();
+  }, 15000);
 }
 
 async function cargarMiPerfilEstilista() {
@@ -610,6 +739,144 @@ async function cargarMiPerfilEstilista() {
   } else {
     contCal.innerHTML = `<p class="text-xs text-white/60 pt-1">Aún no tienes calificaciones de clientas.</p>`;
   }
+}
+
+// ---------------------------------------------------------------
+// HORARIO Y AUSENCIAS REALES EN MYSQL (/estilistas/:id/horario y /ausencias)
+// ---------------------------------------------------------------
+
+function generarOpcionesHora(valorSeleccionado, minMinutos, maxMinutos) {
+  const selNorm = String(valorSeleccionado || '08:00').slice(0, 5);
+  const opciones = [];
+  for (let m = minMinutos; m <= maxMinutos; m += 30) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    const val = `${hh}:${mm}`;
+    opciones.push(`<option value="${val}" ${val === selNorm ? 'selected' : ''}>${val}</option>`);
+  }
+  return opciones.join('');
+}
+
+async function cargarMiHorario() {
+  const cont = document.getElementById('resumenMiHorario');
+  if (!cont || !miPerfilEstilista) return;
+
+  const resp = await pedir(`/estilistas/${miPerfilEstilista.id_estilista}/horario`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) {
+    cont.innerHTML = '<p class="text-white/50">No se pudo cargar tu horario.</p>';
+    return;
+  }
+
+  const activos = (datos.horario || [])
+    .map((h) => `<span class="inline-block rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-[11px] text-white/85">${DIAS_SEMANA[h.dia_semana]}: <b>${String(h.hora_inicio).slice(0, 5)} - ${String(h.hora_fin).slice(0, 5)}</b></span>`)
+    .join(' ');
+
+  const ausenciasHtml = (datos.ausencias || []).length > 0
+    ? `<p class="text-[11px] text-amber-300 pt-1">Ausencias activas: ${datos.ausencias.length} (clic en "Ausencias" para gestionar).</p>`
+    : `<p class="text-[11px] text-white/50 pt-1">Sin ausencias programadas.</p>`;
+
+  cont.innerHTML = `
+    <div class="flex flex-wrap gap-1.5">${activos || '<span class="text-white/50">No tienes días laborales activos.</span>'}</div>
+    ${ausenciasHtml}
+  `;
+}
+
+async function editarHorarioEstilista(idEstilista) {
+  const resp = await pedir(`/estilistas/${idEstilista}/horario`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) return mostrarToast('No se pudo cargar el horario.');
+
+  const filas = [1, 2, 3, 4, 5, 6].map((dia) => {
+    const h = (datos.horario || []).find((x) => Number(x.dia_semana) === dia);
+    return `
+      <div class="grid grid-cols-[6.5rem_1fr_1fr] items-center gap-2">
+        <label class="flex items-center gap-2 text-xs text-white">
+          <input type="checkbox" name="vDia" value="${dia}" class="accent-pink-500" ${h ? 'checked' : ''}>
+          ${DIAS_SEMANA[dia]}
+        </label>
+        <select id="vInicio${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${generarOpcionesHora(h ? h.hora_inicio : '08:00', 8 * 60, 18 * 60)}</select>
+        <select id="vFin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${generarOpcionesHora(h ? h.hora_fin : '19:00', 9 * 60, 19 * 60)}</select>
+      </div>
+    `;
+  }).join('');
+
+  abrirVentana('Mi Horario de Atención',
+    `<p class="text-xs text-white/70">Marca los días que trabajas y define tu hora de entrada y salida. Los días sin marcar quedan libres.</p>
+     <div class="grid grid-cols-[6.5rem_1fr_1fr] gap-2 text-[10px] uppercase tracking-wider text-white/50"><span>Día</span><span>Entrada</span><span>Salida</span></div>
+     <div class="space-y-2">${filas}</div>`,
+    async () => {
+      const dias = [...document.querySelectorAll('input[name="vDia"]:checked')].map((c) => ({
+        dia: Number(c.value),
+        inicio: document.getElementById('vInicio' + c.value).value,
+        fin: document.getElementById('vFin' + c.value).value
+      }));
+
+      const r = await pedir(`/estilistas/${idEstilista}/horario`, 'PUT', { dias });
+      mostrarToast(r.message || (r.success ? 'Horario guardado en MySQL' : 'Error al guardar horario'));
+      if (r.success) {
+        await cargarMiHorario();
+        return true;
+      }
+      return false;
+    }
+  );
+}
+
+async function verAusenciasEstilista(idEstilista) {
+  const resp = await pedir(`/estilistas/${idEstilista}/horario`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) return mostrarToast('No se pudieron cargar las ausencias.');
+
+  const lista = (datos.ausencias || []).length === 0
+    ? '<p class="text-xs text-white/60">No tienes ausencias registradas.</p>'
+    : `<ul class="space-y-2 max-h-40 overflow-y-auto">${datos.ausencias.map((a) => `
+        <li class="flex items-center justify-between gap-3 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs">
+          <span>${escapar(String(a.fecha_inicio).slice(0, 10))} al ${escapar(String(a.fecha_fin).slice(0, 10))}${a.motivo ? ` · <span class="text-white/60">${escapar(a.motivo)}</span>` : ''}</span>
+          <button type="button" data-quitar-ausencia="${a.id_ausencia}" class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-semibold">Quitar</button>
+        </li>
+      `).join('')}</ul>`;
+
+  abrirVentana('Mis Ausencias y Permisos',
+    `${lista}
+     <p class="border-t border-white/10 pt-3 text-xs font-bold text-pink-300">Registrar nueva ausencia</p>
+     <div class="grid grid-cols-2 gap-3">
+       <div>
+         <label for="vAusDesde" class="text-xs text-white/70 block mb-1">Desde</label>
+         <input id="vAusDesde" type="date" min="${obtenerFechaHoy()}" class="campo" required>
+       </div>
+       <div>
+         <label for="vAusHasta" class="text-xs text-white/70 block mb-1">Hasta</label>
+         <input id="vAusHasta" type="date" min="${obtenerFechaHoy()}" class="campo" required>
+       </div>
+     </div>
+     <div>
+       <label for="vAusMotivo" class="text-xs text-white/70 block mb-1">Motivo (opcional)</label>
+       <input id="vAusMotivo" type="text" maxlength="120" placeholder="Ej: Vacaciones o cita médica" class="campo">
+     </div>`,
+    async () => {
+      const desde = document.getElementById('vAusDesde').value;
+      const hasta = document.getElementById('vAusHasta').value;
+      const motivo = document.getElementById('vAusMotivo').value.trim();
+
+      const r = await pedir(`/estilistas/${idEstilista}/ausencias`, 'POST', { desde, hasta, motivo });
+      mostrarToast(r.message || (r.success ? 'Ausencia registrada' : 'No se pudo registrar'));
+      if (r.success) {
+        await cargarMiHorario();
+        return true;
+      }
+      return false;
+    }
+  );
+
+  document.querySelectorAll('[data-quitar-ausencia]').forEach((boton) => {
+    boton.addEventListener('click', async () => {
+      const r = await pedir(`/ausencias/${boton.dataset.quitarAusencia}`, 'DELETE');
+      mostrarToast(r.message || 'Ausencia eliminada');
+      await cargarMiHorario();
+      verAusenciasEstilista(idEstilista);
+    });
+  });
 }
 
 async function verOpinionesEstilista(idEstilista) {
@@ -699,6 +966,7 @@ function renderizarTablaCitasEstilista() {
       <td class="p-3.5 text-pink-300 font-semibold whitespace-nowrap">${escapar(c.fecha)} · ${escapar(c.hora)}</td>
       <td class="p-3.5">${formatearEstadoBadge(c.estado)}</td>
       <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+        ${botonChatCita(c.id, c.sin_leer_estilista)}
         ${c.estado === 'Pendiente' ? `<button type="button" onclick="cambiarEstadoEstilista(${c.id}, 'Confirmada')" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold">Confirmar</button>` : ''}
         ${c.estado === 'Confirmada' ? `<button type="button" onclick="cambiarEstadoEstilista(${c.id}, 'Finalizada')" class="px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded text-[11px] font-semibold">Finalizar</button>` : ''}
         ${c.estado === 'Finalizada' ? `<button type="button" onclick="editarNotasServicio(${c.id})" class="px-2 py-1 bg-white/10 text-white/80 border border-white/15 rounded text-[11px] font-semibold hover:bg-white/20">Notas</button>` : ''}
@@ -720,7 +988,6 @@ window.cambiarEstadoEstilista = async function(idCita, nuevoEstado) {
   renderizarTablaCitasEstilista();
 };
 
-// Historial de clienta (GET /clientas/:id/historial)
 window.verHistorialClienta = async function(idClienta) {
   const resp = await pedir(`/clientas/${idClienta}/historial`, 'GET');
   const datos = resp && resp.data;
@@ -746,7 +1013,6 @@ window.verHistorialClienta = async function(idClienta) {
   );
 };
 
-// Notas del servicio (PUT /citas/:id/notas)
 window.editarNotasServicio = function(idCita) {
   const c = citasUsuario.find(x => String(x.id) === String(idCita));
   abrirVentana(`Notas del servicio · ${c ? c.cliente : ''}`,
@@ -885,25 +1151,6 @@ function modalServiciosEstilista() {
        `).join('')}
      </div>`,
     null
-  );
-}
-
-function modalHorarioEstilista() {
-  abrirVentana('Mi Horario de Atención',
-    `<div class="space-y-3">
-      <div>
-        <label class="text-xs text-white/70 block mb-1">Hora Inicio Jornada</label>
-        <input type="time" value="08:00" class="campo">
-      </div>
-      <div>
-        <label class="text-xs text-white/70 block mb-1">Hora Cierre Jornada</label>
-        <input type="time" value="18:00" class="campo">
-      </div>
-    </div>`,
-    async () => {
-      mostrarToast('Horario actualizado');
-      return true;
-    }
   );
 }
 

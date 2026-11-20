@@ -1,13 +1,16 @@
-// js/admin.js - Control Exclusivo del Panel de Administración conectado 100% a MySQL
+// js/admin.js - Control Exclusivo del Panel de Administración conectado 100% a MySQL (con Bandeja de Mensajes de Bella)
 
 let usuarioAdmin = null;
 let citasGlobales = [];
 let serviciosGlobales = [];
 let estilistasGlobales = [];
 let productosGlobales = [];
-let pagosGlobales = [];
 let versionFotoAdmin = Date.now();
 let alGuardarModalAdmin = null;
+
+let conversacionAbierta = null;
+let ultimoMensajeAdmin = 0;
+const DIAS_SEMANA_ADMIN = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 verificarAccesoAdmin();
 
@@ -21,11 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   inicializarFotoPerfilAdmin();
   inicializarFormularioModalAdmin();
+  prepararChatAdmin();
 
   await cargarDatosAdministrador();
   renderizarMetricasGanancias();
   renderizarTablaCitas();
-  renderizarTablaPagosAdmin();
   renderizarTablaGanancias();
   renderizarTablaServicios();
   renderizarTablaProductos();
@@ -145,7 +148,7 @@ function comprimirImagenAdmin(archivo, maxLado = 1200) {
 }
 
 // ---------------------------------------------------------------
-// CARGA REAL DESDE MYSQL (SIN CITAS NI ESTILISTAS FICTICIOS)
+// CARGA REAL DESDE MYSQL
 // ---------------------------------------------------------------
 
 function normalizarCitaAdmin(c) {
@@ -184,10 +187,6 @@ async function cargarDatosAdministrador() {
   serviciosGlobales = [];
   estilistasGlobales = [];
   productosGlobales = [];
-
-  // Filtrar posibles transacciones demo antiguas si existían en localStorage
-  const pagosLocales = typeof obtenerPagosLocales === 'function' ? obtenerPagosLocales() : [];
-  pagosGlobales = pagosLocales.filter(p => p.id_pago !== 'TXN-894210' && p.id_pago !== 'TXN-894215');
 
   try {
     const [resC, resS, resE, resP] = await Promise.all([
@@ -344,7 +343,162 @@ window.actualizarEstado = async function(idCita, nuevoEstado) {
 };
 
 // ---------------------------------------------------------------
-// HISTORIAL DE CLIENTA Y NOTAS DEL SERVICIO (FROM MAIN)
+// BANDEJA DE MENSAJES DE BELLA (/conversaciones)
+// ---------------------------------------------------------------
+
+async function cargarConversaciones() {
+  const lista = document.getElementById('listaConversacionesAdmin');
+  const badge = document.getElementById('badgeSinLeerAdmin');
+  if (!lista) return;
+
+  const resp = await pedir('/conversaciones', 'GET').catch(() => null);
+  const conversaciones = (resp && resp.data) || [];
+
+  const totalSinLeer = conversaciones.reduce((acc, c) => acc + Number(c.sin_leer || 0), 0);
+  if (badge) {
+    badge.textContent = totalSinLeer;
+    badge.classList.toggle('hidden', totalSinLeer === 0);
+  }
+
+  if (conversaciones.length === 0) {
+    lista.innerHTML = `<li class="p-4 text-center text-xs text-white/50">No hay mensajes de visitantes todavía.</li>`;
+    return;
+  }
+
+  lista.innerHTML = conversaciones.map((c) => {
+    const idConv = c.id_conversacion ?? c.id;
+    const activa = Number(idConv) === Number(conversacionAbierta);
+    return `
+      <li>
+        <button type="button" data-conversacion="${idConv}"
+          class="w-full text-left rounded-xl p-3 border transition ${
+            activa
+              ? 'border-pink-400 bg-pink-500/15'
+              : 'border-white/10 bg-black/25 hover:bg-white/10'
+          }">
+          <span class="flex items-center justify-between gap-2">
+            <span class="truncate font-bold text-xs text-white">${escapar(c.nombre)}</span>
+            ${Number(c.sin_leer) > 0 ? `<span class="rounded-full bg-pink-500 px-2 py-0.5 text-[10px] font-bold text-white">${c.sin_leer}</span>` : ''}
+          </span>
+          <span class="mt-1 block truncate text-[11px] text-white/65">${escapar(c.ultimo || 'Sin mensajes')}</span>
+          <span class="mt-1 block text-[10px] font-semibold ${c.estado === 'Abierta' ? 'text-emerald-300' : 'text-white/40'}">${escapar(c.estado)}</span>
+        </button>
+      </li>
+    `;
+  }).join('');
+
+  lista.querySelectorAll('button[data-conversacion]').forEach((boton) => {
+    boton.addEventListener('click', () => abrirConversacion(Number(boton.dataset.conversacion)));
+  });
+}
+
+async function abrirConversacion(id) {
+  conversacionAbierta = id;
+  ultimoMensajeAdmin = 0;
+
+  document.getElementById('mensajesAdmin').innerHTML = '';
+  const form = document.getElementById('formResponderAdmin');
+  if (form) {
+    form.classList.remove('hidden');
+    form.classList.add('flex');
+  }
+
+  await cargarMensajesAdmin();
+  await cargarConversaciones();
+  document.getElementById('textoRespuestaAdmin')?.focus();
+}
+
+function dibujarMensajeAdmin(m) {
+  const delSalon = m.autor !== 'Visitante';
+  const quien = m.autor === 'Salon'
+    ? 'Tú (Asesora)'
+    : m.autor === 'Asistente'
+      ? 'Bella (IA)'
+      : 'Visitante';
+
+  const estiloBurbuja = m.autor === 'Salon'
+    ? 'bg-pink-500 text-white'
+    : m.autor === 'Asistente'
+      ? 'bg-purple-500/20 border border-purple-400/30 text-purple-100'
+      : 'border border-white/10 bg-white/10 text-white/90';
+
+  document.getElementById('mensajesAdmin').insertAdjacentHTML('beforeend', `
+    <div class="max-w-[82%] ${delSalon ? 'ml-auto text-right' : ''}">
+      <p class="mb-1 text-[10px] text-white/50">${quien} · ${escapar(m.hora)}</p>
+      <p class="inline-block whitespace-pre-line rounded-2xl px-3.5 py-2 text-left text-xs ${estiloBurbuja}">${escapar(m.texto)}</p>
+    </div>
+  `);
+}
+
+async function cargarMensajesAdmin() {
+  if (!conversacionAbierta) return;
+  const resp = await pedir(`/conversaciones/${conversacionAbierta}/mensajes?desde=${ultimoMensajeAdmin}`, 'GET');
+  if (!resp || !resp.success) return;
+
+  const c = resp.data.conversacion;
+  const nuevoEstado = c.estado === 'Abierta' ? 'Cerrada' : 'Abierta';
+  const textoBoton = c.estado === 'Abierta' ? 'Cerrar conversación' : 'Reabrir';
+
+  document.getElementById('cabeceraConversacion').innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="font-bold text-sm text-white">${escapar(c.nombre)}</p>
+        <p class="text-[11px] text-white/60">${c.contacto ? escapar(c.contacto) : 'Sin teléfono ni correo'} · ${escapar(c.estado)}</p>
+      </div>
+      <button type="button" data-estado-conv="${nuevoEstado}" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold">${textoBoton}</button>
+    </div>
+  `;
+
+  const caja = document.getElementById('mensajesAdmin');
+  (resp.data.mensajes || []).forEach((m) => {
+    dibujarMensajeAdmin(m);
+    ultimoMensajeAdmin = m.id;
+  });
+
+  if (resp.data.mensajes && resp.data.mensajes.length > 0) {
+    caja.scrollTop = caja.scrollHeight;
+  }
+}
+
+function prepararChatAdmin() {
+  document.getElementById('formResponderAdmin')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const campoTexto = document.getElementById('textoRespuestaAdmin');
+    const texto = campoTexto.value.trim();
+    if (!texto || !conversacionAbierta) return;
+
+    const resp = await pedir(`/conversaciones/${conversacionAbierta}/responder`, 'POST', { texto });
+    if (!resp.success) {
+      notificarAdmin(resp.message || 'No se pudo enviar la respuesta');
+      return;
+    }
+
+    campoTexto.value = '';
+    await cargarMensajesAdmin();
+    await cargarConversaciones();
+  });
+
+  document.getElementById('cabeceraConversacion')?.addEventListener('click', async (e) => {
+    const boton = e.target.closest('button[data-estado-conv]');
+    if (!boton || !conversacionAbierta) return;
+
+    const resp = await pedir(`/conversaciones/${conversacionAbierta}/estado`, 'PUT', {
+      estado: boton.dataset.estadoConv
+    });
+    notificarAdmin(resp.message || 'Estado actualizado');
+    await cargarMensajesAdmin();
+    await cargarConversaciones();
+  });
+
+  cargarConversaciones();
+  setInterval(() => {
+    cargarConversaciones();
+    cargarMensajesAdmin();
+  }, 5000);
+}
+
+// ---------------------------------------------------------------
+// HISTORIAL DE CLIENTA Y NOTAS DEL SERVICIO
 // ---------------------------------------------------------------
 
 window.verHistorialClienta = async function(idClienta) {
@@ -418,63 +572,6 @@ window.editarNotasServicio = function(idCita) {
       return false;
     }
   );
-};
-
-// ---------------------------------------------------------------
-// CAJA Y PAGOS
-// ---------------------------------------------------------------
-
-function renderizarTablaPagosAdmin() {
-  const tabla = document.getElementById('tablaPagosAdmin');
-  if (!tabla) return;
-
-  const almacenados = typeof obtenerPagosLocales === 'function' ? obtenerPagosLocales() : [];
-  pagosGlobales = almacenados.filter(p => p.id_pago !== 'TXN-894210' && p.id_pago !== 'TXN-894215');
-
-  const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + Number(num).toLocaleString('es-CO');
-
-  if (pagosGlobales.length === 0) {
-    tabla.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-white/50">No hay pagos registrados todavía.</td></tr>`;
-    return;
-  }
-
-  tabla.innerHTML = pagosGlobales.map(p => {
-    const pagado = p.estado_pago === 'Pagado';
-    const badge = pagado
-      ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Pagado</span>`
-      : `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Pendiente en Salón</span>`;
-
-    return `
-      <tr class="hover:bg-white/5 transition border-b border-white/5">
-        <td class="p-3.5 font-mono text-pink-300">${escapar(p.id_pago)}</td>
-        <td class="p-3.5 font-bold text-white">${escapar(p.cliente)}</td>
-        <td class="p-3.5 text-white/80">${escapar(p.servicio)}</td>
-        <td class="p-3.5 text-white/80">${escapar(p.metodo)}</td>
-        <td class="p-3.5 font-bold text-amber-300">${fmt(p.monto)}</td>
-        <td class="p-3.5">${badge}</td>
-        <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
-          ${!pagado ? `<button type="button" onclick="aprobarPagoEnCaja('${escapar(p.id_pago)}', ${p.id_cita})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Confirmar Cobro</button>` : ''}
-          <button type="button" onclick="verComprobantePago(${p.id_cita})" class="px-2.5 py-1 bg-white/10 text-white hover:bg-white/20 rounded text-[11px] font-semibold">Recibo</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-window.aprobarPagoEnCaja = async function(idPago, idCita) {
-  const item = pagosGlobales.find(p => p.id_pago === idPago);
-  if (item) {
-    item.estado_pago = 'Pagado';
-    localStorage.setItem('pagosBellaStyle', JSON.stringify(pagosGlobales));
-  }
-
-  const cita = citasGlobales.find(c => String(c.id) === String(idCita));
-  if (cita && cita.estado !== 'Finalizada') {
-    await actualizarEstado(idCita, 'Finalizada');
-  }
-
-  notificarAdmin(`Cobro ${idPago} confirmado en caja`);
-  renderizarTablaPagosAdmin();
 };
 
 // ---------------------------------------------------------------
@@ -807,7 +904,7 @@ window.modalEditarProducto = function(idProducto) {
 };
 
 // ---------------------------------------------------------------
-// EQUIPO Y CALIFICACIONES (/estilistas/:id/calificaciones)
+// EQUIPO, HORARIOS, AUSENCIAS Y CALIFICACIONES
 // ---------------------------------------------------------------
 
 function renderizarTablaEquipo() {
@@ -831,12 +928,111 @@ function renderizarTablaEquipo() {
       <td class="p-3.5 font-semibold ${e.num_calificaciones ? 'text-amber-300' : 'text-white/40'}">
         ${e.num_calificaciones ? `★ ${e.promedio.toFixed(1)} (${e.num_calificaciones})` : 'Sin calificaciones'}
       </td>
-      <td class="p-3.5 text-right whitespace-nowrap">
-        <button type="button" onclick="verOpinionesEstilistaAdmin(${e.id_estilista}, '${escapar(e.nombre)}')" class="px-3 py-1 rounded bg-white/10 text-white hover:bg-white/20 text-xs font-semibold">Opiniones</button>
+      <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+        <button type="button" onclick="editarHorarioAdmin(${e.id_estilista}, '${escapar(e.nombre)}')" class="px-2.5 py-1 rounded bg-white/10 text-white hover:bg-white/20 text-xs font-semibold">Horario</button>
+        <button type="button" onclick="verAusenciasAdmin(${e.id_estilista}, '${escapar(e.nombre)}')" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 text-xs font-semibold">Ausencias</button>
+        <button type="button" onclick="verOpinionesEstilistaAdmin(${e.id_estilista}, '${escapar(e.nombre)}')" class="px-2.5 py-1 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 hover:bg-pink-500/30 text-xs font-semibold">Opiniones</button>
       </td>
     </tr>
   `).join('');
 }
+
+function opcionesHoraAdmin(valorSeleccionado, minMinutos, maxMinutos) {
+  const selNorm = String(valorSeleccionado || '08:00').slice(0, 5);
+  const opciones = [];
+  for (let m = minMinutos; m <= maxMinutos; m += 30) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    const val = `${hh}:${mm}`;
+    opciones.push(`<option value="${val}" ${val === selNorm ? 'selected' : ''}>${val}</option>`);
+  }
+  return opciones.join('');
+}
+
+window.editarHorarioAdmin = async function(idEstilista, nombre) {
+  const resp = await pedir(`/estilistas/${idEstilista}/horario`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) return notificarAdmin('No se pudo cargar el horario.');
+
+  const filas = [1, 2, 3, 4, 5, 6].map((dia) => {
+    const h = (datos.horario || []).find((x) => Number(x.dia_semana) === dia);
+    return `
+      <div class="grid grid-cols-[6.5rem_1fr_1fr] items-center gap-2">
+        <label class="flex items-center gap-2 text-xs text-white">
+          <input type="checkbox" name="vDiaAdmin" value="${dia}" class="accent-pink-500" ${h ? 'checked' : ''}>
+          ${DIAS_SEMANA_ADMIN[dia]}
+        </label>
+        <select id="vIniAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_inicio : '08:00', 8 * 60, 18 * 60)}</select>
+        <select id="vFinAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_fin : '19:00', 9 * 60, 19 * 60)}</select>
+      </div>
+    `;
+  }).join('');
+
+  abrirModalAdmin(`Horario · ${nombre}`,
+    `<div class="grid grid-cols-[6.5rem_1fr_1fr] gap-2 text-[10px] uppercase tracking-wider text-white/50"><span>Día</span><span>Entrada</span><span>Salida</span></div>
+     <div class="space-y-2">${filas}</div>`,
+    async () => {
+      const dias = [...document.querySelectorAll('input[name="vDiaAdmin"]:checked')].map((c) => ({
+        dia: Number(c.value),
+        inicio: document.getElementById('vIniAdmin' + c.value).value,
+        fin: document.getElementById('vFinAdmin' + c.value).value
+      }));
+      const r = await pedir(`/estilistas/${idEstilista}/horario`, 'PUT', { dias });
+      notificarAdmin(r.message || 'Horario actualizado');
+      return !!r.success;
+    }
+  );
+};
+
+window.verAusenciasAdmin = async function(idEstilista, nombre) {
+  const resp = await pedir(`/estilistas/${idEstilista}/horario`, 'GET');
+  const datos = resp && resp.data;
+  if (!datos) return notificarAdmin('No se pudieron cargar las ausencias.');
+
+  const lista = (datos.ausencias || []).length === 0
+    ? '<p class="text-xs text-white/60">No tiene ausencias registradas.</p>'
+    : `<ul class="space-y-2 max-h-40 overflow-y-auto">${datos.ausencias.map((a) => `
+        <li class="flex items-center justify-between gap-3 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs">
+          <span>${escapar(String(a.fecha_inicio).slice(0, 10))} al ${escapar(String(a.fecha_fin).slice(0, 10))}${a.motivo ? ` · <span class="text-white/60">${escapar(a.motivo)}</span>` : ''}</span>
+          <button type="button" data-quitar-aus-admin="${a.id_ausencia}" class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-semibold">Quitar</button>
+        </li>
+      `).join('')}</ul>`;
+
+  abrirModalAdmin(`Ausencias · ${nombre}`,
+    `${lista}
+     <p class="border-t border-white/10 pt-3 text-xs font-bold text-pink-300">Agregar ausencia</p>
+     <div class="grid grid-cols-2 gap-3">
+       <div>
+         <label class="text-xs text-white/70 block mb-1">Desde</label>
+         <input id="vAusDesdeAdmin" type="date" min="${obtenerFechaHoy()}" class="campo" required>
+       </div>
+       <div>
+         <label class="text-xs text-white/70 block mb-1">Hasta</label>
+         <input id="vAusHastaAdmin" type="date" min="${obtenerFechaHoy()}" class="campo" required>
+       </div>
+     </div>
+     <div>
+       <label class="text-xs text-white/70 block mb-1">Motivo (opcional)</label>
+       <input id="vAusMotivoAdmin" type="text" maxlength="120" class="campo">
+     </div>`,
+    async () => {
+      const desde = document.getElementById('vAusDesdeAdmin').value;
+      const hasta = document.getElementById('vAusHastaAdmin').value;
+      const motivo = document.getElementById('vAusMotivoAdmin').value.trim();
+      const r = await pedir(`/estilistas/${idEstilista}/ausencias`, 'POST', { desde, hasta, motivo });
+      notificarAdmin(r.message || 'Ausencia registrada');
+      return !!r.success;
+    }
+  );
+
+  document.querySelectorAll('[data-quitar-aus-admin]').forEach((boton) => {
+    boton.addEventListener('click', async () => {
+      const r = await pedir(`/ausencias/${boton.dataset.quitarAusAdmin}`, 'DELETE');
+      notificarAdmin(r.message || 'Ausencia eliminada');
+      verAusenciasAdmin(idEstilista, nombre);
+    });
+  });
+};
 
 window.verOpinionesEstilistaAdmin = async function(idEstilista, nombre) {
   const resp = await pedir(`/estilistas/${idEstilista}/calificaciones`, 'GET');
@@ -974,7 +1170,7 @@ window.agregarAVitrinaSalon = function() {
 window.switchTabAdmin = function(tab) {
   const secciones = {
     citas: 'secCitasAdmin',
-    pagos: 'secPagosAdmin',
+    mensajes: 'secMensajesAdmin',
     ganancias: 'secGananciasAdmin',
     servicios: 'secServiciosAdmin',
     productos: 'secProductosAdmin',
@@ -984,7 +1180,7 @@ window.switchTabAdmin = function(tab) {
 
   const botones = {
     citas: 'tabCitas',
-    pagos: 'tabPagos',
+    mensajes: 'tabMensajes',
     ganancias: 'tabGanancias',
     servicios: 'tabServicios',
     productos: 'tabProductos',
@@ -999,9 +1195,10 @@ window.switchTabAdmin = function(tab) {
 
     if (sec) sec.classList.toggle('hidden', !activo);
     if (btn) {
+      const esMensajes = k === 'mensajes';
       btn.className = activo
-        ? 'px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black'
-        : 'px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5';
+        ? `px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black ${esMensajes ? 'inline-flex items-center gap-1.5' : ''}`
+        : `px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5 ${esMensajes ? 'inline-flex items-center gap-1.5' : ''}`;
     }
   });
 };
