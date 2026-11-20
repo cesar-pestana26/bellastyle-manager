@@ -1,6 +1,6 @@
 @startuml Modelo_Datos
 !include skin.iuml
-title Modelo relacional — base de datos bellastylemanager (17 tablas)
+title Modelo relacional — base de datos bellastylemanager (18 tablas)
 skinparam linetype ortho
 left to right direction
 entity usuarios {
@@ -10,6 +10,8 @@ entity usuarios {
   username : VARCHAR(50) <<UNIQUE>>
   password : VARCHAR(255)
   rol : ENUM
+  telefono : VARCHAR(30)
+  email : VARCHAR(120)
   creado_en : TIMESTAMP
 }
 entity clientas {
@@ -135,6 +137,16 @@ entity vitrina {
   datos : MEDIUMBLOB
   descripcion : VARCHAR(120)
 }
+entity pagos {
+  * id_pago : INT <<PK>>
+  --
+  id_cita : INT <<FK, UNIQUE>>
+  referencia : VARCHAR(30) <<UNIQUE>>
+  metodo : ENUM
+  monto : DECIMAL(10,2)
+  estado : ENUM
+  fecha_pago : TIMESTAMP
+}
 usuarios ||--o| clientas
 usuarios ||--o| estilistas
 usuarios ||--o| fotos_perfil
@@ -148,6 +160,7 @@ estilistas ||--o{ horarios
 estilistas ||--o{ ausencias
 citas ||--o| calificaciones
 citas ||--o{ mensajes_cita
+citas ||--o| pagos
 conversaciones ||--o{ mensajes
 servicios ||--o{ fotos_servicio
 productos ||--o| fotos_producto

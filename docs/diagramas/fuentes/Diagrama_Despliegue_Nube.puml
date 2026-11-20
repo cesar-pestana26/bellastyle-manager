@@ -33,7 +33,7 @@ node "Servidor Aiven (nube)\nservicio «bellastyle-mysql»" <<device>> as AIVEN 
 
 node "Google Cloud" <<device>> as GOOGLE {
   node "Gemini API" <<executionEnvironment>> as GEM {
-    artifact "Modelo gemma-4-26b-a4b-it\n(respaldo: gemini-flash-lite-latest)" as MODELO
+    artifact "Modelo gemini-flash-lite-latest" as MODELO
   }
 }
 

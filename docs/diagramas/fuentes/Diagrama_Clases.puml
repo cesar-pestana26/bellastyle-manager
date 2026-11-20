@@ -10,6 +10,11 @@ enum Rol <<enumeration>> {
   Estilista
   Clienta
 }
+enum EstadoPago <<enumeration>> {
+  Pagado
+  PendienteEnSalon
+  Reembolsado
+}
 enum EstadoCita <<enumeration>> {
   Pendiente
   Confirmada
@@ -23,9 +28,12 @@ class Usuario {
   -username : String
   -password : String
   -rol : Rol
+  -telefono : String
+  -email : String
   +buscarPorUsername(username)
   +crear(datos)
   +actualizarPassword(username, hash)
+  +contactosRegistrados(idUsuario)
   +cambiarNombre(idUsuario, nombre)
 }
 class FotoPerfil {
@@ -151,6 +159,23 @@ class Mensaje {
   +agregarMensaje(id, autor, texto)
   +mensajesDesde(id, desde)
 }
+class Pago {
+  -idPago : int
+  -referencia : String
+  -metodo : String
+  -monto : decimal
+  -estado : EstadoPago
+  +crear(datos)
+  +buscarPorCita(idCita)
+  +listar(rol, idUsuario)
+  +actualizarEstado(id, estado)
+}
+class Seguridad <<servicio>> {
+  +crearToken(usuario)
+  +requiereSesion()
+  +soloRoles(roles)
+  +registrarFallo(clave)
+}
 class AsistenteIA <<servicio>> {
   +responder(mensajes)
 }
@@ -177,6 +202,9 @@ Servicio "1" -- "0..*" Cita : incluye >
 Cita --> EstadoCita
 Cita "1" *-- "0..1" Calificacion : recibe >
 Cita "1" *-- "0..*" MensajeCita : chat >
+Cita "1" *-- "0..1" Pago : se paga con >
+Pago --> EstadoPago
+Seguridad ..> Usuario : valida sesión y rol
 Conversacion "1" *-- "1..*" Mensaje : contiene >
 AsistenteIA ..> Servicio : consulta precios
 AsistenteIA ..> Producto : consulta

@@ -76,7 +76,7 @@ def general():
     L.linea([(1215, cy), (1475, cy)]); L.interfaz(1345, cy, 'izq', 'ISQL', 1345, cy - 44, 'middle')
     L.texto(1345, cy + 56, 'TCP + SSL', 14, 'normal', '#444'); L.texto(1345, cy + 76, '(local: puerto 3306)', 13, 'normal', '#444')
     gy = 590
-    L.comp(1000, gy, 430, 150, 'Servicio de IA', 'Gemini API (Google)\nmodelo Gemma 4', 'external')
+    L.comp(1000, gy, 430, 150, 'Servicio de IA', 'Gemini API (Google)\nmodelo Gemini Flash-Lite', 'external')
     L.linea([(1000, cy + 85), (1000, gy - 75)]); L.interfaz(1000, 430, 'arriba', 'IGemini', 1036, 436, 'start', 'HTTPS + JSON')
     L.nota(70, 740, 1860, [
         'El Frontend REQUIERE (media luna) la interfaz IApiRest que el Backend PROVEE (bola).',
@@ -97,14 +97,19 @@ def detallado():
     L.linea([(850, 215), (1070, 215)]); L.interfaz(960, 215, 'izq', 'IClienteAPI', 960, 172, 'middle')
     # Backend
     L.marco(300, 410, 1620, 930, 'Backend (Node.js + Express)')
-    L.comp(1235, 520, 330, 100, 'Enrutador', 'routes/rutas.js (58 rutas)')
+    L.comp(1235, 520, 330, 100, 'Enrutador', 'routes/rutas.js (62 rutas)')
     L.linea([(1235, 270), (1235, 470)]); L.interfaz(1235, 365, 'arriba', 'IApiRest', 1270, 372, 'start', 'HTTPS + JSON')
+    # Seguridad: el enrutador pide la sesión (token JWT) y el rol antes de llamar al controlador
+    L.comp(1680, 520, 250, 100, 'Seguridad', 'middleware/seguridad.js\nsesión JWT y roles')
+    L.linea([(1400, 520), (1555, 520)]); L.interfaz(1478, 520, 'izq', 'ISeguridad', 1478, 480, 'middle')
+    L.comp(2170, 520, 250, 100, 'jsonwebtoken', 'firma y valida tokens', 'library')
+    L.linea([(1805, 520), (2045, 520)]); L.interfaz(1955, 520, 'izq', 'IJwt', 1955, 480, 'middle')
     xs = [445, 705, 965, 1235, 1495, 1755]
     nombres = [('Autenticación', 'authController', 'IAutenticacion'),
                ('Catálogo y gestión', 'catalogo · gestion', 'ICatalogo'),
                ('Citas y agenda', 'citas · horario\ncalificacion', 'ICitas'),
                ('Perfil y fotos', 'perfil · fotoServicio', 'IPerfil'),
-               ('Comprobantes', 'comprobanteController', 'IComprobante'),
+               ('Pagos y PDF', 'pago · comprobante', 'IPagos'),
                ('Chats', 'chat · chatCita', 'IChat')]
     L.linea([(xs[0], 610), (xs[-1], 610)]); L.linea([(1235, 570), (1235, 610)])
     for x, (n, sub, i) in zip(xs, nombres):
@@ -128,7 +133,7 @@ def detallado():
     L.comp(150, 750, 200, 100, 'bcryptjs', 'hash de contraseñas', 'library')
     L.linea([(250, 750), (327, 750)]); L.interfaz(285, 750, 'der', 'ICifrado', 285, 798, 'middle')
     # Gemini (derecha, fuera del marco)
-    L.comp(2170, uy, 250, 110, 'Gemini API', 'Google · Gemma 4', 'external')
+    L.comp(2170, uy, 250, 110, 'Gemini API', 'Google · Flash-Lite', 'external')
     L.linea([(1860, uy), (2045, uy)]); L.interfaz(1955, uy, 'izq', 'IGemini', 1955, uy - 40, 'middle', '')
     L.texto(1955, uy + 48, 'HTTPS + JSON', 13.5, 'normal', '#444')
     # acceso a datos
@@ -204,7 +209,7 @@ def despliegue():
     # Google
     nodo(L, 1640, 830, 500, 300, 'device', 'Google Cloud')
     nodo(L, 1680, 900, 420, 200, 'executionEnvironment', 'Gemini API', fondo='#FFFFFF')
-    artefacto(L, 1720, 980, 340, 100, ['gemma-4-26b-a4b-it', 'respaldo: gemini-flash-lite-latest'])
+    artefacto(L, 1720, 980, 340, 100, ['gemini-flash-lite-latest', 'API v1beta'])
     # Rutas de comunicación
     L.linea([(560, 420), (760, 420)])
     L.texto(660, 404, '«HTTPS»', 15, 'bold', ROSA); L.texto(660, 446, 'puerto 443', 14, 'normal', '#444')
@@ -215,7 +220,7 @@ def despliegue():
     L.linea([(1100, 760), (1100, 980), (1640, 980)])
     L.texto(1370, 964, '«HTTPS»', 15, 'bold', ROSA); L.texto(1370, 1006, 'JSON + API key', 14, 'normal', '#444')
     L.nota(60, 820, 940, ['Las claves llegan como variables de entorno: DB_HOST, DB_PORT, DB_USER,',
-                         'DB_PASSWORD, DB_NAME, DB_SSL, GEMINI_API_KEY y CODIGO_ADMIN.',
+                         'DB_PASSWORD, DB_NAME, DB_SSL, GEMINI_API_KEY, CODIGO_ADMIN y JWT_SECRETO.',
                          'El código llega desde GitHub (rama main): Render ejecuta npm install y node app.js.',
                          'En el computador de desarrollo: http://localhost:3000 y MySQL en el puerto 3306.'], 'Notas')
     return L
