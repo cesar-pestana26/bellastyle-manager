@@ -1,5 +1,6 @@
 // Controlador de citas: listar, horas libres, crear (con asignación automática),
 // reprogramar y cambiar estado
+const db = require('../config/db');
 const citaModel = require('../models/citaModel');
 const clienteModel = require('../models/clienteModel');
 const servicioModel = require('../models/servicioModel');
@@ -166,14 +167,30 @@ async function crear(req, res) {
         return res.status(400).json({ success: false, message: errorFecha });
     }
 
+    // Todo se hace dentro de una TRANSACCIÓN que bloquea (SELECT ... FOR UPDATE) a la clienta
+    // y a las estilistas posibles. Si dos personas piden la misma hora al mismo tiempo,
+    // la segunda espera a que la primera termine y luego ve la hora ya ocupada:
+    // así nunca quedan dos citas cruzadas (condición de carrera).
+    const conexion = await db.getConnection();
     try {
+        await conexion.beginTransaction();
+
         const clienta = await clienteModel.buscarPorUsuario(idUsuario);
         if (!clienta) {
+            await conexion.rollback();
             return res.status(404).json({ success: false, message: 'Tu cuenta no tiene perfil de clienta.' });
+        }
+        await conexion.query('SELECT id_clienta FROM clientas WHERE id_clienta = ? FOR UPDATE', [clienta.id_clienta]);
+        const posibles = idEstilista ? [Number(idEstilista)]
+            : (await estilistaModel.capacitadasPara(idServicio)).map((e) => e.id_estilista);
+        if (posibles.length > 0) {
+            // Se bloquean en orden (ORDER BY) para que dos transacciones no se esperen entre sí (deadlock)
+            await conexion.query('SELECT id_estilista FROM estilistas WHERE id_estilista IN (?) ORDER BY id_estilista FOR UPDATE', [posibles]);
         }
 
         const servicio = await servicioModel.buscarPorId(idServicio);
         if (!servicio) {
+            await conexion.rollback();
             return res.status(404).json({ success: false, message: 'El servicio no existe.' });
         }
 
@@ -181,6 +198,7 @@ async function crear(req, res) {
         const inicio = aMinutos(hora);
         const fin = inicio + servicio.duracion_min;
         if (fueraDeHorario(inicio, fin)) {
+            await conexion.rollback();
             return res.status(400).json({
                 success: false,
                 message: `El horario es de 8:00 a 19:00 y este servicio dura ${servicio.duracion_min} minutos.`
@@ -189,6 +207,7 @@ async function crear(req, res) {
 
         // La clienta no puede tener dos citas que se crucen
         if (await clientaTieneCruce(clienta.id_clienta, fecha, inicio, fin)) {
+            await conexion.rollback();
             return res.status(409).json({ success: false, message: 'Ya tienes otra cita en ese horario.' });
         }
 
@@ -199,6 +218,7 @@ async function crear(req, res) {
             const agenda = await agendaDelDia(idEstilista, fecha);
             const motivo = motivoNoDisponible(agenda, inicio, fin);
             if (motivo) {
+                await conexion.rollback();
                 return res.status(409).json({ success: false, message: MENSAJES_NO_DISPONIBLE[motivo] });
             }
             const estilista = await estilistaModel.buscarPorId(idEstilista);
@@ -216,11 +236,12 @@ async function crear(req, res) {
                 }
             }
             if (!elegida) {
+                await conexion.rollback();
                 return res.status(409).json({ success: false, message: 'No hay estilistas libres para ese servicio a esa hora. Prueba otro horario.' });
             }
         }
 
-        const idCita = await citaModel.crear({
+        const idCita = await citaModel.crear(conexion, {
             idClienta: clienta.id_clienta,
             idEstilista: elegida.id_estilista,
             idServicio,
@@ -229,14 +250,18 @@ async function crear(req, res) {
             precio: servicio.precio,
             observaciones
         });
+        await conexion.commit();
 
         const mensaje = elegida.nombre
             ? `Cita agendada. Te atenderá ${elegida.nombre}.`
             : 'Cita agendada.';
         res.status(201).json({ success: true, message: mensaje, id: idCita, estilista: elegida.nombre });
     } catch (err) {
+        await conexion.rollback().catch(() => {});
         console.error('Error al crear cita:', err.message);
         res.status(500).json({ success: false, message: 'No se pudo agendar la cita.' });
+    } finally {
+        conexion.release();
     }
 }
 
@@ -246,6 +271,10 @@ async function cambiarEstado(req, res) {
     const { estado } = req.body;
     if (!ESTADOS.includes(estado)) {
         return res.status(400).json({ success: false, message: 'Estado no válido.' });
+    }
+    // La clienta solo puede cancelar; confirmar o finalizar es tarea del salón
+    if (req.usuario && req.usuario.rol === 'Clienta' && estado !== 'Cancelada') {
+        return res.status(403).json({ success: false, message: 'Solo puedes cancelar tu cita.' });
     }
     try {
         const actualizada = await citaModel.cambiarEstado(req.params.id, estado);

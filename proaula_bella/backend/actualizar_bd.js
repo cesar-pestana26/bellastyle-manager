@@ -92,7 +92,10 @@ const TABLAS = [
 const COLUMNAS = [
     ['clientas', 'profesion', 'VARCHAR(80) NULL'],
     ['citas', 'notas_servicio', 'VARCHAR(500) NULL'],
-    ['citas', 'reprogramaciones', 'TINYINT NOT NULL DEFAULT 0']
+    ['citas', 'reprogramaciones', 'TINYINT NOT NULL DEFAULT 0'],
+    // Teléfono y correo de cada cuenta (estilistas y administradora), para recuperar la contraseña
+    ['usuarios', 'telefono', 'VARCHAR(30) NULL'],
+    ['usuarios', 'email', 'VARCHAR(120) NULL']
 ];
 
 // Las estilistas que todavía no tienen horario reciben el de siempre:

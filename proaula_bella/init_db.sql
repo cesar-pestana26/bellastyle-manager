@@ -43,6 +43,8 @@ CREATE TABLE usuarios (
     password    VARCHAR(255) NOT NULL,
     rol         ENUM('Administradora','Estilista','Clienta') NOT NULL DEFAULT 'Clienta',
     foto        VARCHAR(255),
+    telefono    VARCHAR(30),          -- para recuperar la contraseña
+    email       VARCHAR(120),
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -251,12 +253,12 @@ CREATE TABLE vitrina (
 -- Contraseñas: admin123, est123, diana123, paula123, cli123
 -- =====================================================================
 
-INSERT INTO usuarios (id_usuario, nombre, username, password, rol, foto) VALUES
-(1, 'Admin',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg'),
-(2, 'Laura Estilista', 'estilista', '$2a$10$WmrWwFDrn6YvFrl0GkMTluTXGFTi7Mo1NTy1QuhTjDKtIptxfSeo2', 'Estilista',      'img/rol_estilista.svg'),
-(3, 'Diana Martínez',  'diana',     '$2a$10$keW7X2fdPNp3lekvelDIJeqnaEtWHFNH3AsRn41qr1RlNMndqXtsO', 'Estilista',      'img/rol_estilista.svg'),
-(4, 'Paula Ríos',      'paula',     '$2a$10$8QYcfgNx/jt2VrF1ECRwie2X6OfGjQHXLppFYJ3Pe9MkEG6UcPPQa', 'Estilista',      'img/rol_estilista.svg'),
-(5, 'César Pestana',   'cliente',   '$2a$10$wPH.tKFjr54oM.IzJVbSHOUYpEJjgJ43.CAekjbRWF3IpVt3P6csa', 'Clienta',        'img/rol_clienta.svg');
+INSERT INTO usuarios (id_usuario, nombre, username, password, rol, foto, telefono, email) VALUES
+(1, 'Admin',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg', '3005550001', 'admin@bellastyle.com'),
+(2, 'Laura Estilista', 'estilista', '$2a$10$WmrWwFDrn6YvFrl0GkMTluTXGFTi7Mo1NTy1QuhTjDKtIptxfSeo2', 'Estilista',      'img/rol_estilista.svg', '3005550002', 'laura@bellastyle.com'),
+(3, 'Diana Martínez',  'diana',     '$2a$10$keW7X2fdPNp3lekvelDIJeqnaEtWHFNH3AsRn41qr1RlNMndqXtsO', 'Estilista',      'img/rol_estilista.svg', '3005550003', 'diana@bellastyle.com'),
+(4, 'Paula Ríos',      'paula',     '$2a$10$8QYcfgNx/jt2VrF1ECRwie2X6OfGjQHXLppFYJ3Pe9MkEG6UcPPQa', 'Estilista',      'img/rol_estilista.svg', '3005550004', 'paula@bellastyle.com'),
+(5, 'César Pestana',   'cliente',   '$2a$10$wPH.tKFjr54oM.IzJVbSHOUYpEJjgJ43.CAekjbRWF3IpVt3P6csa', 'Clienta',        'img/rol_clienta.svg', '3001112233', 'cesar@correo.com');
 
 INSERT INTO clientas (id_clienta, id_usuario, nombres, apellidos, telefono, email) VALUES
 (1, 5,    'César', 'Pestana',  '3001112233', 'cesar@correo.com'),

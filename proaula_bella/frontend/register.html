@@ -69,8 +69,8 @@
               </div>
             </div>
 
-            <!-- Campos solo para Clienta -->
-            <div data-solo="cliente" class="grid gap-4 sm:grid-cols-2">
+            <!-- Contacto (todos los roles): se usa para recuperar la contraseña -->
+            <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label for="telefono" class="etiqueta">Teléfono</label>
                 <input id="telefono" class="campo" type="tel" inputmode="numeric" maxlength="10" placeholder="3001234567">
@@ -79,6 +79,11 @@
                 <label for="email" class="etiqueta">Correo electrónico</label>
                 <input id="email" class="campo" type="email" placeholder="tu@correo.com">
               </div>
+              <p class="sm:col-span-2 -mt-2 text-xs text-white/60">Escribe al menos uno: lo necesitarás si olvidas tu contraseña.</p>
+            </div>
+
+            <!-- Campos solo para Clienta -->
+            <div data-solo="cliente" class="grid gap-4 sm:grid-cols-2">
               <div class="sm:col-span-2">
                 <label for="profesion" class="etiqueta">Profesión u ocupación (opcional)</label>
                 <input id="profesion" class="campo" maxlength="80" list="listaProfesiones" placeholder="Ej: Enfermera, docente, estudiante...">

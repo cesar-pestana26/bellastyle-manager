@@ -7,10 +7,10 @@ async function buscarPorUsername(username) {
 }
 
 // conexion: se recibe para poder usarlo dentro de una transacción
-async function crear(conexion, { nombre, username, passwordHash, rol, foto }) {
+async function crear(conexion, { nombre, username, passwordHash, rol, foto, telefono, email }) {
     const [resultado] = await conexion.query(
-        'INSERT INTO usuarios (nombre, username, password, rol, foto) VALUES (?, ?, ?, ?, ?)',
-        [nombre, username, passwordHash, rol, foto]
+        'INSERT INTO usuarios (nombre, username, password, rol, foto, telefono, email) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [nombre, username, passwordHash, rol, foto, telefono || null, email || null]
     );
     return resultado.insertId;
 }
@@ -19,4 +19,19 @@ async function actualizarPassword(username, passwordHash) {
     await db.query('UPDATE usuarios SET password = ? WHERE username = ?', [passwordHash, username]);
 }
 
-module.exports = { buscarPorUsername, crear, actualizarPassword };
+// Teléfonos y correos registrados de la cuenta (para recuperar la contraseña).
+// Se buscan en la cuenta y, si es clienta, también en su ficha de clienta.
+async function contactosRegistrados(idUsuario) {
+    const [filas] = await db.query(`
+        SELECT u.telefono, u.email FROM usuarios u WHERE u.id_usuario = ?
+        UNION ALL
+        SELECT c.telefono, c.email FROM clientas c WHERE c.id_usuario = ?`, [idUsuario, idUsuario]);
+    const lista = [];
+    for (const f of filas) {
+        if (f.telefono) lista.push(String(f.telefono).trim());
+        if (f.email) lista.push(String(f.email).trim().toLowerCase());
+    }
+    return lista;
+}
+
+module.exports = { buscarPorUsername, crear, actualizarPassword, contactosRegistrados };

@@ -87,8 +87,9 @@ async function ocupadasClientaDelDia(idClienta, fecha, excluirId = 0) {
 
 // Se guarda el precio del momento: si luego cambia el precio del servicio,
 // las citas anteriores (ingresos y comisiones) no se alteran.
-async function crear({ idClienta, idEstilista, idServicio, fecha, hora, precio, observaciones }) {
-    const [resultado] = await db.query(
+// conexion: la de la transacción de crear cita (o el pool si no hay transacción)
+async function crear(conexion, { idClienta, idEstilista, idServicio, fecha, hora, precio, observaciones }) {
+    const [resultado] = await (conexion || db).query(
         `INSERT INTO citas (id_cliente, id_estilista, id_servicio, fecha, hora, precio, observaciones, estado)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente')`,
         [idClienta, idEstilista, idServicio, fecha, hora, precio, observaciones || null]

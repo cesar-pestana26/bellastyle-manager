@@ -6,6 +6,7 @@ const usuarioModel = require('../models/usuarioModel');
 const clienteModel = require('../models/clienteModel');
 const estilistaModel = require('../models/estilistaModel');
 const horarioModel = require('../models/horarioModel');
+const { crearToken, minutosBloqueado, registrarFallo, limpiarIntentos } = require('../middleware/seguridad');
 const { nombreValido, usuarioValido, passwordValida, telefonoValido, emailValido, separarNombre } = require('../utils/validators');
 
 // Nombre del rol en el frontend -> nombre del rol en la base de datos
@@ -30,21 +31,35 @@ async function login(req, res) {
         return res.status(400).json({ success: false, message: 'Escribe tu usuario y contraseña.' });
     }
 
+    // Máximo 3 intentos fallidos; después la cuenta queda bloqueada 15 minutos
+    const clave = 'login:' + String(username).trim().toLowerCase();
+    const espera = minutosBloqueado(clave);
+    if (espera > 0) {
+        return res.status(429).json({ success: false, message: `Demasiados intentos fallidos. Espera ${espera} minuto(s) e inténtalo de nuevo.` });
+    }
+
     try {
         const usuario = await usuarioModel.buscarPorUsername(username.trim().toLowerCase());
 
         // Se usa el mismo mensaje para no revelar si el usuario existe
         if (!usuario || !bcrypt.compareSync(password, usuario.password)) {
-            return res.status(401).json({ success: false, message: 'Usuario o contraseña incorrectos.' });
+            const quedan = registrarFallo(clave);
+            const message = quedan > 0
+                ? `Usuario o contraseña incorrectos. Te quedan ${quedan} intento(s).`
+                : 'Usuario o contraseña incorrectos. Por seguridad, espera 15 minutos para volver a intentarlo.';
+            return res.status(401).json({ success: false, message });
         }
+        limpiarIntentos(clave);
 
         // Una clienta no puede entrar por el portal de administradora, etc.
         if (rol && ROLES[rol] !== usuario.rol) {
             return res.status(403).json({ success: false, message: 'Esta cuenta no pertenece a este portal.' });
         }
 
+        // Token de la sesión: el navegador lo manda en cada petición (vence en 8 horas)
         return res.json({
             success: true,
+            token: crearToken(usuario),
             user: {
                 id: usuario.id_usuario,
                 nombre: usuario.nombre,
@@ -81,7 +96,11 @@ async function registrar(req, res) {
     if (!passwordValida(password)) {
         return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
     }
-    // Teléfono y correo son opcionales, pero si se escriben deben tener formato válido
+    // Se necesita al menos el teléfono o el correo: con ellos se recupera la contraseña.
+    // Si se escriben, deben tener formato válido.
+    if (!telefono && !email) {
+        return res.status(400).json({ success: false, message: 'Escribe tu teléfono o tu correo: los necesitarás para recuperar la contraseña.' });
+    }
     if (telefono && !telefonoValido(telefono)) {
         return res.status(400).json({ success: false, message: 'El teléfono debe tener 10 dígitos: celular que empiece por 3 o fijo que empiece por 60.' });
     }
@@ -117,7 +136,9 @@ async function registrar(req, res) {
             username,
             passwordHash: bcrypt.hashSync(password, 10),
             rol: rolBD,
-            foto: FOTOS[rolBD]
+            foto: FOTOS[rolBD],
+            telefono: telefono || null,
+            email: email ? email.trim().toLowerCase() : null
         });
 
         const { nombres, apellidos } = separarNombre(nombre);
@@ -147,20 +168,38 @@ async function registrar(req, res) {
 }
 
 // POST /api/recuperar-password
-// Versión simple para el proyecto: cambia la contraseña con el nombre de usuario.
-// En un sistema real se enviaría un enlace al correo.
+// Recibe: { username, contacto, nuevaPassword }
+// Para cambiar la contraseña hay que demostrar que la cuenta es tuya: el teléfono o el correo
+// que escribas debe ser el mismo que registraste. Máximo 3 intentos y luego 15 minutos de bloqueo.
+// (En un sistema real se enviaría un código por SMS o correo; aquí se compara con el registrado.)
 async function recuperarPassword(req, res) {
     const { username, nuevaPassword } = req.body;
+    const contacto = typeof req.body.contacto === 'string' ? req.body.contacto.trim().toLowerCase() : '';
 
-    if (!usuarioValido(username) || !passwordValida(nuevaPassword)) {
-        return res.status(400).json({ success: false, message: 'Revisa el usuario y que la contraseña tenga al menos 6 caracteres.' });
+    if (!usuarioValido(username) || !contacto || !passwordValida(nuevaPassword)) {
+        return res.status(400).json({ success: false, message: 'Escribe tu usuario, tu teléfono o correo registrado y una contraseña de al menos 6 caracteres.' });
+    }
+
+    const clave = 'recuperar:' + username.trim().toLowerCase();
+    const espera = minutosBloqueado(clave);
+    if (espera > 0) {
+        return res.status(429).json({ success: false, message: `Demasiados intentos fallidos. Espera ${espera} minuto(s) e inténtalo de nuevo.` });
     }
 
     try {
         const usuario = await usuarioModel.buscarPorUsername(username.trim().toLowerCase());
-        if (!usuario) {
-            return res.status(404).json({ success: false, message: 'No existe una cuenta con ese usuario.' });
+        const contactos = usuario ? await usuarioModel.contactosRegistrados(usuario.id_usuario) : [];
+
+        // Mismo mensaje si el usuario no existe o el dato no coincide: así no se revela qué cuentas existen
+        if (!contactos.includes(contacto)) {
+            const quedan = registrarFallo(clave);
+            const message = quedan > 0
+                ? `El usuario y el teléfono o correo no coinciden. Te quedan ${quedan} intento(s).`
+                : 'El usuario y el teléfono o correo no coinciden. Por seguridad, espera 15 minutos para volver a intentarlo.';
+            return res.status(401).json({ success: false, message });
         }
+
+        limpiarIntentos(clave);
         await usuarioModel.actualizarPassword(usuario.username, bcrypt.hashSync(nuevaPassword, 10));
         return res.json({ success: true, message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
     } catch (err) {

@@ -38,6 +38,16 @@ module.exports = {
     // Solo lo conoce la dueña del salón.
     codigoAdmin: process.env.CODIGO_ADMIN || 'BELLA2026',
 
+    // Sesiones con token JWT (JSON Web Token).
+    // secreto: clave con la que el servidor firma los tokens. En Render va en JWT_SECRETO.
+    // Si no existe, se arma una a partir de la clave de la base de datos (que tampoco es pública),
+    // así el token sigue siendo válido aunque el servidor se reinicie.
+    jwt: {
+        secreto: process.env.JWT_SECRETO || require('crypto').createHash('sha256')
+            .update('bellastyle|' + (process.env.DB_PASSWORD || '1234') + '|' + (process.env.DB_HOST || '')).digest('hex'),
+        duracion: '8h'
+    },
+
     // Asistente con inteligencia artificial del chat (Gemini API de Google).
     // Sin clave, el chat usa el asistente de palabras clave.
     ia: {

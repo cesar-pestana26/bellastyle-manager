@@ -116,6 +116,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const telVal = document.getElementById('telefono')?.value.trim() || '';
+    if (!telVal && !emailVal) {
+      mostrarMensajeAlerta(alerta, 'Escribe tu teléfono o tu correo: los necesitarás para recuperar la contraseña.', 'error');
+      return;
+    }
+
     if (/\s/.test(userVal) || userVal.length < 3) {
       mostrarMensajeAlerta(alerta, 'El usuario debe tener al menos 3 caracteres y no contener espacios.', 'error');
       return;
@@ -129,11 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
       usuario: userVal,
       username: userVal,
       email: emailVal,
+      telefono: telVal,
       password: password
     };
 
     if (rolNormalizado === 'cliente') {
-      datos.telefono = document.getElementById('telefono')?.value.trim() || '';
       datos.profesion = document.getElementById('profesion')?.value.trim() || '';
     } else if (rolNormalizado === 'estilista') {
       const checks = [...document.querySelectorAll('input[name="servicio"]:checked')];

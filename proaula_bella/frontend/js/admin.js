@@ -302,7 +302,7 @@ function renderizarTablaCitas(lista = null) {
       <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
         ${c.estado === 'Pendiente' ? `<button type="button" onclick="actualizarEstado(${c.id}, 'Confirmada')" class="px-2 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Confirmar</button>` : ''}
         ${c.estado === 'Confirmada' ? `<button type="button" onclick="actualizarEstado(${c.id}, 'Finalizada')" class="px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded text-[11px] font-semibold hover:bg-blue-500/30">Finalizar</button>` : ''}
-        ${c.estado === 'Finalizada' ? `<a href="/api/citas/${c.id}/comprobante" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>` : ''}
+        ${c.estado === 'Finalizada' ? `<a href="/api/citas/${c.id}/comprobante?token=${encodeURIComponent(localStorage.getItem('token') || '')}" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>` : ''}
         ${c.estado === 'Finalizada' ? `<button type="button" onclick="editarNotasServicio(${c.id})" class="px-2 py-1 bg-white/10 text-white/80 rounded text-[11px] font-semibold hover:bg-white/20">Notas</button>` : ''}
         ${c.estado !== 'Cancelada' && c.estado !== 'Finalizada' ? `<button type="button" onclick="actualizarEstado(${c.id}, 'Cancelada')" class="px-2 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-[11px] font-semibold hover:bg-rose-500/30">Cancelar</button>` : ''}
       </td>

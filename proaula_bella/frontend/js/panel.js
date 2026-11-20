@@ -323,7 +323,7 @@ function renderizarTablaCitasClienta() {
 
       acciones += `${btnReprog} ${btnCancelar}`;
     } else if (c.estado === 'Finalizada') {
-      const btnPdf = `<a href="/api/citas/${c.id}/comprobante" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>`;
+      const btnPdf = `<a href="/api/citas/${c.id}/comprobante?token=${encodeURIComponent(localStorage.getItem('token') || '')}" target="_blank" rel="noopener" class="px-2 py-1 bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded text-[11px] font-semibold hover:bg-sky-500/30">PDF</a>`;
       const btnCalificar = c.calificacion
         ? `<span class="px-2 py-1 text-amber-300 font-bold text-xs" title="Tu calificación">${'★'.repeat(c.calificacion)}</span>`
         : `<button type="button" onclick="calificarCita(${c.id})" class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[11px] font-semibold hover:bg-emerald-500/30">Calificar</button>`;
