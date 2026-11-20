@@ -71,7 +71,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-3xl font-serif font-bold text-white">Centro de Control de Operaciones y Ganancias</h1>
-        <p class="text-xs text-white/70 mt-1">Supervisión exclusiva de citas, ingresos, caja, distribución 40/60, catálogo y vitrina del salón.</p>
+        <p class="text-xs text-white/70 mt-1">Supervisión de citas, pagos en MySQL, bandeja de mensajes de Bella, liquidación 60/40, horarios y vitrina.</p>
       </div>
       <div class="text-xs text-right text-white/60 bg-white/5 px-4 py-2.5 rounded-xl border border-white/10">
         <span>Fecha de reporte: </span><strong class="text-pink-300 font-bold" id="fechaHoyAdmin">-</strong>
@@ -84,11 +84,15 @@
       <div class="flex items-center justify-between border-b border-white/10 pb-4 overflow-x-auto">
         <div class="flex gap-2 whitespace-nowrap">
           <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">Control Total de Citas</button>
-          <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Caja y Pagos</button>
+          <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Pagos</button>
+          <button type="button" id="tabMensajes" onclick="switchTabAdmin('mensajes')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5 inline-flex items-center gap-1.5">
+            <span>Mensajes (Chat Bella)</span>
+            <span id="badgeSinLeerAdmin" class="hidden rounded-full bg-pink-500 px-2 py-0.5 text-[10px] font-bold text-white">0</span>
+          </button>
           <button type="button" id="tabGanancias" onclick="switchTabAdmin('ganancias')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Liquidación (60/40)</button>
           <button type="button" id="tabServicios" onclick="switchTabAdmin('servicios')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Servicios y Fotos</button>
           <button type="button" id="tabProductos" onclick="switchTabAdmin('productos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Productos</button>
-          <button type="button" id="tabEquipo" onclick="switchTabAdmin('equipo')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Equipo y Calificaciones</button>
+          <button type="button" id="tabEquipo" onclick="switchTabAdmin('equipo')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Equipo, Horarios y Calificaciones</button>
           <button type="button" id="tabVitrina" onclick="switchTabAdmin('vitrina')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Vitrina del Salón</button>
         </div>
       </div>
@@ -137,23 +141,20 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 2: CAJA Y PAGOS -->
+      <!-- PESTAÑA 2: PAGOS EN MYSQL -->
       <section id="secPagosAdmin" class="space-y-4 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <p class="text-xs text-white/70">Auditoría de transacciones electrónicas (Nequi, Tarjeta, PSE) y cobros presenciales en salón.</p>
-        </div>
-
+        <p class="text-xs text-white/70">Historial real de pagos registrados en MySQL. Confirma aquí los cobros marcados como "Pendiente en Salón".</p>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-white/80">
-            <thead class="text-[11px] uppercase tracking-wider text-emerald-300 border-b border-white/10 bg-white/5">
+            <thead class="text-[11px] uppercase tracking-wider text-pink-300 border-b border-white/10 bg-white/5">
               <tr>
-                <th class="p-3.5 rounded-l-xl">Transacción</th>
+                <th class="p-3.5 rounded-l-xl">Referencia</th>
                 <th class="p-3.5">Clienta</th>
                 <th class="p-3.5">Servicio</th>
                 <th class="p-3.5">Método</th>
                 <th class="p-3.5">Monto</th>
-                <th class="p-3.5">Estado Pago</th>
-                <th class="p-3.5 text-right rounded-r-xl">Acción</th>
+                <th class="p-3.5">Estado</th>
+                <th class="p-3.5 text-right rounded-r-xl">Acciones</th>
               </tr>
             </thead>
             <tbody id="tablaPagosAdmin" class="divide-y divide-white/5"></tbody>
@@ -161,7 +162,34 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 3: GANANCIAS -->
+      <!-- PESTAÑA 3: BANDEJA DE MENSAJES (CHAT DE BELLA CON VISITANTES) -->
+      <section id="secMensajesAdmin" class="space-y-4 hidden">
+        <p class="text-xs text-white/70">Bandeja de atención personalizada: lee y responde los chats iniciados por visitantes desde la página de inicio cuando Bella deriva a una asesora.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-4 rounded-2xl border border-white/10 bg-white/5 p-3 space-y-2 max-h-[460px] overflow-y-auto">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-pink-300 px-2 py-1">Conversaciones</h3>
+            <ul id="listaConversacionesAdmin" class="space-y-1.5">
+              <li class="p-3 text-xs text-white/50">Cargando conversaciones...</li>
+            </ul>
+          </div>
+
+          <div class="lg:col-span-8 rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col justify-between min-h-[460px]">
+            <div id="cabeceraConversacion" class="border-b border-white/10 pb-3 text-xs text-white/60">
+              Selecciona una conversación de la izquierda para leer y responder.
+            </div>
+
+            <div id="mensajesAdmin" class="my-3 flex-1 max-h-80 overflow-y-auto space-y-3 rounded-xl bg-black/25 p-3.5 text-xs"></div>
+
+            <form id="formResponderAdmin" class="hidden gap-2 pt-2 border-t border-white/10">
+              <input id="textoRespuestaAdmin" type="text" maxlength="500" placeholder="Escribe la respuesta como asesora del salón..." class="campo flex-1" required>
+              <button type="submit" class="btn-primario text-xs px-4 py-2 shrink-0">Responder</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- PESTAÑA 4: GANANCIAS -->
       <section id="secGananciasAdmin" class="space-y-4 hidden">
         <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
           Las ganancias brutas corresponden a citas <strong>Finalizadas</strong> en MySQL (60% Estilista / 40% Salón).
@@ -182,7 +210,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 4: SERVICIOS Y FOTOS -->
+      <!-- PESTAÑA 5: SERVICIOS Y FOTOS -->
       <section id="secServiciosAdmin" class="space-y-4 hidden">
         <div class="flex justify-between items-center">
           <p class="text-xs text-white/70">Ajusta tarifas, administra las fotos de cada servicio o registra nuevos servicios.</p>
@@ -204,7 +232,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 5: PRODUCTOS Y FOTOS -->
+      <!-- PESTAÑA 6: PRODUCTOS Y FOTOS -->
       <section id="secProductosAdmin" class="space-y-4 hidden">
         <div class="flex justify-between items-center">
           <p class="text-xs text-white/70">Gestiona el inventario de productos de la tienda y sus fotografías.</p>
@@ -225,10 +253,10 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 6: EQUIPO Y CALIFICACIONES -->
+      <!-- PESTAÑA 7: EQUIPO, HORARIOS Y CALIFICACIONES -->
       <section id="secEquipoAdmin" class="space-y-4 hidden">
         <div>
-          <p class="text-xs text-white/70">Estilistas activas en el salón, sus servicios asignados y las calificaciones recibidas por sus clientas.</p>
+          <p class="text-xs text-white/70">Estilistas activas en el salón, horarios de trabajo, ausencias y calificaciones recibidas.</p>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-white/80">
@@ -245,7 +273,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 7: VITRINA DEL SALÓN -->
+      <!-- PESTAÑA 8: VITRINA DEL SALÓN -->
       <section id="secVitrinaAdmin" class="space-y-4 hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>

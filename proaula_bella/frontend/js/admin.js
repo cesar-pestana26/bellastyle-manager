@@ -1,10 +1,11 @@
-// js/admin.js - Control Exclusivo del Panel de Administración conectado 100% a MySQL (con Bandeja de Mensajes de Bella)
+
 
 let usuarioAdmin = null;
 let citasGlobales = [];
 let serviciosGlobales = [];
 let estilistasGlobales = [];
 let productosGlobales = [];
+let pagosGlobales = [];
 let versionFotoAdmin = Date.now();
 let alGuardarModalAdmin = null;
 
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarDatosAdministrador();
   renderizarMetricasGanancias();
   renderizarTablaCitas();
+  renderizarTablaPagos();
   renderizarTablaGanancias();
   renderizarTablaServicios();
   renderizarTablaProductos();
@@ -187,6 +189,7 @@ async function cargarDatosAdministrador() {
   serviciosGlobales = [];
   estilistasGlobales = [];
   productosGlobales = [];
+  pagosGlobales = [];
 
   try {
     const [resC, resS, resE, resP] = await Promise.all([
@@ -207,6 +210,10 @@ async function cargarDatosAdministrador() {
 
     const listaP = Array.isArray(resP) ? resP : (resP?.data || []);
     if (Array.isArray(listaP)) productosGlobales = listaP;
+
+    if (typeof cargarPagosDesdeServidor === 'function') {
+      pagosGlobales = await cargarPagosDesdeServidor('Administradora');
+    }
   } catch (e) {
     console.error('Error cargando datos del panel administrador:', e);
   }
@@ -340,6 +347,52 @@ window.actualizarEstado = async function(idCita, nuevoEstado) {
   renderizarMetricasGanancias();
   renderizarTablaCitas();
   renderizarTablaGanancias();
+};
+
+// ---------------------------------------------------------------
+// PAGOS EN MYSQL (/api/pagos)
+// ---------------------------------------------------------------
+
+function renderizarTablaPagos() {
+  const tabla = document.getElementById('tablaPagosAdmin');
+  if (!tabla) return;
+
+  const fmt = (num) => typeof pesos === 'function' ? pesos(num) : '$' + Number(num).toLocaleString('es-CO');
+
+  if (pagosGlobales.length === 0) {
+    tabla.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-white/50">No hay pagos registrados en MySQL todavía.</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = pagosGlobales.map(p => `
+    <tr class="hover:bg-white/5 transition border-b border-white/5">
+      <td class="p-3.5 font-mono text-pink-300">${escapar(p.referencia)}</td>
+      <td class="p-3.5 font-bold text-white">${escapar(p.cliente)}</td>
+      <td class="p-3.5 text-white/80">${escapar(p.servicio)}</td>
+      <td class="p-3.5 text-white/80">${escapar(p.metodo)}</td>
+      <td class="p-3.5 font-bold text-amber-300">${fmt(p.monto)}</td>
+      <td class="p-3.5">
+        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
+          p.estado === 'Pagado' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+        }">${escapar(p.estado)}</span>
+      </td>
+      <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
+        <button type="button" onclick="verComprobantePago(${p.id_cita})" class="px-2.5 py-1 rounded bg-white/10 text-white hover:bg-white/20 text-xs font-semibold">Comprobante</button>
+        ${p.estado === 'Pendiente en Salón' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">Confirmar Cobro</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.confirmarCobroAdmin = async function(idPago) {
+  const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', { estado: 'Pagado' });
+  if (!resp || !resp.success) {
+    notificarAdmin((resp && resp.message) || 'No se pudo confirmar el cobro');
+    return;
+  }
+  notificarAdmin('Cobro confirmado en MySQL');
+  pagosGlobales = await cargarPagosDesdeServidor('Administradora');
+  renderizarTablaPagos();
 };
 
 // ---------------------------------------------------------------
@@ -1170,6 +1223,7 @@ window.agregarAVitrinaSalon = function() {
 window.switchTabAdmin = function(tab) {
   const secciones = {
     citas: 'secCitasAdmin',
+    pagos: 'secPagosAdmin',
     mensajes: 'secMensajesAdmin',
     ganancias: 'secGananciasAdmin',
     servicios: 'secServiciosAdmin',
@@ -1180,6 +1234,7 @@ window.switchTabAdmin = function(tab) {
 
   const botones = {
     citas: 'tabCitas',
+    pagos: 'tabPagos',
     mensajes: 'tabMensajes',
     ganancias: 'tabGanancias',
     servicios: 'tabServicios',

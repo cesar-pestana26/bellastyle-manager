@@ -1,4 +1,3 @@
-// js/panel.js - Panel Privado conectado a MySQL con Chat por Cita, Horario/Ausencias, Reprogramar, Calificaciones, Foto y Vitrina
 
 let usuarioSesion = null;
 let rolApiActual = 'Clienta';
@@ -81,7 +80,7 @@ function configurarHeader(rolNorm) {
   if (subtituloPanel) {
     subtituloPanel.textContent = esEstilista
       ? 'Gestiona tus citas asignadas, chatea con tus clientas, define tu horario, ausencias y vitrina.'
-      : 'Revisa tus citas, chatea con tu estilista, reprograma, califica y descarga tus comprobantes PDF.';
+      : 'Revisa tus citas, realiza tus pagos en línea, chatea con tu estilista, reprograma y descarga tus comprobantes.';
   }
 
   const btnAgendar = document.getElementById('btnAgendarHeader');
@@ -170,7 +169,7 @@ function comprimirImagenWebp(archivo, maxLado = 1200) {
 }
 
 // ---------------------------------------------------------------
-// CARGA DE CITAS DESDE MYSQL
+// CARGA DE CITAS Y PAGOS DESDE MYSQL
 // ---------------------------------------------------------------
 
 function normalizarCitaServidor(c) {
@@ -216,6 +215,10 @@ async function recargarCitas(rolNorm) {
     const resp = await pedir(`/citas?rol=${encodeURIComponent(rolApi)}&idUsuario=${encodeURIComponent(idUsuario)}`, 'GET');
     const listaCruda = Array.isArray(resp) ? resp : (resp?.data || resp?.citas || []);
     citasUsuario = Array.isArray(listaCruda) ? listaCruda.map(normalizarCitaServidor) : [];
+
+    if (typeof cargarPagosDesdeServidor === 'function') {
+      await cargarPagosDesdeServidor(rolApi, idUsuario);
+    }
   } catch (e) {
     console.error('Error al cargar citas desde MySQL:', e);
     citasUsuario = [];
@@ -230,7 +233,7 @@ function botonChatCita(idCita, sinLeer = 0) {
 }
 
 // ---------------------------------------------------------------
-// VISTA CLIENTA (Datos, Citas, Chat, Reprogramar, Calificar, PDF, Vitrina)
+// VISTA CLIENTA (Datos, Citas, Pagos MySQL, Chat, Reprogramar, Calificar, PDF, Vitrina)
 // ---------------------------------------------------------------
 
 async function iniciarVistaClienta() {
@@ -302,6 +305,15 @@ function renderizarTablaCitasClienta() {
     const activa = c.estado === 'Pendiente' || c.estado === 'Confirmada';
     let acciones = botonChatCita(c.id, c.sin_leer_clienta) + ' ';
 
+    const pagoExistente = typeof obtenerPagoPorCita === 'function' ? obtenerPagoPorCita(c.id) : null;
+    if (c.estado !== 'Cancelada') {
+      if (pagoExistente) {
+        acciones += `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-[11px] font-semibold hover:bg-purple-500/30">${pagoExistente.estado === 'Pagado' ? 'Pagado ✓' : 'Recibo Salón'}</button> `;
+      } else {
+        acciones += `<button type="button" onclick="iniciarPagoCitaClienta(${c.id})" class="px-2.5 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600">Pagar</button> `;
+      }
+    }
+
     if (activa) {
       const btnReprog = c.reprogramaciones >= 1
         ? `<span class="px-2 py-1 text-[10px] text-white/40" title="Cada cita se puede reprogramar una sola vez">Ya reprogramada</span>`
@@ -330,6 +342,15 @@ function renderizarTablaCitasClienta() {
     `;
   }).join('');
 }
+
+window.iniciarPagoCitaClienta = function(idCita) {
+  const cita = citasUsuario.find(c => String(c.id) === String(idCita));
+  if (!cita || typeof abrirPasarelaPago !== 'function') return;
+  abrirPasarelaPago(cita, async () => {
+    await recargarCitas('cliente');
+    renderizarTablaCitasClienta();
+  });
+};
 
 window.reprogramarCita = function(idCita) {
   const cita = citasUsuario.find(c => String(c.id) === String(idCita));

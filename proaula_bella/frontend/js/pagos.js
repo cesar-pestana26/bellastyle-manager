@@ -1,8 +1,9 @@
-// js/pagos.js - Pasarela de Pagos y Comprobantes para BellaStyle
+// js/pagos.js - Pasarela de Pagos y Comprobantes conectada 100% a MySQL (/api/pagos)
 
 let citaEnProcesoPago = null;
 let metodoPagoSeleccionado = 'Nequi';
 let callbackPagoCompletado = null;
+let cachePagosPorCita = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   inyectarModalesPago();
@@ -23,7 +24,6 @@ function inyectarModalesPago() {
   const ico = (k) => typeof obtenerIcono === 'function' ? obtenerIcono(k, 'w-4 h-4') : '';
 
   const html = `
-    <!-- Modal Pasarela de Pago -->
     <dialog id="modalPasarelaPago" class="max-w-lg w-full rounded-2xl bg-[#120f1d] p-6 text-white border border-white/20 backdrop:bg-black/80 shadow-2xl">
       <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
         <div>
@@ -51,6 +51,8 @@ function inyectarModalesPago() {
           <strong id="pagoResumenMonto" class="text-amber-300 font-serif text-base">$0</strong>
         </div>
       </div>
+
+      <div id="alertaPagoModal" class="hidden mb-3 rounded-xl border border-rose-500/30 bg-rose-500/20 px-3 py-2 text-xs text-rose-200"></div>
 
       <div class="space-y-3">
         <label class="text-xs text-white/70 font-semibold block">Selecciona el método de pago:</label>
@@ -90,7 +92,6 @@ function inyectarModalesPago() {
       </div>
     </dialog>
 
-    <!-- Modal Comprobante de Pago -->
     <dialog id="modalComprobantePago" class="max-w-md w-full rounded-2xl bg-[#120f1d] p-6 text-white border border-white/20 backdrop:bg-black/80 shadow-2xl">
       <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
         <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Comprobante Oficial</span>
@@ -116,12 +117,35 @@ function inyectarModalesPago() {
   });
 }
 
+window.cargarPagosDesdeServidor = async function(rol = '', idUsuario = '') {
+  const params = new URLSearchParams();
+  if (rol) params.set('rol', rol);
+  if (idUsuario) params.set('idUsuario', idUsuario);
+  const query = params.toString() ? `?${params.toString()}` : '';
+
+  const resp = await pedir(`/pagos${query}`, 'GET').catch(() => null);
+  const lista = (resp && resp.success && Array.isArray(resp.data)) ? resp.data : [];
+
+  cachePagosPorCita = {};
+  lista.forEach((p) => {
+    cachePagosPorCita[String(p.id_cita)] = p;
+  });
+  return lista;
+};
+
+window.obtenerPagoPorCita = function(idCita) {
+  return cachePagosPorCita[String(idCita)] || null;
+};
+
 window.abrirPasarelaPago = function(cita, onSuccess = null) {
   inyectarModalesPago();
   citaEnProcesoPago = cita;
   callbackPagoCompletado = onSuccess;
 
-  const monto = Number(cita.precio || cita.valor || 45000);
+  const alerta = document.getElementById('alertaPagoModal');
+  if (alerta) alerta.classList.add('hidden');
+
+  const monto = Number(cita.precio || cita.valor || 0);
   document.getElementById('pagoResumenServicio').textContent = cita.servicio;
   document.getElementById('pagoResumenEstilista').textContent = cita.estilista || 'Por asignar';
   document.getElementById('pagoResumenFecha').textContent = `${cita.fecha} · ${cita.hora}`;
@@ -214,80 +238,67 @@ async function procesarTransaccionPago() {
   if (!citaEnProcesoPago) return;
 
   const btn = document.getElementById('btnConfirmarTransaccion');
+  const alerta = document.getElementById('alertaPagoModal');
   const textoOriginal = btn ? btn.textContent : 'Confirmar';
+
+  if (alerta) alerta.classList.add('hidden');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Procesando...';
+    btn.textContent = 'Guardando en MySQL...';
   }
 
   const idCitaReal = citaEnProcesoPago.id_cita || citaEnProcesoPago.id;
-  const monto = Number(citaEnProcesoPago.precio || citaEnProcesoPago.valor || 45000);
-  const esSalon = metodoPagoSeleccionado === 'Salon';
-  const codigoTx = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+  const metodoFinal = metodoPagoSeleccionado === 'Salon' ? 'Efectivo / Salón' : metodoPagoSeleccionado;
 
-  const registroPago = {
-    id_pago: codigoTx,
-    id_cita: idCitaReal,
-    cliente: citaEnProcesoPago.cliente || 'Clienta BellaStyle',
-    servicio: citaEnProcesoPago.servicio,
-    estilista: citaEnProcesoPago.estilista || 'Por asignar',
-    metodo: esSalon ? 'Efectivo / Salón' : metodoPagoSeleccionado,
-    monto,
-    estado_pago: esSalon ? 'Pendiente en Salón' : 'Pagado',
-    fecha_pago: new Date().toISOString().slice(0, 10)
-  };
-
-  guardarPagoLocal(registroPago);
+  const resp = await pedir('/pagos', 'POST', {
+    idCita: idCitaReal,
+    metodo: metodoFinal
+  });
 
   if (btn) {
     btn.disabled = false;
     btn.textContent = textoOriginal;
   }
 
+  if (!resp || resp.errorRed || !resp.success) {
+    if (alerta) {
+      alerta.textContent = (resp && (resp.message || resp.mensaje)) || 'No se pudo registrar el pago en el servidor.';
+      alerta.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const pagoGuardado = resp.data;
+  if (pagoGuardado) {
+    cachePagosPorCita[String(idCitaReal)] = pagoGuardado;
+  }
+
   cerrarModalPago();
 
   if (typeof callbackPagoCompletado === 'function') {
-    callbackPagoCompletado(registroPago);
+    await callbackPagoCompletado(pagoGuardado);
   }
 
-  verComprobantePago(idCitaReal);
+  await verComprobantePago(idCitaReal);
 }
 
-function guardarPagoLocal(pago) {
-  try {
-    const lista = JSON.parse(localStorage.getItem('pagosBellaStyle')) || [];
-    const idx = lista.findIndex(p => String(p.id_cita) === String(pago.id_cita));
-    if (idx >= 0) {
-      lista[idx] = pago;
-    } else {
-      lista.unshift(pago);
-    }
-    localStorage.setItem('pagosBellaStyle', JSON.stringify(lista));
-  } catch (e) {}
-}
-
-window.obtenerPagosLocales = function() {
-  try {
-    return JSON.parse(localStorage.getItem('pagosBellaStyle')) || [];
-  } catch (e) {
-    return [];
-  }
-};
-
-window.obtenerPagoPorCita = function(idCita) {
-  const lista = obtenerPagosLocales();
-  return lista.find(p => String(p.id_cita) === String(idCita)) || null;
-};
-
-window.verComprobantePago = function(idCita) {
+window.verComprobantePago = async function(idCita) {
   inyectarModalesPago();
-  const pago = obtenerPagoPorCita(idCita);
+
+  let pago = obtenerPagoPorCita(idCita);
+  if (!pago) {
+    const resp = await pedir(`/pagos/cita/${idCita}`, 'GET').catch(() => null);
+    if (resp && resp.success && resp.data) {
+      pago = resp.data;
+      cachePagosPorCita[String(idCita)] = pago;
+    }
+  }
   if (!pago) return;
 
   const cont = document.getElementById('contenidoComprobante');
   if (!cont) return;
 
-  const pagado = pago.estado_pago === 'Pagado';
+  const pagado = pago.estado === 'Pagado';
 
   cont.innerHTML = `
     <div class="text-center space-y-1 pb-3 border-b border-white/10">
@@ -295,12 +306,12 @@ window.verComprobantePago = function(idCita) {
       <p class="text-[11px] text-white/50">Comprobante Electrónico de Servicio</p>
       <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase ${
         pagado ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-      }">${escaparTextoPago(pago.estado_pago)}</span>
+      }">${escaparTextoPago(pago.estado)}</span>
     </div>
 
     <div class="space-y-2">
-      <div class="flex justify-between"><span class="text-white/50">Referencia:</span><strong class="font-mono text-pink-300">${escaparTextoPago(pago.id_pago)}</strong></div>
-      <div class="flex justify-between"><span class="text-white/50">Fecha:</span><span class="text-white">${escaparTextoPago(pago.fecha_pago)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">Referencia:</span><strong class="font-mono text-pink-300">${escaparTextoPago(pago.referencia)}</strong></div>
+      <div class="flex justify-between"><span class="text-white/50">Fecha de Pago:</span><span class="text-white">${escaparTextoPago(pago.fecha_pago)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Clienta:</span><span class="text-white font-semibold">${escaparTextoPago(pago.cliente)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Servicio:</span><span class="text-white">${escaparTextoPago(pago.servicio)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Especialista:</span><span class="text-white">${escaparTextoPago(pago.estilista)}</span></div>
