@@ -1,0 +1,24 @@
+@startuml Mapa_Navegacion
+!include skin.iuml
+title Mapa de navegación — BellaStyle Manager
+skinparam rectangle {
+  BackgroundColor #FCF1F6
+  BorderColor #B03A78
+  RoundCorner 14
+}
+rectangle "Inicio de sesión\n(index.html)" as I
+rectangle "Presentación del salón\n(welcome.html)\nservicios · vitrina · productos" as W
+rectangle "Crear cuenta\n(register.html)" as R
+rectangle "Recuperar contraseña\n(recuperar.html)" as P
+rectangle "Chat con Bella\n(asistente IA)" as C
+rectangle "Panel de la Clienta\nAgendar · Mis citas · Mis datos\nChat con la estilista · Calificar · PDF" as PC
+rectangle "Panel de la Estilista\nCitas asignadas · Notas · Historial\nHorario y ausencias · Vitrina · Opiniones" as PE
+rectangle "Panel de la Administradora\nCitas · Estilistas · Clientas · Servicios\nProductos · Vitrina · Registrar usuario · Mensajes" as PA
+I <-right-> W : Conoce el salón /\nVolver al inicio
+I -down-> R : Crear cuenta
+I -down-> P : ¿Olvidaste tu contraseña?
+I -up-> C : burbuja del chat
+I -down-> PC : Entrar (Clienta)
+I -down-> PE : Entrar (Estilista)
+I -down-> PA : Entrar (Administradora)
+@enduml
