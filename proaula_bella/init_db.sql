@@ -15,6 +15,7 @@ USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS agenda;
+DROP TABLE IF EXISTS pagos;
 DROP TABLE IF EXISTS vitrina;
 DROP TABLE IF EXISTS fotos_producto;
 DROP TABLE IF EXISTS fotos_perfil;
@@ -117,6 +118,19 @@ CREATE TABLE citas (
     CONSTRAINT fk_citas_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista),
     CONSTRAINT fk_citas_servicio  FOREIGN KEY (id_servicio)  REFERENCES servicios(id_servicio)
 );
+
+CREATE TABLE pagos (
+    id_pago     INT AUTO_INCREMENT PRIMARY KEY,
+    id_cita     INT NOT NULL UNIQUE,
+    referencia  VARCHAR(30) NOT NULL UNIQUE,
+    metodo      ENUM('Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón',
+    monto       DECIMAL(10,2) NOT NULL DEFAULT 0,
+    estado      ENUM('Pagado','Pendiente en Salón','Reembolsado') NOT NULL DEFAULT 'Pagado',
+    fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
+
 
 -- Chat de la página de inicio. Un visitante escribe sin tener cuenta.
 -- El "codigo" es un texto aleatorio que se guarda en su navegador y sirve

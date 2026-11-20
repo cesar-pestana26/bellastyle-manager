@@ -4,6 +4,7 @@ const path = require('path');
 const config = require('./config/config');
 const db = require('./config/db');
 const rutas = require('./routes/rutas');
+const actualizarBD = require('./actualizar_bd');
 
 const app = express();
 
@@ -45,7 +46,9 @@ async function revisarBaseDeDatos() {
 }
 
 // Antes de arrancar, se comprueba que MySQL responda
+// y se crean las tablas nuevas que falten (no borra datos)
 db.query('SELECT 1')
+    .then(() => actualizarBD().catch((err) => console.error('No se pudo actualizar la base de datos:', err.message)))
     .then(revisarBaseDeDatos)
     .then(() => {
         app.listen(config.puerto, () => {

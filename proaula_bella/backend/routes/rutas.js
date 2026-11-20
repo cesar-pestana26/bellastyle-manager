@@ -14,6 +14,7 @@ const chatCita = require('../controllers/chatCitaController');
 const fotos = require('../controllers/fotoServicioController');
 const perfil = require('../controllers/perfilController');
 const comprobantes = require('../controllers/comprobanteController');
+const pagos = require('../controllers/pagoController');
 
 // Autenticación
 router.post('/login', auth.login);
@@ -102,5 +103,11 @@ router.get('/conversaciones', chat.listar);
 router.get('/conversaciones/:id/mensajes', chat.abrir);
 router.post('/conversaciones/:id/responder', chat.responder);
 router.put('/conversaciones/:id/estado', chat.cambiarEstado);
+
+// Pagos (persistencia en MySQL)
+router.get('/pagos', pagos.listar);
+router.get('/pagos/cita/:idCita', pagos.porCita);
+router.post('/pagos', pagos.crear);
+router.put('/pagos/:id/estado', pagos.cambiarEstado);
 
 module.exports = router;

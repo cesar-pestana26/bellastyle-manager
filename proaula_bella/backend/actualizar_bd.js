@@ -74,6 +74,16 @@ const TABLAS = [
         tipo        VARCHAR(20) NOT NULL,
         datos       MEDIUMBLOB NOT NULL,
         CONSTRAINT fk_fotos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE IF NOT EXISTS pagos (
+        id_pago     INT AUTO_INCREMENT PRIMARY KEY,
+        id_cita     INT NOT NULL UNIQUE,
+        referencia  VARCHAR(30) NOT NULL UNIQUE,
+        metodo      ENUM('Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón',
+        monto       DECIMAL(10,2) NOT NULL DEFAULT 0,
+        estado      ENUM('Pagado','Pendiente en Salón','Reembolsado') NOT NULL DEFAULT 'Pagado',
+        fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
     )`
 ];
 
@@ -112,8 +122,14 @@ async function actualizar() {
     console.log(`Horarios por defecto creados: ${resultado.affectedRows} filas.`);
 }
 
-actualizar().catch((err) => {
-    console.error('No se pudo actualizar la base de datos:', err.message);
-    console.error('Revisa la conexión en backend/config/config.js o en las variables de entorno.');
-    process.exit(1);
-});
+// El servidor (app.js) la llama al arrancar, así Render/Aiven reciben las tablas nuevas solos.
+module.exports = actualizar;
+
+// Si se ejecuta a mano: node actualizar_bd.js
+if (require.main === module) {
+    actualizar().catch((err) => {
+        console.error('No se pudo actualizar la base de datos:', err.message);
+        console.error('Revisa la conexión en backend/config/config.js o en las variables de entorno.');
+        process.exit(1);
+    });
+}

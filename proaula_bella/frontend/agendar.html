@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agendar Cita | BellaStyle</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="css/estilos.css?v=80">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tema.js"></script>
+</head>
+<body class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Header Global -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="welcome.html" class="flex items-center gap-3 shrink-0">
+        <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
+        <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
+      </a>
+      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-white/80">
+        <a href="welcome.html" class="hover:text-pink-400 transition">Inicio</a>
+        <a href="servicios.html" class="hover:text-pink-400 transition">Servicios</a>
+        <a href="galeria.html" class="hover:text-pink-400 transition">Galería</a>
+        <a href="tienda.html" class="hover:text-pink-400 transition">Tienda</a>
+      </nav>
+      <div class="flex items-center space-x-3">
+        <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
+        <span id="labelUsuario" class="text-xs text-pink-300 font-semibold hidden md:inline-block"></span>
+        <a href="index.html" id="btnAccesoHeader" class="text-xs sm:text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-10 flex-1 w-full">
+    
+    <!-- Título y Progreso -->
+    <div class="text-center mb-8">
+      <span class="text-xs font-semibold tracking-widest text-pink-400 uppercase">Reserva tu experiencia</span>
+      <h1 class="text-3xl sm:text-4xl font-serif font-bold mt-1">Agendar Cita</h1>
+      
+      <!-- Indicador de pasos -->
+      <div class="flex items-center justify-center gap-3 mt-6 text-xs font-semibold">
+        <div id="pasoIndicador1" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black">
+          <span class="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px]">1</span>
+          <span>Servicio</span>
+        </div>
+        <span class="text-white/30">&rarr;</span>
+        <div id="pasoIndicador2" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white/60">
+          <span class="w-5 h-5 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px]">2</span>
+          <span>Estilista</span>
+        </div>
+        <span class="text-white/30">&rarr;</span>
+        <div id="pasoIndicador3" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white/60">
+          <span class="w-5 h-5 rounded-full bg-white/20 text-white flex items-center justify-center text-[10px]">3</span>
+          <span>Fecha & Hora</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tarjeta Principal del Agendador -->
+    <div class="tarjeta p-6 sm:p-8 relative">
+      <div id="alertaAgendamiento" class="alerta mb-6"></div>
+
+      <!-- PASO 1: Selección de Servicio -->
+      <section id="paso1" class="space-y-6">
+        <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">1. Selecciona el servicio</h2>
+        <div id="contenedorServiciosAgendar" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="esqueleto h-24 rounded-xl"></div>
+          <div class="esqueleto h-24 rounded-xl"></div>
+        </div>
+        <div class="flex justify-end pt-4">
+          <button type="button" id="btnSiguientePaso1" class="btn-primario text-sm px-6 py-2.5" disabled>
+            Continuar a Estilista &rarr;
+          </button>
+        </div>
+      </section>
+
+      <!-- PASO 2: Selección de Estilista -->
+      <section id="paso2" class="space-y-6 hidden">
+        <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">2. Selecciona tu estilista</h2>
+        <div id="contenedorEstilistasAgendar" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Cargado por agendar.js -->
+        </div>
+        <div class="flex justify-between pt-4">
+          <button type="button" onclick="irAPaso(1)" class="btn-secundario text-xs px-5 py-2">&larr; Volver</button>
+          <button type="button" id="btnSiguientePaso2" class="btn-primario text-sm px-6 py-2.5">
+            Continuar a Fecha & Hora &rarr;
+          </button>
+        </div>
+      </section>
+
+      <!-- PASO 3: Fecha, Hora y Confirmación -->
+      <section id="paso3" class="space-y-6 hidden">
+        <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">3. Elige fecha, hora y confirma</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Fecha y Horario -->
+          <div class="space-y-4">
+            <div>
+              <label for="fechaCita" class="etiqueta">Fecha de la cita</label>
+              <input id="fechaCita" type="date" class="campo" required>
+            </div>
+
+            <div>
+              <label class="etiqueta">Horarios disponibles</label>
+              <div id="gridHorarios" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-white/5 rounded-xl border border-white/10 text-xs">
+                <!-- Generado por JS -->
+              </div>
+            </div>
+
+            <div>
+              <label for="notasCita" class="etiqueta">Notas o requerimientos especiales (opcional)</label>
+              <textarea id="notasCita" class="campo" rows="2" placeholder="Ej: Tengo cabello fino, alergia a fragancias..."></textarea>
+            </div>
+          </div>
+
+          <!-- Resumen Glassmorphism -->
+          <div class="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
+            <div>
+              <span class="text-xs uppercase tracking-wider text-pink-400 font-semibold">Resumen de tu reserva</span>
+              
+              <div class="mt-4 space-y-3 text-sm">
+                <div class="flex justify-between border-b border-white/10 pb-2">
+                  <span class="text-white/60">Servicio:</span>
+                  <span id="resumenServicio" class="font-bold text-white text-right">-</span>
+                </div>
+                <div class="flex justify-between border-b border-white/10 pb-2">
+                  <span class="text-white/60">Estilista:</span>
+                  <span id="resumenEstilista" class="font-bold text-white text-right">-</span>
+                </div>
+                <div class="flex justify-between border-b border-white/10 pb-2">
+                  <span class="text-white/60">Duración estimada:</span>
+                  <span id="resumenDuracion" class="font-bold text-pink-300 text-right">-</span>
+                </div>
+                <div class="flex justify-between border-b border-white/10 pb-2">
+                  <span class="text-white/60">Fecha y Hora:</span>
+                  <span id="resumenFechaHora" class="font-bold text-white text-right">Por seleccionar</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/15 flex items-center justify-between">
+              <div>
+                <span class="text-xs text-white/50 block">Total a pagar</span>
+                <span id="resumenPrecio" class="text-3xl font-bold font-serif text-amber-300">$0</span>
+              </div>
+              <button type="button" id="btnConfirmarCita" class="btn-primario text-sm px-6 py-3">
+                Confirmar Cita
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-start pt-2">
+          <button type="button" onclick="irAPaso(2)" class="btn-secundario text-xs px-5 py-2">&larr; Volver</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 backdrop-blur-md bg-black/40">
+    BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/agendar.js"></script>
+</body>
+</html>

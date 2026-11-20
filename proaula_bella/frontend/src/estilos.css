@@ -458,3 +458,28 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
 @media (max-width: 639px) {
   .btn-tema.btn-tema-barra { padding: .45rem; }
 }
+
+/* ---------- Agregados del rediseño (GIF y grillas) ---------- */
+.fondo-video img {
+  @apply h-full w-full object-cover;
+}
+
+.grid-galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.grid-tienda {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.btn-toggle-tema {
+  cursor: pointer;
+}
+
+

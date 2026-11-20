@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tienda | BellaStyle</title>
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="css/estilos.css?v=60">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tema.js"></script>
+</head>
+<body class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Header Global -->
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="welcome.html" class="flex items-center gap-3 shrink-0">
+        <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
+        <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
+      </a>
+      <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-white/80">
+        <a href="welcome.html" class="hover:text-pink-400 transition">Inicio</a>
+        <a href="servicios.html" class="hover:text-pink-400 transition">Servicios</a>
+        <a href="galeria.html" class="hover:text-pink-400 transition">Galería</a>
+        <a href="tienda.html" class="text-pink-400 font-semibold">Tienda</a>
+      </nav>
+      <div class="flex items-center space-x-3">
+        <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
+        <a href="index.html" class="text-xs sm:text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
+        <a href="register.html?rol=cliente" class="px-4 py-2 text-xs sm:text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Crear cuenta</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12 flex-1 w-full">
+    <div class="text-center max-w-2xl mx-auto mb-10 backdrop-blur-sm bg-black/20 p-6 rounded-2xl border border-white/10">
+      <span class="text-xs font-semibold tracking-widest text-pink-400 uppercase">Cuidado Profesional</span>
+      <h1 class="text-4xl font-serif font-bold mt-1">Tienda de Productos</h1>
+      <p class="text-white/80 text-sm mt-2">Productos capilares recomendados por nuestras estilistas para el cuidado diario.</p>
+    </div>
+
+    <!-- Contenedor con la cuadrícula de productos Glassmorphism -->
+    <div id="listaProductos" class="grid-tienda">
+      <div class="esqueleto"></div>
+      <div class="esqueleto"></div>
+      <div class="esqueleto"></div>
+      <div class="esqueleto"></div>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/10 py-6 text-center text-xs text-white/50 backdrop-blur-md bg-black/40">
+    BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/inicio.js"></script>
+</body>
+</html>
