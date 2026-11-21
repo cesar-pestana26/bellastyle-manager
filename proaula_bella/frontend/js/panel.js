@@ -307,9 +307,11 @@ function renderizarTablaCitasClienta() {
 
     const pagoExistente = typeof obtenerPagoPorCita === 'function' ? obtenerPagoPorCita(c.id) : null;
     if (c.estado !== 'Cancelada') {
-      if (pagoExistente) {
-        acciones += `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-[11px] font-semibold hover:bg-purple-500/30">${pagoExistente.estado === 'Pagado' ? 'Pagado ✓' : 'Recibo Salón'}</button> `;
+      if (pagoExistente && pagoExistente.estado !== 'Rechazado') {
+        const textoPago = { 'Pagado': 'Pagado ✓', 'Por verificar': 'Pago por verificar', 'Pendiente en Salón': 'Pago en salón' }[pagoExistente.estado] || pagoExistente.estado;
+        acciones += `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-[11px] font-semibold hover:bg-purple-500/30">${textoPago}</button> `;
       } else {
+        // Sin pago, o el salón rechazó el comprobante: puede volver a pagar
         acciones += `<button type="button" onclick="iniciarPagoCitaClienta(${c.id})" class="px-2.5 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600">Pagar</button> `;
       }
     }

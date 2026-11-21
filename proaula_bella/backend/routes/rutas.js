@@ -97,6 +97,11 @@ router.get('/pagos/cita/:idCita', sesion, duenoDeCita((req) => req.params.idCita
 router.post('/pagos', sesion, soloRoles('Clienta', 'Administradora'), duenoDeCita((req) => req.body.idCita || req.body.id_cita), pagos.crear);
 router.put('/pagos/:id/estado', admin, pagos.cambiarEstado);
 
+// Datos de cobro Bre-B del salón: la clienta los ve al pagar; solo la administradora los cambia
+router.get('/pago-salon', pagos.datosSalon);
+router.get('/pago-salon/qr', pagos.qrSalon);
+router.put('/pago-salon', admin, pagos.guardarSalon);
+
 // Pedidos de la tienda: la clienta compra y ve los suyos; la administradora los gestiona
 router.get('/pedidos', sesion, pedidos.listar);
 router.post('/pedidos', sesion, soloRoles('Clienta'), pedidos.crear);

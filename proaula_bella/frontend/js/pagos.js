@@ -1,7 +1,8 @@
 // js/pagos.js - Pasarela de Pagos y Comprobantes conectada 100% a MySQL (/api/pagos)
 
 let citaEnProcesoPago = null;
-let metodoPagoSeleccionado = 'Nequi';
+let metodoPagoSeleccionado = 'BreB';
+let datosCobroSalon = null;   // llave Bre-B, titular y QR del salón (GET /api/pago-salon)
 let callbackPagoCompletado = null;
 let cachePagosPorCita = {};
 
@@ -56,26 +57,16 @@ function inyectarModalesPago() {
 
       <div class="space-y-3">
         <label class="text-xs text-white/70 font-semibold block">Selecciona el método de pago:</label>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="selectorMetodosPago">
-          <button type="button" onclick="seleccionarMetodoPago('Nequi')" data-metodo="Nequi"
+        <div class="grid grid-cols-2 gap-2 text-xs" id="selectorMetodosPago">
+          <button type="button" onclick="seleccionarMetodoPago('BreB')" data-metodo="BreB"
             class="btn-metodo-pago py-2.5 px-2 rounded-xl border border-pink-400 bg-pink-500/20 text-white font-bold flex items-center justify-center gap-1.5 transition">
             ${ico('celular')}
-            <span>Nequi / Davi</span>
-          </button>
-          <button type="button" onclick="seleccionarMetodoPago('Tarjeta')" data-metodo="Tarjeta"
-            class="btn-metodo-pago py-2.5 px-2 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white font-semibold flex items-center justify-center gap-1.5 transition">
-            ${ico('tarjeta')}
-            <span>Tarjeta</span>
-          </button>
-          <button type="button" onclick="seleccionarMetodoPago('PSE')" data-metodo="PSE"
-            class="btn-metodo-pago py-2.5 px-2 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white font-semibold flex items-center justify-center gap-1.5 transition">
-            ${ico('banco')}
-            <span>PSE</span>
+            <span>Bre-B (QR o llave)</span>
           </button>
           <button type="button" onclick="seleccionarMetodoPago('Salon')" data-metodo="Salon"
             class="btn-metodo-pago py-2.5 px-2 rounded-xl border border-white/10 bg-white/5 text-white/70 hover:text-white font-semibold flex items-center justify-center gap-1.5 transition">
             ${ico('salon')}
-            <span>En Salón</span>
+            <span>En el salón</span>
           </button>
         </div>
 
@@ -109,7 +100,7 @@ function inyectarModalesPago() {
   `;
 
   document.body.insertAdjacentHTML('beforeend', html);
-  renderizarCamposMetodoPago('Nequi');
+  renderizarCamposMetodoPago('BreB');
 
   document.getElementById('formProcesarPago')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -151,10 +142,16 @@ window.abrirPasarelaPago = function(cita, onSuccess = null) {
   document.getElementById('pagoResumenFecha').textContent = `${cita.fecha} · ${cita.hora}`;
   document.getElementById('pagoResumenMonto').textContent = formatearMonedaPago(monto);
 
-  seleccionarMetodoPago('Nequi');
+  seleccionarMetodoPago('BreB');
 
   const modal = document.getElementById('modalPasarelaPago');
   if (modal && !modal.open) modal.showModal();
+
+  // Datos de cobro del salón: se leen cada vez que se abre, por si la administradora los cambió
+  pedir('/pago-salon').then((r) => {
+    datosCobroSalon = (r && r.success) ? r.data : null;
+    if (metodoPagoSeleccionado === 'BreB') renderizarCamposMetodoPago('BreB');
+  });
 };
 
 window.cerrarModalPago = function() {
@@ -180,55 +177,45 @@ function renderizarCamposMetodoPago(metodo) {
   const btn = document.getElementById('btnConfirmarTransaccion');
   if (!cont) return;
 
-  if (metodo === 'Nequi') {
-    if (btn) btn.textContent = 'Pagar con Billetera Digital';
+  if (metodo === 'BreB') {
+    const d = datosCobroSalon;
+    if (!d || !d.llave) {
+      if (btn) btn.classList.add('hidden');
+      cont.innerHTML = `<div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px]">
+        El salón todavía no ha configurado su QR de Bre-B. Por ahora elige <strong>En el salón</strong>.</div>`;
+      return;
+    }
+    if (btn) { btn.classList.remove('hidden'); btn.textContent = 'Ya pagué, enviar comprobante'; }
+    const monto = formatearMonedaPago(Number(citaEnProcesoPago && (citaEnProcesoPago.precio || citaEnProcesoPago.valor) || 0));
     cont.innerHTML = `
-      <div>
-        <label class="text-[11px] text-white/60 block mb-1">Número de celular Nequi / Daviplata</label>
-        <input type="tel" required placeholder="300 000 0000" maxlength="10" class="campo">
-      </div>
-      <p class="text-[11px] text-white/50">Recibirás una notificación push en tu celular para autorizar el débito.</p>
-    `;
-  } else if (metodo === 'Tarjeta') {
-    if (btn) btn.textContent = 'Pagar con Tarjeta';
-    cont.innerHTML = `
-      <div>
-        <label class="text-[11px] text-white/60 block mb-1">Número de Tarjeta</label>
-        <input type="text" required placeholder="4532 •••• •••• 8890" maxlength="19" class="campo">
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-[11px] text-white/60 block mb-1">Vencimiento</label>
-          <input type="text" required placeholder="MM/AA" maxlength="5" class="campo">
-        </div>
-        <div>
-          <label class="text-[11px] text-white/60 block mb-1">CVV</label>
-          <input type="password" required placeholder="123" maxlength="4" class="campo">
+      <div class="grid gap-4 sm:grid-cols-[10rem_1fr] items-start">
+        ${d.qr ? `<img src="${d.qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 mx-auto rounded-xl bg-white p-2 object-contain">` : ''}
+        <div class="space-y-2 text-[11px] ${d.qr ? '' : 'sm:col-span-2'}">
+          <p class="text-white/70">1. Abre la app de tu banco o billetera (Nequi, Daviplata, Bancolombia...) y paga <strong class="text-amber-300">${monto}</strong> ${d.qr ? 'escaneando el QR o' : ''} con la llave Bre-B:</p>
+          <div class="flex items-center gap-2">
+            <code id="llaveBreB" class="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-bold text-white select-all">${escaparTextoPago(d.llave)}</code>
+            <button type="button" id="btnCopiarLlave" class="btn-secundario text-[11px] px-3 py-2">Copiar</button>
+          </div>
+          <p class="text-white/60">A nombre de: <strong class="text-white">${escaparTextoPago(d.titular || 'BellaStyle')}</strong></p>
+          <p class="text-white/70">2. Escribe el número del comprobante que te da tu banco:</p>
         </div>
       </div>
-    `;
-  } else if (metodo === 'PSE') {
-    if (btn) btn.textContent = 'Continuar a PSE';
-    cont.innerHTML = `
       <div>
-        <label class="text-[11px] text-white/60 block mb-1">Selecciona tu Banco</label>
-        <select required class="campo bg-[#120f1d]">
-          <option value="Bancolombia">Bancolombia</option>
-          <option value="Davivienda">Davivienda</option>
-          <option value="Banco de Bogotá">Banco de Bogotá</option>
-          <option value="BBVA">BBVA Colombia</option>
-        </select>
+        <label for="numeroComprobante" class="text-[11px] text-white/60 block mb-1">Número del comprobante</label>
+        <input id="numeroComprobante" required maxlength="40" placeholder="Ej: M123456789" class="campo" autocomplete="off">
       </div>
-      <div>
-        <label class="text-[11px] text-white/60 block mb-1">Documento de Identidad</label>
-        <input type="text" required placeholder="Número de cédula" class="campo">
-      </div>
-    `;
+      <p class="text-[11px] text-white/50">El pago queda <strong>por verificar</strong> hasta que el salón confirme que recibió el dinero.</p>`;
+    const copiar = document.getElementById('btnCopiarLlave');
+    copiar.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(d.llave); copiar.textContent = '¡Copiada!'; }
+      catch (e) { window.getSelection().selectAllChildren(document.getElementById('llaveBreB')); copiar.textContent = 'Selecciónala'; }
+      setTimeout(() => { copiar.textContent = 'Copiar'; }, 1500);
+    });
   } else {
-    if (btn) btn.textContent = 'Registrar Pago en Salón';
+    if (btn) { btn.classList.remove('hidden'); btn.textContent = 'Pagar en el salón'; }
     cont.innerHTML = `
       <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px]">
-        Tu cita quedará marcada para pago presencial en recepción (efectivo o datáfono) al finalizar tu atención.
+        Pagas en recepción (efectivo, datáfono o Bre-B) cuando termine tu servicio.
       </div>
     `;
   }
@@ -248,11 +235,13 @@ async function procesarTransaccionPago() {
   }
 
   const idCitaReal = citaEnProcesoPago.id_cita || citaEnProcesoPago.id;
-  const metodoFinal = metodoPagoSeleccionado === 'Salon' ? 'Efectivo / Salón' : metodoPagoSeleccionado;
+  const metodoFinal = metodoPagoSeleccionado === 'Salon' ? 'Efectivo / Salón' : 'Bre-B';
+  const comprobante = document.getElementById('numeroComprobante')?.value.trim() || '';
 
   const resp = await pedir('/pagos', 'POST', {
     idCita: idCitaReal,
-    metodo: metodoFinal
+    metodo: metodoFinal,
+    comprobante
   });
 
   if (btn) {
@@ -305,7 +294,9 @@ window.verComprobantePago = async function(idCita) {
       <h4 class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></h4>
       <p class="text-[11px] text-white/50">Comprobante Electrónico de Servicio</p>
       <span class="inline-block mt-1 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-        pagado ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+        pagado ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+          : pago.estado === 'Rechazado' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
       }">${escaparTextoPago(pago.estado)}</span>
     </div>
 
@@ -316,6 +307,7 @@ window.verComprobantePago = async function(idCita) {
       <div class="flex justify-between"><span class="text-white/50">Servicio:</span><span class="text-white">${escaparTextoPago(pago.servicio)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Especialista:</span><span class="text-white">${escaparTextoPago(pago.estilista)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Método de Pago:</span><span class="text-white font-semibold">${escaparTextoPago(pago.metodo)}</span></div>
+      ${pago.comprobante ? `<div class="flex justify-between"><span class="text-white/50">Comprobante Bre-B:</span><span class="font-mono text-white">${escaparTextoPago(pago.comprobante)}</span></div>` : ''}
     </div>
 
     <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center">

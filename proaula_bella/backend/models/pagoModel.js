@@ -3,7 +3,7 @@ const db = require('../config/db');
 
 async function buscarPorCita(idCita) {
     const [filas] = await db.query(`
-        SELECT p.id_pago, p.id_cita, p.referencia, p.metodo, p.monto, p.estado,
+        SELECT p.id_pago, p.id_cita, p.referencia, p.metodo, p.monto, p.estado, p.comprobante,
                DATE_FORMAT(p.fecha_pago, '%Y-%m-%d %H:%i') AS fecha_pago,
                DATE_FORMAT(c.fecha, '%Y-%m-%d') AS fecha_cita,
                TIME_FORMAT(c.hora, '%H:%i') AS hora_cita,
@@ -32,7 +32,7 @@ async function listar({ rol, idUsuario }) {
     }
 
     const [filas] = await db.query(`
-        SELECT p.id_pago, p.id_cita, p.referencia, p.metodo, p.monto, p.estado,
+        SELECT p.id_pago, p.id_cita, p.referencia, p.metodo, p.monto, p.estado, p.comprobante,
                DATE_FORMAT(p.fecha_pago, '%Y-%m-%d %H:%i') AS fecha_pago,
                DATE_FORMAT(c.fecha, '%Y-%m-%d') AS fecha_cita,
                TIME_FORMAT(c.hora, '%H:%i') AS hora_cita,
@@ -49,7 +49,7 @@ async function listar({ rol, idUsuario }) {
     return filas;
 }
 
-async function crear({ idCita, referencia, metodo, monto, estado }) {
+async function crear({ idCita, referencia, metodo, monto, estado, comprobante = null }) {
     const existente = await buscarPorCita(idCita);
 
     if (existente) {
@@ -58,16 +58,16 @@ async function crear({ idCita, referencia, metodo, monto, estado }) {
         }
         await db.query(
             `UPDATE pagos
-             SET referencia = ?, metodo = ?, monto = ?, estado = ?, fecha_pago = CURRENT_TIMESTAMP
+             SET referencia = ?, metodo = ?, monto = ?, estado = ?, comprobante = ?, fecha_pago = CURRENT_TIMESTAMP
              WHERE id_cita = ?`,
-            [referencia, metodo, monto, estado, idCita]
+            [referencia, metodo, monto, estado, comprobante, idCita]
         );
         return { duplicado: false, pago: await buscarPorCita(idCita) };
     }
 
     await db.query(
-        'INSERT INTO pagos (id_cita, referencia, metodo, monto, estado) VALUES (?, ?, ?, ?, ?)',
-        [idCita, referencia, metodo, monto, estado]
+        'INSERT INTO pagos (id_cita, referencia, metodo, monto, estado, comprobante) VALUES (?, ?, ?, ?, ?, ?)',
+        [idCita, referencia, metodo, monto, estado, comprobante]
     );
     return { duplicado: false, pago: await buscarPorCita(idCita) };
 }
@@ -80,4 +80,24 @@ async function actualizarEstado(idPago, estado) {
     return resultado.affectedRows > 0;
 }
 
-module.exports = { buscarPorCita, listar, crear, actualizarEstado };
+// ---------- Datos de cobro del salón (tabla pago_salon, una sola fila) ----------
+async function datosSalon() {
+    const [filas] = await db.query(
+        "SELECT llave, titular, qr_tipo IS NOT NULL AS tiene_qr, UNIX_TIMESTAMP(actualizado) AS version FROM pago_salon WHERE id = 1");
+    return filas[0] || null;
+}
+
+async function qrSalon() {
+    const [filas] = await db.query('SELECT qr_tipo, qr_datos FROM pago_salon WHERE id = 1 AND qr_datos IS NOT NULL');
+    return filas[0] || null;
+}
+
+// Guarda la llave y el titular; la imagen solo si llega una nueva
+async function guardarDatosSalon({ llave, titular, qrTipo, qrDatos }) {
+    await db.query(`INSERT INTO pago_salon (id, llave, titular, qr_tipo, qr_datos) VALUES (1, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE llave = VALUES(llave), titular = VALUES(titular),
+            qr_tipo = COALESCE(VALUES(qr_tipo), qr_tipo), qr_datos = COALESCE(VALUES(qr_datos), qr_datos)`,
+        [llave, titular, qrTipo || null, qrDatos || null]);
+}
+
+module.exports = { datosSalon, qrSalon, guardarDatosSalon, buscarPorCita, listar, crear, actualizarEstado };

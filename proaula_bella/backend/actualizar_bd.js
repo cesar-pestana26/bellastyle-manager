@@ -85,6 +85,15 @@ const TABLAS = [
         fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
     )`,
+    // Datos de cobro del salón (una fila): llave Bre-B, titular y QR
+    `CREATE TABLE IF NOT EXISTS pago_salon (
+        id          TINYINT PRIMARY KEY DEFAULT 1,
+        llave       VARCHAR(80),
+        titular     VARCHAR(100),
+        qr_tipo     VARCHAR(20),
+        qr_datos    MEDIUMBLOB,
+        actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
     // Pedidos de la tienda: el encabezado del pedido y sus productos
     `CREATE TABLE IF NOT EXISTS pedidos (
         id_pedido   INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,7 +124,15 @@ const COLUMNAS = [
     ['usuarios', 'telefono', 'VARCHAR(30) NULL'],
     ['usuarios', 'email', 'VARCHAR(120) NULL'],
     // Para quién es cada servicio: filtra el catálogo por Mujer, Hombre o Unisex
-    ['servicios', 'publico', "ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex'"]
+    ['servicios', 'publico', "ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex'"],
+    // Número de la transferencia Bre-B que escribe la clienta al pagar con el QR
+    ['pagos', 'comprobante', 'VARCHAR(40) NULL']
+];
+
+// Listas (ENUM) que crecieron: se amplían sin perder los valores que ya existen
+const ENUMS = [
+    ['pagos', 'metodo', "ENUM('Bre-B','Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón'", 'Bre-B'],
+    ['pagos', 'estado', "ENUM('Pagado','Por verificar','Pendiente en Salón','Rechazado','Reembolsado') NOT NULL DEFAULT 'Pagado'", 'Por verificar']
 ];
 
 // Se ejecuta una sola vez, cuando se crea la columna servicios.publico:
@@ -160,6 +177,12 @@ async function actualizar() {
         }
     }
     if (creadas.includes('servicios.publico')) await datosPublico(conexion);
+    for (const [tabla, columna, definicion, valorNuevo] of ENUMS) {
+        const [col] = await conexion.query(`SHOW COLUMNS FROM ${tabla} LIKE ?`, [columna]);
+        if (col.length && !String(col[0].Type).includes(`'${valorNuevo}'`)) {
+            await conexion.query(`ALTER TABLE ${tabla} MODIFY ${columna} ${definicion}`);
+        }
+    }
     const [resultado] = await conexion.query(HORARIO_POR_DEFECTO);
     const [tablas] = await conexion.query('SHOW TABLES');
     await conexion.end();

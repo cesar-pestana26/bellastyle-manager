@@ -14,6 +14,7 @@ CREATE DATABASE IF NOT EXISTS bellastylemanager
 USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS pago_salon;
 DROP TABLE IF EXISTS pedido_items;
 DROP TABLE IF EXISTS pedidos;
 DROP TABLE IF EXISTS agenda;
@@ -128,11 +129,22 @@ CREATE TABLE pagos (
     id_pago     INT AUTO_INCREMENT PRIMARY KEY,
     id_cita     INT NOT NULL UNIQUE,
     referencia  VARCHAR(30) NOT NULL UNIQUE,
-    metodo      ENUM('Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón',
+    metodo      ENUM('Bre-B','Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón',
     monto       DECIMAL(10,2) NOT NULL DEFAULT 0,
-    estado      ENUM('Pagado','Pendiente en Salón','Reembolsado') NOT NULL DEFAULT 'Pagado',
+    estado      ENUM('Pagado','Por verificar','Pendiente en Salón','Rechazado','Reembolsado') NOT NULL DEFAULT 'Pagado',
+    comprobante VARCHAR(40),          -- número de la transferencia Bre-B que escribe la clienta
     fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
+-- Datos de cobro del salón (una sola fila): llave Bre-B, titular y la imagen del QR
+CREATE TABLE pago_salon (
+    id          TINYINT PRIMARY KEY DEFAULT 1,
+    llave       VARCHAR(80),
+    titular     VARCHAR(100),
+    qr_tipo     VARCHAR(20),
+    qr_datos    MEDIUMBLOB,
+    actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Pedidos de la tienda (carrito). El precio se copia al pedido: si mañana cambia, el pedido conserva el cobrado.

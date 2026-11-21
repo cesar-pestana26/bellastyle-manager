@@ -144,7 +144,29 @@
 
       <!-- PESTAÑA 2: PAGOS EN MYSQL -->
       <section id="secPagosAdmin" class="space-y-4 hidden">
-        <p class="text-xs text-white/70">Historial real de pagos registrados en MySQL. Confirma aquí los cobros marcados como "Pendiente en Salón".</p>
+        <!-- Datos de cobro Bre-B: el QR y la llave que ven las clientas al pagar -->
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+          <div class="grid gap-5 md:grid-cols-[11rem_1fr] md:items-start">
+            <div class="text-center">
+              <img id="vistaQrSalon" src="" alt="QR Bre-B del salón" class="hidden mx-auto h-40 w-40 rounded-xl bg-white p-2 object-contain">
+              <div id="sinQrSalon" class="mx-auto flex h-40 w-40 items-center justify-center rounded-xl border border-dashed border-white/20 text-[11px] text-white/50 p-3">Aún no hay QR</div>
+            </div>
+            <form id="formPagoSalon" class="space-y-3">
+              <div>
+                <h3 class="font-serif text-lg font-bold text-white">Cobro con Bre-B</h3>
+                <p class="text-[11px] text-white/60">Sube el QR de Bre-B que te da tu banco y tu llave. Las clientas los verán al pagar; cuando te llegue la transferencia, confírmala en la tabla.</p>
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div><label for="llaveSalon" class="text-[11px] text-white/70 block mb-1">Llave Bre-B</label><input id="llaveSalon" class="campo" maxlength="80" placeholder="Celular, correo, cédula o @llave" required></div>
+                <div><label for="titularSalon" class="text-[11px] text-white/70 block mb-1">Titular de la cuenta</label><input id="titularSalon" class="campo" maxlength="100" placeholder="BellaStyle / nombre del titular" required></div>
+              </div>
+              <div><label for="archivoQrSalon" class="text-[11px] text-white/70 block mb-1">Imagen del QR (PNG o JPG)</label><input id="archivoQrSalon" type="file" accept="image/png,image/jpeg,image/webp" class="campo"></div>
+              <button type="submit" class="btn-primario text-xs px-4 py-2">Guardar datos de cobro</button>
+            </form>
+          </div>
+        </div>
+
+        <p class="text-xs text-white/70">Pagos registrados. Confirma los cobros "Pendiente en Salón" y los pagos Bre-B "Por verificar" cuando veas el dinero en tu cuenta.</p>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-white/80">
             <thead class="text-[11px] uppercase tracking-wider text-pink-300 border-b border-white/10 bg-white/5">
@@ -342,8 +364,9 @@
 
   <script src="js/menuPerfil.js?v=43"></script>
   <script src="js/iconos.js"></script>
-  <script src="js/pagos.js?v=42"></script>
-  <script src="js/admin.js?v=43"></script>
+  <script src="js/pagos.js?v=46"></script>
+  <script src="js/admin.js?v=46"></script>
   <script src="js/pedidos.js?v=42"></script>
+  <script src="js/cobroSalon.js?v=46"></script>
 </body>
 </html>

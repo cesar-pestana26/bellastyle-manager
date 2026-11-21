@@ -373,16 +373,28 @@ function renderizarTablaPagos() {
       <td class="p-3.5 font-bold text-amber-300">${fmt(p.monto)}</td>
       <td class="p-3.5">
         <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
-          p.estado === 'Pagado' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+          p.estado === 'Pagado' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            : p.estado === 'Rechazado' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
         }">${escapar(p.estado)}</span>
+        ${p.comprobante ? `<span class="block mt-1 font-mono text-[10px] text-white/60">Comp. ${escapar(p.comprobante)}</span>` : ''}
       </td>
       <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
         <button type="button" onclick="verComprobantePago(${p.id_cita})" class="px-2.5 py-1 rounded bg-white/10 text-white hover:bg-white/20 text-xs font-semibold">Comprobante</button>
-        ${p.estado === 'Pendiente en Salón' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">Confirmar Cobro</button>` : ''}
+        ${p.estado === 'Pendiente en Salón' || p.estado === 'Por verificar' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">${p.estado === 'Por verificar' ? 'Llegó: confirmar' : 'Confirmar Cobro'}</button>` : ''}
+        ${p.estado === 'Por verificar' ? `<button type="button" onclick="rechazarPagoAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-xs font-semibold">No llegó</button>` : ''}
       </td>
     </tr>
   `).join('');
 }
+
+// La transferencia Bre-B no aparece en la cuenta: se rechaza y la clienta puede pagar de nuevo
+window.rechazarPagoAdmin = async function(idPago) {
+  const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', { estado: 'Rechazado' });
+  notificarAdmin((resp && resp.message) || 'No se pudo actualizar el pago');
+  pagosGlobales = await cargarPagosDesdeServidor('Administradora');
+  renderizarTablaPagos();
+};
 
 window.confirmarCobroAdmin = async function(idPago) {
   const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', { estado: 'Pagado' });

@@ -2,8 +2,12 @@
 const db = require('../config/db');
 const pagoModel = require('../models/pagoModel');
 
-const METODOS_VALIDOS = ['Nequi', 'Tarjeta', 'PSE', 'Efectivo / Salón'];
-const ESTADOS_VALIDOS = ['Pagado', 'Pendiente en Salón', 'Reembolsado'];
+const { leerImagen, enviarImagen } = require('../utils/imagenes');
+
+// Bre-B: la clienta escanea el QR del salón, paga desde su banco y escribe el número
+// del comprobante. El pago queda "Por verificar" hasta que la administradora lo confirma.
+const METODOS_VALIDOS = ['Bre-B', 'Efectivo / Salón', 'Nequi', 'Tarjeta', 'PSE'];
+const ESTADOS_VALIDOS = ['Pagado', 'Por verificar', 'Pendiente en Salón', 'Rechazado', 'Reembolsado'];
 
 async function listar(req, res) {
     try {
@@ -54,7 +58,19 @@ async function crear(req, res) {
             return res.status(400).json({ success: false, message: 'No se puede pagar una cita cancelada.' });
         }
 
-        const estadoPago = metodo === 'Efectivo / Salón' ? 'Pendiente en Salón' : 'Pagado';
+        let comprobante = null;
+        if (metodo === 'Bre-B') {
+            comprobante = String(req.body.comprobante || '').trim().toUpperCase();
+            if (!/^[A-Z0-9-]{4,40}$/.test(comprobante)) {
+                return res.status(400).json({ success: false, message: 'Escribe el número del comprobante de la transferencia (de 4 a 40 letras o números).' });
+            }
+            const salon = await pagoModel.datosSalon();
+            if (!salon || !salon.llave) {
+                return res.status(400).json({ success: false, message: 'El salón aún no ha configurado su llave Bre-B. Elige pagar en el salón.' });
+            }
+        }
+        const estadoPago = metodo === 'Efectivo / Salón' ? 'Pendiente en Salón'
+            : metodo === 'Bre-B' ? 'Por verificar' : 'Pagado';
         const referencia = 'TXN-' + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 89);
 
         const resultado = await pagoModel.crear({
@@ -62,7 +78,8 @@ async function crear(req, res) {
             referencia,
             metodo,
             monto: Number(cita.precio),
-            estado: estadoPago
+            estado: estadoPago,
+            comprobante
         });
 
         if (resultado.duplicado) {
@@ -75,8 +92,8 @@ async function crear(req, res) {
 
         res.status(201).json({
             success: true,
-            message: estadoPago === 'Pagado'
-                ? 'Pago registrado correctamente en MySQL.'
+            message: estadoPago === 'Pagado' ? 'Pago registrado correctamente.'
+                : estadoPago === 'Por verificar' ? 'Recibimos tu comprobante. El salón confirmará el pago en cuanto vea la transferencia.'
                 : 'Pago presencial en salón registrado.',
             data: resultado.pago
         });
@@ -107,4 +124,50 @@ async function cambiarEstado(req, res) {
     }
 }
 
-module.exports = { listar, porCita, crear, cambiarEstado };
+// GET /api/pago-salon  -> llave, titular y si hay QR (público: lo ve la clienta al pagar)
+async function datosSalon(req, res) {
+    try {
+        const d = await pagoModel.datosSalon();
+        res.json({ success: true, data: d ? {
+            llave: d.llave, titular: d.titular, tieneQr: Boolean(d.tiene_qr),
+            qr: d.tiene_qr ? `/api/pago-salon/qr?v=${d.version}` : null
+        } : null });
+    } catch (error) {
+        console.error('Error al leer datos de cobro:', error);
+        res.status(500).json({ success: false, message: 'No se pudieron leer los datos de cobro.' });
+    }
+}
+
+// GET /api/pago-salon/qr  -> la imagen del QR
+async function qrSalon(req, res) {
+    try {
+        const qr = await pagoModel.qrSalon();
+        if (!qr) return res.status(404).json({ success: false, message: 'El salón no ha subido su QR.' });
+        enviarImagen(res, qr.qr_tipo, qr.qr_datos);
+    } catch (error) {
+        console.error('Error al enviar el QR:', error);
+        res.status(500).json({ success: false, message: 'No se pudo cargar el QR.' });
+    }
+}
+
+// PUT /api/pago-salon   Recibe: { llave, titular, imagen? }  (solo administradora)
+async function guardarSalon(req, res) {
+    const llave = String(req.body.llave || '').trim();
+    const titular = String(req.body.titular || '').trim();
+    if (llave.length < 3 || llave.length > 80) return res.status(400).json({ success: false, message: 'Escribe la llave Bre-B (celular, correo, cédula o código).' });
+    if (titular.length < 3 || titular.length > 100) return res.status(400).json({ success: false, message: 'Escribe el nombre del titular de la cuenta.' });
+    let imagen = {};
+    if (req.body.imagen) {
+        imagen = leerImagen(req.body.imagen);
+        if (imagen.error) return res.status(400).json({ success: false, message: imagen.error });
+    }
+    try {
+        await pagoModel.guardarDatosSalon({ llave, titular, qrTipo: imagen.tipo, qrDatos: imagen.buffer });
+        res.json({ success: true, message: 'Datos de cobro Bre-B guardados.' });
+    } catch (error) {
+        console.error('Error al guardar datos de cobro:', error);
+        res.status(500).json({ success: false, message: 'No se pudieron guardar los datos de cobro.' });
+    }
+}
+
+module.exports = { listar, porCita, crear, cambiarEstado, datosSalon, qrSalon, guardarSalon };
