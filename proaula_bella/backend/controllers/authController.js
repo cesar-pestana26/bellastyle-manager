@@ -31,7 +31,7 @@ async function login(req, res) {
         return res.status(400).json({ success: false, message: 'Escribe tu usuario y contraseña.' });
     }
 
-    // Máximo 3 intentos fallidos; después la cuenta queda bloqueada 15 minutos
+    // Máximo 3 intentos fallidos; después la cuenta queda bloqueada 3 minutos
     const clave = 'login:' + String(username).trim().toLowerCase();
     const espera = minutosBloqueado(clave);
     if (espera > 0) {
@@ -46,7 +46,7 @@ async function login(req, res) {
             const quedan = registrarFallo(clave);
             const message = quedan > 0
                 ? `Usuario o contraseña incorrectos. Te quedan ${quedan} intento(s).`
-                : 'Usuario o contraseña incorrectos. Por seguridad, espera 15 minutos para volver a intentarlo.';
+                : 'Usuario o contraseña incorrectos. Por seguridad, espera 3 minutos para volver a intentarlo.';
             return res.status(401).json({ success: false, message });
         }
         limpiarIntentos(clave);
@@ -170,7 +170,7 @@ async function registrar(req, res) {
 // POST /api/recuperar-password
 // Recibe: { username, contacto, nuevaPassword }
 // Para cambiar la contraseña hay que demostrar que la cuenta es tuya: el teléfono o el correo
-// que escribas debe ser el mismo que registraste. Máximo 3 intentos y luego 15 minutos de bloqueo.
+// que escribas debe ser el mismo que registraste. Máximo 3 intentos y luego 3 minutos de bloqueo.
 // (En un sistema real se enviaría un código por SMS o correo; aquí se compara con el registrado.)
 async function recuperarPassword(req, res) {
     const { username, nuevaPassword } = req.body;
@@ -195,11 +195,13 @@ async function recuperarPassword(req, res) {
             const quedan = registrarFallo(clave);
             const message = quedan > 0
                 ? `El usuario y el teléfono o correo no coinciden. Te quedan ${quedan} intento(s).`
-                : 'El usuario y el teléfono o correo no coinciden. Por seguridad, espera 15 minutos para volver a intentarlo.';
+                : 'El usuario y el teléfono o correo no coinciden. Por seguridad, espera 3 minutos para volver a intentarlo.';
             return res.status(401).json({ success: false, message });
         }
 
         limpiarIntentos(clave);
+        // Ya demostró que la cuenta es suya: se quita también el bloqueo del inicio de sesión
+        limpiarIntentos('login:' + username.trim().toLowerCase());
         await usuarioModel.actualizarPassword(usuario.username, bcrypt.hashSync(nuevaPassword, 10));
         return res.json({ success: true, message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
     } catch (err) {

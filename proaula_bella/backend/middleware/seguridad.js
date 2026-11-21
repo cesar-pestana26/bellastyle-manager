@@ -124,12 +124,12 @@ function mismaClienta({ permitirPersonal = false } = {}) {
 }
 
 // ---------------------------------------------------------------
-// Límite de intentos: máximo 3 fallos seguidos; luego 15 minutos de bloqueo.
+// Límite de intentos: máximo 3 fallos seguidos; luego 3 minutos de bloqueo.
 // Se usa en el login y en recuperar contraseña (contra ataques de fuerza bruta).
 // Se guarda en memoria del servidor: clave = "login:usuario" o "recuperar:usuario".
 // ---------------------------------------------------------------
 const MAX_INTENTOS = 3;
-const BLOQUEO_MS = 15 * 60 * 1000;
+const BLOQUEO_MS = 3 * 60 * 1000;
 const intentos = new Map();
 
 // Si la cuenta está bloqueada devuelve los minutos que faltan; si no, 0.
