@@ -189,7 +189,15 @@ function renderizarCamposMetodoPago(metodo) {
     const monto = formatearMonedaPago(Number(citaEnProcesoPago && (citaEnProcesoPago.precio || citaEnProcesoPago.valor) || 0));
     cont.innerHTML = `
       <div class="grid gap-4 sm:grid-cols-[10rem_1fr] items-start">
-        ${d.qr ? `<img src="${d.qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 mx-auto rounded-xl bg-white p-2 object-contain">` : ''}
+        ${d.qr ? `<div class="space-y-2">
+          <button type="button" id="btnAmpliarQR" class="block w-40 mx-auto" aria-label="Ver el QR en grande">
+            <img src="${d.qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 rounded-xl bg-white p-2 object-contain">
+          </button>
+          <div class="grid grid-cols-2 gap-1.5 w-40 mx-auto">
+            <button type="button" id="btnVerQRGrande" class="btn-secundario text-[10px] px-2 py-1.5">Ver grande</button>
+            <a href="${d.qr}" download="QR-BreB-BellaStyle.png" class="btn-secundario text-[10px] px-2 py-1.5 text-center">Descargar</a>
+          </div>
+        </div>` : ''}
         <div class="space-y-2 text-[11px] ${d.qr ? '' : 'sm:col-span-2'}">
           <p class="text-white/70">1. Abre la app de tu banco o billetera (Nequi, Daviplata, Bancolombia...) y paga <strong class="text-amber-300">${monto}</strong> ${d.qr && d.llave ? 'escaneando el QR o con la llave Bre-B:' : d.qr ? 'escaneando el QR.' : 'con la llave Bre-B:'}</p>
           ${d.llave ? `<div class="flex items-center gap-2">
@@ -205,6 +213,10 @@ function renderizarCamposMetodoPago(metodo) {
         <input id="numeroComprobante" required maxlength="40" placeholder="Ej: M123456789" class="campo" autocomplete="off">
       </div>
       <p class="text-[11px] text-white/50">El pago queda <strong>por verificar</strong> hasta que el salón confirme que recibió el dinero.</p>`;
+    ['btnAmpliarQR', 'btnVerQRGrande'].forEach((id) => {
+      const b = document.getElementById(id);
+      if (b) b.addEventListener('click', () => verQRGrande(d.qr));
+    });
     const copiar = document.getElementById('btnCopiarLlave');
     if (copiar) copiar.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(d.llave); copiar.textContent = '¡Copiada!'; }
@@ -219,6 +231,28 @@ function renderizarCamposMetodoPago(metodo) {
       </div>
     `;
   }
+}
+
+// Muestra el QR a pantalla completa para que el celular lo pueda leer desde el computador.
+// Si la clienta está en el celular, mejor lo descarga y en su banco elige "pagar con QR desde la galería".
+function verQRGrande(src) {
+  let visor = document.getElementById('visorQRBreB');
+  if (!visor) {
+    visor = document.createElement('dialog');
+    visor.id = 'visorQRBreB';
+    // Colores fijos (no del tema): el QR siempre se lee mejor sobre blanco
+    visor.style.cssText = 'padding:0;border:0;border-radius:1rem;background:#fff;max-width:95vw;max-height:95vh';
+    visor.innerHTML = `<div style="padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.75rem">
+        <img id="imgVisorQR" alt="Código QR Bre-B del salón" style="display:block;width:min(85vw,78vh);height:min(85vw,78vh);object-fit:contain;background:#fff">
+        <p style="margin:0;font-size:.875rem;color:#374151;text-align:center">Escanéalo con la app de tu banco. Acerca o aleja el celular hasta que enfoque.</p>
+        <button type="button" style="padding:.5rem 1.25rem;border-radius:9999px;background:#111827;color:#fff;font-size:.875rem;font-weight:600;border:0;cursor:pointer">Cerrar</button>
+      </div>`;
+    visor.querySelector('button').addEventListener('click', () => visor.close());
+    visor.addEventListener('click', (e) => { if (e.target === visor) visor.close(); });
+    document.body.appendChild(visor);
+  }
+  visor.querySelector('#imgVisorQR').src = src;
+  visor.showModal();
 }
 
 async function procesarTransaccionPago() {
