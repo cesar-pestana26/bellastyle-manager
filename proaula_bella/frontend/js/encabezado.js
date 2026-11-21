@@ -29,10 +29,10 @@
   const linkMovil = ([url, texto]) => `<a href="${url}" class="block rounded-xl px-4 py-3 text-base font-semibold ${url === pagina ? 'bg-pink-500/15 text-pink-400' : 'text-white/85 hover:bg-white/5'}">${texto}</a>`;
 
   const sesionEscritorio = usuario
-    ? `<a href="${panel}" class="hidden sm:inline text-sm font-semibold text-pink-400 hover:text-pink-300 transition">Hola, ${esc(primerNombre)}</a>
-       <a href="${panel}" class="px-4 py-2 text-xs sm:text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Mi panel</a>`
-    : `<a href="index.html" class="hidden sm:inline text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
-       <a href="register.html?rol=cliente" class="hidden sm:inline-flex px-4 py-2 text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Crear cuenta</a>`;
+    ? `<a href="${panel}" class="hidden sm:inline whitespace-nowrap text-sm font-semibold text-pink-400 hover:text-pink-300 transition">Hola, ${esc(primerNombre)}</a>
+       <a href="${panel}" class="whitespace-nowrap px-4 py-2 text-xs sm:text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Mi panel</a>`
+    : `<a href="index.html" class="hidden sm:inline whitespace-nowrap text-sm font-semibold px-3 py-2 text-white/80 hover:text-white transition">Iniciar sesión</a>
+       <a href="register.html?rol=cliente" class="hidden sm:inline-flex whitespace-nowrap px-4 py-2 text-sm rounded-full bg-white text-black font-semibold hover:bg-pink-400 hover:text-white transition">Crear cuenta</a>`;
 
   const sesionMovil = usuario
     ? `<a href="${panel}" class="block rounded-xl bg-pink-500 px-4 py-3 text-center text-base font-semibold text-white">Mi panel (${esc(primerNombre)})</a>`
@@ -46,7 +46,7 @@
         <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
         <span class="font-serif text-xl font-bold text-white">Bella<span class="text-pink-400">Style</span></span>
       </a>
-      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-white/80" aria-label="Menú principal">
+      <nav class="hidden lg:flex items-center gap-6 text-sm font-medium text-white/80" aria-label="Menú principal">
         ${enlaces.map(linkEscritorio).join('')}
       </nav>
       <div class="flex items-center gap-2 sm:gap-3">
@@ -54,14 +54,14 @@
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
           <span id="contadorCarrito" class="absolute -right-1.5 -top-1.5 hidden min-w-[1.15rem] rounded-full bg-pink-500 px-1 text-center text-[10px] font-bold leading-[1.15rem] text-white">0</span>
         </a>
-        <button type="button" class="btn-toggle-tema hidden sm:flex px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition items-center gap-1.5"></button>
+        <button type="button" class="btn-toggle-tema hidden lg:flex whitespace-nowrap px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition items-center gap-1.5"></button>
         ${sesionEscritorio}
-        <button type="button" id="btnMenuMovil" class="md:hidden rounded-full border border-white/15 bg-white/5 p-2 text-white" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuMovil">
+        <button type="button" id="btnMenuMovil" class="lg:hidden rounded-full border border-white/15 bg-white/5 p-2 text-white" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuMovil">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
       </div>
     </div>
-    <div id="menuMovil" class="md:hidden hidden border-t border-white/10 bg-[#07060b]/95 px-4 pb-5 pt-3">
+    <div id="menuMovil" class="lg:hidden hidden border-t border-white/10 bg-[#07060b]/95 px-4 pb-5 pt-3">
       <nav class="space-y-1" aria-label="Menú del celular">${enlaces.map(linkMovil).join('')}</nav>
       <div class="mt-4 grid gap-2">
         <button type="button" class="btn-toggle-tema flex justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white items-center gap-2"></button>
