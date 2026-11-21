@@ -8,7 +8,7 @@
 document.body.insertAdjacentHTML('beforeend', `
   <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
     <!-- Ventana del chat -->
-    <div id="chatVentana" class="hidden h-[32rem] max-h-[75vh] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-tinta/10 bg-noche-900/45 shadow-2xl shadow-tinta/20 backdrop-blur-md">
+    <div id="chatVentana" class="hidden h-[32rem] max-h-[75vh] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-tinta/10 bg-noche-900/95 shadow-2xl shadow-tinta/20 backdrop-blur-md">
       <div class="flex items-center justify-between bg-gradient-to-r from-bella-200 to-lavanda-200 px-4 py-3">
         <div>
           <p class="font-semibold">Chat BellaStyle</p>

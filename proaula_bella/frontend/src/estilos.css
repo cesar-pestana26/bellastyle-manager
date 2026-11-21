@@ -483,3 +483,9 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
 }
 
 
+
+/* Chat de Bella: usa el color de tarjeta del tema oscuro.
+   Las páginas que cargan Tailwind desde el CDN pintan bg-white de blanco puro
+   y el texto claro de la invitación no se leía. */
+#chatInvitacion.bg-white { background-color: rgb(var(--blanco)); }
+#chatMensajes .bg-white\/70 { background-color: rgb(var(--blanco) / 0.7); }
