@@ -101,6 +101,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formRegistro');
   if (!form) return;
 
+  // Mientras escribe: el nombre solo acepta letras y espacios, y el teléfono solo números
+  const soloPermitido = (id, quitar) => {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', () => {
+      const limpio = campo.value.replace(quitar, '');
+      if (limpio !== campo.value) campo.value = limpio;
+    });
+  };
+  soloPermitido('nombre', /[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g);
+  soloPermitido('telefono', /\D/g);
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const alerta = document.getElementById('alerta');
@@ -113,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!nombre || !userVal || !password) {
       mostrarMensajeAlerta(alerta, 'Por favor completa todos los campos obligatorios.', 'error');
+      return;
+    }
+
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]{2,100}$/.test(nombre)) {
+      mostrarMensajeAlerta(alerta, 'El nombre solo puede tener letras y espacios.', 'error');
       return;
     }
 

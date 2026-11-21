@@ -1,5 +1,5 @@
 // Validaciones que se usan en varios controladores
-const RE_NOMBRE = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,100}$/;
+const RE_NOMBRE = /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]{2,100}$/;
 const RE_USUARIO = /^[a-zA-Z0-9_.]{3,50}$/;
 
 function nombreValido(valor) {
