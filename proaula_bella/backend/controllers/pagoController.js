@@ -65,7 +65,7 @@ async function crear(req, res) {
                 return res.status(400).json({ success: false, message: 'Escribe el número del comprobante de la transferencia (de 4 a 40 letras o números).' });
             }
             const salon = await pagoModel.datosSalon();
-            if (!salon || !salon.llave) {
+            if (!salon || (!salon.llave && !salon.tiene_qr)) {
                 return res.status(400).json({ success: false, message: 'El salón aún no ha configurado su llave Bre-B. Elige pagar en el salón.' });
             }
         }
@@ -150,18 +150,23 @@ async function qrSalon(req, res) {
     }
 }
 
-// PUT /api/pago-salon   Recibe: { llave, titular, imagen? }  (solo administradora)
+// PUT /api/pago-salon   Recibe: { llave?, titular?, imagen? }  (solo administradora)
+// La llave y el titular son opcionales: basta con el QR (o con la llave si no hay QR).
 async function guardarSalon(req, res) {
-    const llave = String(req.body.llave || '').trim();
-    const titular = String(req.body.titular || '').trim();
-    if (llave.length < 3 || llave.length > 80) return res.status(400).json({ success: false, message: 'Escribe la llave Bre-B (celular, correo, cédula o código).' });
-    if (titular.length < 3 || titular.length > 100) return res.status(400).json({ success: false, message: 'Escribe el nombre del titular de la cuenta.' });
+    const llave = String(req.body.llave || '').trim() || null;
+    const titular = String(req.body.titular || '').trim() || null;
+    if (llave && llave.length > 80) return res.status(400).json({ success: false, message: 'La llave Bre-B es muy larga (máximo 80 caracteres).' });
+    if (titular && titular.length > 100) return res.status(400).json({ success: false, message: 'El nombre del titular es muy largo (máximo 100 caracteres).' });
     let imagen = {};
     if (req.body.imagen) {
         imagen = leerImagen(req.body.imagen);
         if (imagen.error) return res.status(400).json({ success: false, message: imagen.error });
     }
     try {
+        const actual = await pagoModel.datosSalon();
+        if (!imagen.tipo && !(actual && actual.tiene_qr) && !llave) {
+            return res.status(400).json({ success: false, message: 'Sube la imagen del QR (o escribe la llave Bre-B).' });
+        }
         await pagoModel.guardarDatosSalon({ llave, titular, qrTipo: imagen.tipo, qrDatos: imagen.buffer });
         res.json({ success: true, message: 'Datos de cobro Bre-B guardados.' });
     } catch (error) {

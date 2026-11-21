@@ -179,7 +179,7 @@ function renderizarCamposMetodoPago(metodo) {
 
   if (metodo === 'BreB') {
     const d = datosCobroSalon;
-    if (!d || !d.llave) {
+    if (!d || (!d.llave && !d.qr)) {
       if (btn) btn.classList.add('hidden');
       cont.innerHTML = `<div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px]">
         El salón todavía no ha configurado su QR de Bre-B. Por ahora elige <strong>En el salón</strong>.</div>`;
@@ -191,12 +191,12 @@ function renderizarCamposMetodoPago(metodo) {
       <div class="grid gap-4 sm:grid-cols-[10rem_1fr] items-start">
         ${d.qr ? `<img src="${d.qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 mx-auto rounded-xl bg-white p-2 object-contain">` : ''}
         <div class="space-y-2 text-[11px] ${d.qr ? '' : 'sm:col-span-2'}">
-          <p class="text-white/70">1. Abre la app de tu banco o billetera (Nequi, Daviplata, Bancolombia...) y paga <strong class="text-amber-300">${monto}</strong> ${d.qr ? 'escaneando el QR o' : ''} con la llave Bre-B:</p>
-          <div class="flex items-center gap-2">
+          <p class="text-white/70">1. Abre la app de tu banco o billetera (Nequi, Daviplata, Bancolombia...) y paga <strong class="text-amber-300">${monto}</strong> ${d.qr && d.llave ? 'escaneando el QR o con la llave Bre-B:' : d.qr ? 'escaneando el QR.' : 'con la llave Bre-B:'}</p>
+          ${d.llave ? `<div class="flex items-center gap-2">
             <code id="llaveBreB" class="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-bold text-white select-all">${escaparTextoPago(d.llave)}</code>
             <button type="button" id="btnCopiarLlave" class="btn-secundario text-[11px] px-3 py-2">Copiar</button>
-          </div>
-          <p class="text-white/60">A nombre de: <strong class="text-white">${escaparTextoPago(d.titular || 'BellaStyle')}</strong></p>
+          </div>` : ''}
+          ${d.titular ? `<p class="text-white/60">A nombre de: <strong class="text-white">${escaparTextoPago(d.titular)}</strong></p>` : ''}
           <p class="text-white/70">2. Escribe el número del comprobante que te da tu banco:</p>
         </div>
       </div>
@@ -206,7 +206,7 @@ function renderizarCamposMetodoPago(metodo) {
       </div>
       <p class="text-[11px] text-white/50">El pago queda <strong>por verificar</strong> hasta que el salón confirme que recibió el dinero.</p>`;
     const copiar = document.getElementById('btnCopiarLlave');
-    copiar.addEventListener('click', async () => {
+    if (copiar) copiar.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(d.llave); copiar.textContent = '¡Copiada!'; }
       catch (e) { window.getSelection().selectAllChildren(document.getElementById('llaveBreB')); copiar.textContent = 'Selecciónala'; }
       setTimeout(() => { copiar.textContent = 'Copiar'; }, 1500);

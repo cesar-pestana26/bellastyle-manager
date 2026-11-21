@@ -6,12 +6,15 @@ async function cargarCobroSalon() {
   if (!d) return;
   document.getElementById('llaveSalon').value = d.llave || '';
   document.getElementById('titularSalon').value = d.titular || '';
-  if (d.qr) {
-    const img = document.getElementById('vistaQrSalon');
-    img.src = d.qr;
-    img.classList.remove('hidden');
-    document.getElementById('sinQrSalon').classList.add('hidden');
-  }
+  if (d.qr) mostrarQr(d.qr);
+  document.getElementById('avisoVistaPrevia').classList.add('hidden');
+}
+
+function mostrarQr(url) {
+  const img = document.getElementById('vistaQrSalon');
+  img.src = url;
+  img.classList.remove('hidden');
+  document.getElementById('sinQrSalon').classList.add('hidden');
 }
 
 // Reduce la imagen a máximo 800 px y la pasa a PNG
@@ -43,6 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formPagoSalon');
   if (!form) return;
   cargarCobroSalon();
+  // Vista previa: apenas se elige la imagen se muestra, antes de guardar
+  document.getElementById('archivoQrSalon').addEventListener('change', (e) => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    mostrarQr(URL.createObjectURL(archivo));
+    document.getElementById('avisoVistaPrevia').classList.remove('hidden');
+  });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const archivo = document.getElementById('archivoQrSalon').files[0];

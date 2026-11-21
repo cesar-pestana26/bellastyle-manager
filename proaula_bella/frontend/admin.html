@@ -150,15 +150,16 @@
             <div class="text-center">
               <img id="vistaQrSalon" src="" alt="QR Bre-B del salón" class="hidden mx-auto h-40 w-40 rounded-xl bg-white p-2 object-contain">
               <div id="sinQrSalon" class="mx-auto flex h-40 w-40 items-center justify-center rounded-xl border border-dashed border-white/20 text-[11px] text-white/50 p-3">Aún no hay QR</div>
+              <p id="avisoVistaPrevia" class="hidden mt-2 text-[11px] font-semibold text-amber-300">Vista previa: falta pulsar Guardar</p>
             </div>
             <form id="formPagoSalon" class="space-y-3">
               <div>
                 <h3 class="font-serif text-lg font-bold text-white">Cobro con Bre-B</h3>
-                <p class="text-[11px] text-white/60">Sube el QR de Bre-B que te da tu banco y tu llave. Las clientas los verán al pagar; cuando te llegue la transferencia, confírmala en la tabla.</p>
+                <p class="text-[11px] text-white/60">Sube la imagen del QR de Bre-B que te da tu banco (la llave y el titular son opcionales). Las clientas lo verán al pagar; cuando te llegue la transferencia, confírmala en la tabla.</p>
               </div>
               <div class="grid gap-3 sm:grid-cols-2">
-                <div><label for="llaveSalon" class="text-[11px] text-white/70 block mb-1">Llave Bre-B</label><input id="llaveSalon" class="campo" maxlength="80" placeholder="Celular, correo, cédula o @llave" required></div>
-                <div><label for="titularSalon" class="text-[11px] text-white/70 block mb-1">Titular de la cuenta</label><input id="titularSalon" class="campo" maxlength="100" placeholder="BellaStyle / nombre del titular" required></div>
+                <div><label for="llaveSalon" class="text-[11px] text-white/70 block mb-1">Llave Bre-B</label><input id="llaveSalon" class="campo" maxlength="80" placeholder="Opcional: celular, correo o @llave"></div>
+                <div><label for="titularSalon" class="text-[11px] text-white/70 block mb-1">Titular de la cuenta</label><input id="titularSalon" class="campo" maxlength="100" placeholder="Opcional: nombre del titular"></div>
               </div>
               <div><label for="archivoQrSalon" class="text-[11px] text-white/70 block mb-1">Imagen del QR (PNG o JPG)</label><input id="archivoQrSalon" type="file" accept="image/png,image/jpeg,image/webp" class="campo"></div>
               <button type="submit" class="btn-primario text-xs px-4 py-2">Guardar datos de cobro</button>
@@ -364,9 +365,9 @@
 
   <script src="js/menuPerfil.js?v=43"></script>
   <script src="js/iconos.js"></script>
-  <script src="js/pagos.js?v=46"></script>
+  <script src="js/pagos.js?v=47"></script>
   <script src="js/admin.js?v=46"></script>
   <script src="js/pedidos.js?v=42"></script>
-  <script src="js/cobroSalon.js?v=46"></script>
+  <script src="js/cobroSalon.js?v=47"></script>
 </body>
 </html>
