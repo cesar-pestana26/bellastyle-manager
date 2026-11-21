@@ -1250,5 +1250,5 @@ function escapar(str) {
 window.cerrarSesionPanel = function() {
   localStorage.removeItem('usuarioLogueado');
   localStorage.removeItem('token');
-  window.location.replace('index.html');
+  window.location.replace('welcome.html');
 };

@@ -26,9 +26,9 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="css/estilos.css?v=41">
+  <link rel="stylesheet" href="css/estilos.css?v=42">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/tema.js?v=41"></script>
+  <script src="js/tema.js?v=42"></script>
 </head>
 <body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
@@ -85,6 +85,7 @@
         <div class="flex gap-2 whitespace-nowrap">
           <button type="button" id="tabCitas" onclick="switchTabAdmin('citas')" class="px-4 py-2 rounded-xl text-xs font-bold transition bg-white text-black">Control Total de Citas</button>
           <button type="button" id="tabPagos" onclick="switchTabAdmin('pagos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Pagos</button>
+          <button type="button" id="tabPedidos" onclick="switchTabAdmin('pedidos')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5">Pedidos tienda</button>
           <button type="button" id="tabMensajes" onclick="switchTabAdmin('mensajes')" class="px-4 py-2 rounded-xl text-xs font-bold transition text-white/60 hover:text-white hover:bg-white/5 inline-flex items-center gap-1.5">
             <span>Mensajes (Chat Bella)</span>
             <span id="badgeSinLeerAdmin" class="hidden rounded-full bg-pink-500 px-2 py-0.5 text-[10px] font-bold text-white">0</span>
@@ -158,6 +159,27 @@
               </tr>
             </thead>
             <tbody id="tablaPagosAdmin" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PESTAÑA: PEDIDOS DE LA TIENDA (carrito de las clientas) -->
+      <section id="secPedidosAdmin" class="space-y-4 hidden">
+        <p class="text-xs text-white/70">Pedidos que hicieron las clientas desde la tienda. Se pagan y recogen en el salón. Al cancelar uno, las unidades vuelven al stock.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-white/80">
+            <thead class="text-[11px] uppercase tracking-wider text-pink-300 border-b border-white/10 bg-white/5">
+              <tr>
+                <th class="p-3.5 rounded-l-xl">Pedido</th>
+                <th class="p-3.5">Fecha</th>
+                <th class="p-3.5">Clienta</th>
+                <th class="p-3.5">Productos</th>
+                <th class="p-3.5">Total</th>
+                <th class="p-3.5">Estado</th>
+                <th class="p-3.5 text-right rounded-r-xl">Cambiar estado</th>
+              </tr>
+            </thead>
+            <tbody id="tablaPedidosAdmin" class="divide-y divide-white/5"></tbody>
           </table>
         </div>
       </section>
@@ -316,9 +338,10 @@
     BellaStyle Manager · Sistema de Gestión Gerencial · Ingeniería de Sistemas
   </footer>
 
-  <script src="js/api.js?v=41"></script>
+  <script src="js/api.js?v=42"></script>
   <script src="js/iconos.js"></script>
-  <script src="js/pagos.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/pagos.js?v=42"></script>
+  <script src="js/admin.js?v=42"></script>
+  <script src="js/pedidos.js?v=42"></script>
 </body>
 </html>

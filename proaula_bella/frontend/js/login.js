@@ -190,7 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
           window.location.replace('admin.html');
         } else if (rolRealCuenta === 'estilista') {
           window.location.replace('panel.html?rol=estilista');
-        } else if (redirect) {
+        } else if (redirect && /^[a-z]+\.html(#[a-z]+)?$/.test(redirect)) {
+          // Solo páginas propias (ej: tienda.html#carrito), nunca otro sitio
           window.location.replace(redirect);
         } else {
           window.location.replace('panel.html?rol=cliente');

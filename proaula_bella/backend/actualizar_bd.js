@@ -84,6 +84,24 @@ const TABLAS = [
         estado      ENUM('Pagado','Pendiente en Salón','Reembolsado') NOT NULL DEFAULT 'Pagado',
         fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+    )`,
+    // Pedidos de la tienda: el encabezado del pedido y sus productos
+    `CREATE TABLE IF NOT EXISTS pedidos (
+        id_pedido   INT AUTO_INCREMENT PRIMARY KEY,
+        id_clienta  INT NOT NULL,
+        total       DECIMAL(10,2) NOT NULL DEFAULT 0,
+        estado      ENUM('Pendiente','Listo para recoger','Entregado','Cancelado') NOT NULL DEFAULT 'Pendiente',
+        creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_pedidos_clienta FOREIGN KEY (id_clienta) REFERENCES clientas(id_clienta)
+    )`,
+    `CREATE TABLE IF NOT EXISTS pedido_items (
+        id_item     INT AUTO_INCREMENT PRIMARY KEY,
+        id_pedido   INT NOT NULL,
+        id_producto INT NOT NULL,
+        cantidad    INT NOT NULL,
+        precio      DECIMAL(10,2) NOT NULL,
+        CONSTRAINT fk_items_pedido FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido) ON DELETE CASCADE,
+        CONSTRAINT fk_items_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
     )`
 ];
 
@@ -95,8 +113,28 @@ const COLUMNAS = [
     ['citas', 'reprogramaciones', 'TINYINT NOT NULL DEFAULT 0'],
     // Teléfono y correo de cada cuenta (estilistas y administradora), para recuperar la contraseña
     ['usuarios', 'telefono', 'VARCHAR(30) NULL'],
-    ['usuarios', 'email', 'VARCHAR(120) NULL']
+    ['usuarios', 'email', 'VARCHAR(120) NULL'],
+    // Para quién es cada servicio: filtra el catálogo por Mujer, Hombre o Unisex
+    ['servicios', 'publico', "ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex'"]
 ];
+
+// Se ejecuta una sola vez, cuando se crea la columna servicios.publico:
+// marca los servicios de mujer y agrega dos servicios de caballero,
+// asignados a las estilistas que ya hacen "Corte de Cabello".
+async function datosPublico(conexion) {
+    await conexion.query(`UPDATE servicios SET publico = 'Mujer'
+        WHERE nombre IN ('Manicure', 'Pedicure', 'Mechas / Balayage', 'Peinado para Evento')`);
+    const nuevos = [['Corte Caballero', 25000, 30], ['Arreglo de Barba', 18000, 30]];
+    for (const [nombre, precio, duracion] of nuevos) {
+        const [existe] = await conexion.query('SELECT id_servicio FROM servicios WHERE nombre = ?', [nombre]);
+        if (existe.length) continue;
+        const [r] = await conexion.query(
+            "INSERT INTO servicios (nombre, precio, duracion_min, publico) VALUES (?, ?, ?, 'Hombre')", [nombre, precio, duracion]);
+        await conexion.query(`INSERT IGNORE INTO estilista_servicios (id_estilista, id_servicio)
+            SELECT es.id_estilista, ? FROM estilista_servicios es
+            JOIN servicios s ON s.id_servicio = es.id_servicio WHERE s.nombre = 'Corte de Cabello'`, [r.insertId]);
+    }
+}
 
 // Las estilistas que todavía no tienen horario reciben el de siempre:
 // lunes a sábado, de 8:00 a 19:00. Así nada cambia hasta que lo editen.
@@ -113,10 +151,15 @@ async function actualizar() {
     for (const sql of TABLAS) {
         await conexion.query(sql);
     }
+    const creadas = [];
     for (const [tabla, columna, definicion] of COLUMNAS) {
         const [existe] = await conexion.query(`SHOW COLUMNS FROM ${tabla} LIKE ?`, [columna]);
-        if (existe.length === 0) await conexion.query(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${definicion}`);
+        if (existe.length === 0) {
+            await conexion.query(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${definicion}`);
+            creadas.push(`${tabla}.${columna}`);
+        }
     }
+    if (creadas.includes('servicios.publico')) await datosPublico(conexion);
     const [resultado] = await conexion.query(HORARIO_POR_DEFECTO);
     const [tablas] = await conexion.query('SHOW TABLES');
     await conexion.end();

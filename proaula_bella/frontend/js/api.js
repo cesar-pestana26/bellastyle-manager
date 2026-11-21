@@ -106,5 +106,5 @@ function guardarSesion(usuario, token = null) {
 function cerrarSesion() {
   localStorage.removeItem('usuarioLogueado');
   localStorage.removeItem('token');
-  window.location.href = 'index.html';
+  window.location.href = 'welcome.html';
 }

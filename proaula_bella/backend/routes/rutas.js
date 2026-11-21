@@ -15,6 +15,7 @@ const fotos = require('../controllers/fotoServicioController');
 const perfil = require('../controllers/perfilController');
 const comprobantes = require('../controllers/comprobanteController');
 const pagos = require('../controllers/pagoController');
+const pedidos = require('../controllers/pedidoController');
 const {
     requiereSesion, soloRoles, duenoDeCita, mismaCuenta, mismaEstilista, duenaDeAusencia, mismaClienta
 } = require('../middleware/seguridad');
@@ -95,6 +96,11 @@ router.get('/pagos', sesion, pagos.listar);
 router.get('/pagos/cita/:idCita', sesion, duenoDeCita((req) => req.params.idCita), pagos.porCita);
 router.post('/pagos', sesion, soloRoles('Clienta', 'Administradora'), duenoDeCita((req) => req.body.idCita || req.body.id_cita), pagos.crear);
 router.put('/pagos/:id/estado', admin, pagos.cambiarEstado);
+
+// Pedidos de la tienda: la clienta compra y ve los suyos; la administradora los gestiona
+router.get('/pedidos', sesion, pedidos.listar);
+router.post('/pedidos', sesion, soloRoles('Clienta'), pedidos.crear);
+router.put('/pedidos/:id/estado', admin, pedidos.cambiarEstado);
 
 // ---------------------------------------------------------------
 // SOLO ADMINISTRADORA

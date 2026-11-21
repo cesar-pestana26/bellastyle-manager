@@ -79,7 +79,9 @@ function crearVideoDeFondo() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (document.body.hasAttribute('data-sin-video')) return;
 
-  const destino = document.getElementById('ladoVideo') || document.body;
+  // La silueta ya no va de fondo en toda la página: solo dentro de un #ladoVideo si la página lo tiene
+  const destino = document.getElementById('ladoVideo');
+  if (!destino) return;
   if (destino.id === 'ladoVideo' && getComputedStyle(destino).display === 'none') return;
 
   // Evita duplicar elementos si ya fueron creados previamente

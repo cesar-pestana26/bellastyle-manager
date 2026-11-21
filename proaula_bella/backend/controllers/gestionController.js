@@ -24,7 +24,17 @@ function errorServidor(res, err) {
 // SERVICIOS
 // ---------------------------------------------------------------
 
+const PUBLICOS = ['Mujer', 'Hombre', 'Unisex'];
+
+// El panel envía duracion_min; se acepta también duracion. El público por defecto es Unisex.
+function normalizarServicio(body) {
+    if (body.duracion === undefined && body.duracion_min !== undefined) body.duracion = body.duracion_min;
+    if (!body.publico) body.publico = 'Unisex';
+}
+
 function validarServicio(body) {
+    normalizarServicio(body);
+    if (!PUBLICOS.includes(body.publico)) return 'El público debe ser Mujer, Hombre o Unisex.';
     if (!textoValido(body.nombre)) return 'El nombre debe tener entre 2 y 100 caracteres.';
     if (!numeroValido(body.precio) || Number(body.precio) === 0) return 'El precio debe ser un número mayor que cero.';
     if (!numeroValido(body.duracion) || Number(body.duracion) < 15 || Number(body.duracion) > 480) {
@@ -38,8 +48,8 @@ async function crearServicio(req, res) {
     const error = validarServicio(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
     try {
-        const { nombre, precio, duracion } = req.body;
-        await servicioModel.crear({ nombre: nombre.trim(), precio, duracion });
+        const { nombre, precio, duracion, publico } = req.body;
+        await servicioModel.crear({ nombre: nombre.trim(), precio, duracion, publico });
         res.status(201).json({ success: true, message: 'Servicio creado.' });
     } catch (err) { errorServidor(res, err); }
 }
@@ -49,8 +59,8 @@ async function editarServicio(req, res) {
     const error = validarServicio(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
     try {
-        const { nombre, precio, duracion } = req.body;
-        const ok = await servicioModel.actualizar(req.params.id, { nombre: nombre.trim(), precio, duracion });
+        const { nombre, precio, duracion, publico } = req.body;
+        const ok = await servicioModel.actualizar(req.params.id, { nombre: nombre.trim(), precio, duracion, publico });
         if (!ok) return res.status(404).json({ success: false, message: 'El servicio no existe.' });
         res.json({ success: true, message: 'Servicio actualizado.' });
     } catch (err) { errorServidor(res, err); }

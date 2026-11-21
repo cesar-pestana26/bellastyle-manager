@@ -17,18 +17,18 @@ async function buscarPorId(idServicio) {
     return filas[0] || null;
 }
 
-async function crear({ nombre, precio, duracion }) {
+async function crear({ nombre, precio, duracion, publico }) {
     const [resultado] = await db.query(
-        'INSERT INTO servicios (nombre, precio, duracion_min) VALUES (?, ?, ?)',
-        [nombre, precio, duracion]
+        'INSERT INTO servicios (nombre, precio, duracion_min, publico) VALUES (?, ?, ?, ?)',
+        [nombre, precio, duracion, publico]
     );
     return resultado.insertId;
 }
 
-async function actualizar(idServicio, { nombre, precio, duracion }) {
+async function actualizar(idServicio, { nombre, precio, duracion, publico }) {
     const [resultado] = await db.query(
-        'UPDATE servicios SET nombre = ?, precio = ?, duracion_min = ? WHERE id_servicio = ?',
-        [nombre, precio, duracion, idServicio]
+        'UPDATE servicios SET nombre = ?, precio = ?, duracion_min = ?, publico = ? WHERE id_servicio = ?',
+        [nombre, precio, duracion, publico, idServicio]
     );
     return resultado.affectedRows > 0;
 }

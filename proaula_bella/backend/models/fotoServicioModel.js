@@ -10,7 +10,7 @@ const MAX_POR_SERVICIO = 6;
 async function listar(idServicio) {
     const sql = idServicio
         ? 'SELECT id_foto, id_servicio FROM fotos_servicio WHERE id_servicio = ? ORDER BY id_foto'
-        : 'SELECT id_foto, id_servicio FROM fotos_servicio ORDER BY id_servicio, id_foto';
+        : 'SELECT f.id_foto, f.id_servicio, s.nombre AS servicio FROM fotos_servicio f JOIN servicios s ON s.id_servicio = f.id_servicio ORDER BY f.id_servicio, f.id_foto';
     const [filas] = await db.query(sql, idServicio ? [idServicio] : []);
     return filas;
 }

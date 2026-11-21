@@ -14,6 +14,8 @@ CREATE DATABASE IF NOT EXISTS bellastylemanager
 USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS pedido_items;
+DROP TABLE IF EXISTS pedidos;
 DROP TABLE IF EXISTS agenda;
 DROP TABLE IF EXISTS pagos;
 DROP TABLE IF EXISTS vitrina;
@@ -80,6 +82,7 @@ CREATE TABLE servicios (
     nombre       VARCHAR(100) NOT NULL,
     precio       DECIMAL(10,2) NOT NULL DEFAULT 0,
     duracion_min INT NOT NULL DEFAULT 60,
+    publico      ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex',  -- para quién es
     estado       ENUM('Disponible','No disponible') NOT NULL DEFAULT 'Disponible'
 );
 
@@ -130,6 +133,26 @@ CREATE TABLE pagos (
     estado      ENUM('Pagado','Pendiente en Salón','Reembolsado') NOT NULL DEFAULT 'Pagado',
     fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
+);
+
+-- Pedidos de la tienda (carrito). El precio se copia al pedido: si mañana cambia, el pedido conserva el cobrado.
+CREATE TABLE pedidos (
+    id_pedido   INT AUTO_INCREMENT PRIMARY KEY,
+    id_clienta  INT NOT NULL,
+    total       DECIMAL(10,2) NOT NULL DEFAULT 0,
+    estado      ENUM('Pendiente','Listo para recoger','Entregado','Cancelado') NOT NULL DEFAULT 'Pendiente',
+    creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pedidos_clienta FOREIGN KEY (id_clienta) REFERENCES clientas(id_clienta)
+);
+
+CREATE TABLE pedido_items (
+    id_item     INT AUTO_INCREMENT PRIMARY KEY,
+    id_pedido   INT NOT NULL,
+    id_producto INT NOT NULL,
+    cantidad    INT NOT NULL,
+    precio      DECIMAL(10,2) NOT NULL,
+    CONSTRAINT fk_items_pedido FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido) ON DELETE CASCADE,
+    CONSTRAINT fk_items_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
 );
 
 
@@ -270,14 +293,16 @@ INSERT INTO estilistas (id_estilista, id_usuario, nombres, apellidos, especialid
 (2, 3, 'Diana', 'Martínez',  'Corte y peinado'),
 (3, 4, 'Paula', 'Ríos',      'Manicure y spa');
 
-INSERT INTO servicios (id_servicio, nombre, precio, duracion_min) VALUES
-(1, 'Corte de Cabello',     35000,  45),
-(2, 'Tinte / Coloración',  120000, 120),
-(3, 'Mechas / Balayage',   180000, 150),
-(4, 'Peinado para Evento',  60000,  60),
-(5, 'Manicure',             25000,  45),
-(6, 'Pedicure',             30000,  60),
-(7, 'Tratamiento Capilar',  55000,  60);
+INSERT INTO servicios (id_servicio, nombre, precio, duracion_min, publico) VALUES
+(1, 'Corte de Cabello',     35000,  45, 'Unisex'),
+(2, 'Tinte / Coloración',  120000, 120, 'Unisex'),
+(3, 'Mechas / Balayage',   180000, 150, 'Mujer'),
+(4, 'Peinado para Evento',  60000,  60, 'Mujer'),
+(5, 'Manicure',             25000,  45, 'Mujer'),
+(6, 'Pedicure',             30000,  60, 'Mujer'),
+(7, 'Tratamiento Capilar',  55000,  60, 'Unisex'),
+(8, 'Corte Caballero',      25000,  30, 'Hombre'),
+(9, 'Arreglo de Barba',     18000,  30, 'Hombre');
 
 INSERT INTO productos (nombre, precio, stock) VALUES
 ('Shampoo Hidratante', 28000, 20),
@@ -288,6 +313,7 @@ INSERT INTO productos (nombre, precio, stock) VALUES
 INSERT INTO estilista_servicios (id_estilista, id_servicio) VALUES
 (1, 2), (1, 3),          -- Laura: tinte y mechas
 (2, 1), (2, 4), (2, 7),  -- Diana: corte, peinado y tratamiento
+(2, 8), (2, 9),          -- Diana: corte caballero y barba
 (3, 5), (3, 6);          -- Paula: manicure y pedicure
 
 INSERT INTO citas (id_cliente, id_estilista, id_servicio, fecha, hora, precio, estado, observaciones) VALUES

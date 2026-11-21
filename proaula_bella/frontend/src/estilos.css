@@ -573,3 +573,28 @@ html:not(.oscuro) [class*="from-black"] [class*="text-white/"] { color: rgb(255 
 html:not(.oscuro) [class~="bg-black/60"][class~="text-pink-300"] { color: #f9a8d4; }
 /* Cajas translúcidas oscuras (encabezados, pies de página, chats): en claro van como vidrio blanco */
 html:not(.oscuro) [class~="bg-black/20"], html:not(.oscuro) [class~="bg-black/25"], html:not(.oscuro) [class~="bg-black/30"], html:not(.oscuro) [class~="bg-black/40"] { background-color: rgb(255 255 255 / .6); }
+
+/* ===== Fondo de la app =====
+   La silueta ya no va de fondo (distraía al leer): ahora va al lado, en el inicio.
+   El fondo es un degradado suave con los colores del salón. */
+body::before {
+  background-image:
+    radial-gradient(55rem 35rem at 90% -10%, rgb(244 114 182 / .22), transparent 60%),
+    radial-gradient(50rem 35rem at -10% 110%, rgb(196 181 253 / .30), transparent 60%),
+    linear-gradient(#fbf5f8, #fbf5f8) !important;
+}
+html.oscuro body::before {
+  background-image:
+    radial-gradient(55rem 35rem at 90% -10%, rgb(236 72 153 / .14), transparent 60%),
+    radial-gradient(50rem 35rem at -10% 110%, rgb(124 58 237 / .14), transparent 60%),
+    linear-gradient(#07050d, #07050d) !important;
+}
+
+/* Silueta del inicio: una imagen por tema, con bordes difuminados y un movimiento muy suave */
+.silueta { -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 55%, transparent 71%); mask-image: radial-gradient(circle at 50% 48%, #000 55%, transparent 71%); }
+.silueta-oscuro { display: none; }
+html.oscuro .silueta-oscuro { display: block; }
+html.oscuro .silueta-claro { display: none; }
+@keyframes flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.animar-flotar { animation: flotar 7s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .animar-flotar { animation: none; } }

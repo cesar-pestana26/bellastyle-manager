@@ -691,7 +691,7 @@ function renderizarTablaServicios() {
       <tr class="hover:bg-white/5 transition border-b border-white/5">
         <td class="p-3.5 font-mono text-white/50">#${idSrv}</td>
         <td class="p-3.5 font-bold text-white">${escapar(s.nombre)}</td>
-        <td class="p-3.5 text-white/80">${s.duracion_min || 45} minutos</td>
+        <td class="p-3.5 text-white/80">${s.duracion_min || 45} minutos · <span class="text-pink-300">${escapar(s.publico || 'Unisex')}</span></td>
         <td class="p-3.5 font-bold text-amber-300">${fmt(s.precio)}</td>
         <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
           <button type="button" onclick="fotosServicioAdmin(${idSrv})" class="px-3 py-1 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 hover:bg-pink-500/30 text-xs font-semibold">Fotos</button>
@@ -760,6 +760,10 @@ window.modalCrearServicio = function() {
         <label class="text-xs text-white/70 block mb-1">Duración (minutos)</label>
         <input id="vNuevaDuracionSrv" type="number" placeholder="60" class="campo" required>
       </div>
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Para quién es</label>
+        <select id="vNuevoPublicoSrv" class="campo"><option>Unisex</option><option>Mujer</option><option>Hombre</option></select>
+      </div>
     </div>`,
     async () => {
       const nombre = document.getElementById('vNuevoNombreSrv').value.trim();
@@ -768,7 +772,8 @@ window.modalCrearServicio = function() {
 
       if (!nombre || !precio) return false;
 
-      const resp = await pedir('/servicios', 'POST', { nombre, precio, duracion_min });
+      const publico = document.getElementById('vNuevoPublicoSrv').value;
+      const resp = await pedir('/servicios', 'POST', { nombre, precio, duracion_min, publico });
       if (!resp || resp.errorRed || !resp.success) {
         notificarAdmin((resp && resp.message) || 'No se pudo crear el servicio en MySQL');
         return false;
@@ -796,12 +801,17 @@ window.modalEditarServicio = function(idServicio) {
         <label class="text-xs text-white/70 block mb-1">Nueva Duración (minutos)</label>
         <input id="vEditDuracionSrv" type="number" value="${srv.duracion_min || 45}" class="campo" required>
       </div>
+      <div>
+        <label class="text-xs text-white/70 block mb-1">Para quién es</label>
+        <select id="vEditPublicoSrv" class="campo">${['Unisex', 'Mujer', 'Hombre'].map((o) => `<option ${o === (srv.publico || 'Unisex') ? 'selected' : ''}>${o}</option>`).join('')}</select>
+      </div>
     </div>`,
     async () => {
       const precio = Number(document.getElementById('vEditPrecioSrv').value);
       const duracion_min = Number(document.getElementById('vEditDuracionSrv').value);
 
-      const resp = await pedir(`/servicios/${idServicio}`, 'PUT', { nombre: srv.nombre, precio, duracion_min });
+      const publico = document.getElementById('vEditPublicoSrv').value;
+      const resp = await pedir(`/servicios/${idServicio}`, 'PUT', { nombre: srv.nombre, precio, duracion_min, publico });
       if (!resp || resp.errorRed || !resp.success) {
         notificarAdmin((resp && resp.message) || 'No se pudo actualizar el servicio en MySQL');
         return false;
@@ -809,6 +819,7 @@ window.modalEditarServicio = function(idServicio) {
 
       srv.precio = precio;
       srv.duracion_min = duracion_min;
+      srv.publico = publico;
       notificarAdmin(`Servicio ${srv.nombre} actualizado`);
       renderizarTablaServicios();
       return true;
@@ -1224,6 +1235,7 @@ window.switchTabAdmin = function(tab) {
   const secciones = {
     citas: 'secCitasAdmin',
     pagos: 'secPagosAdmin',
+    pedidos: 'secPedidosAdmin',
     mensajes: 'secMensajesAdmin',
     ganancias: 'secGananciasAdmin',
     servicios: 'secServiciosAdmin',
@@ -1235,6 +1247,7 @@ window.switchTabAdmin = function(tab) {
   const botones = {
     citas: 'tabCitas',
     pagos: 'tabPagos',
+    pedidos: 'tabPedidos',
     mensajes: 'tabMensajes',
     ganancias: 'tabGanancias',
     servicios: 'tabServicios',
@@ -1249,6 +1262,7 @@ window.switchTabAdmin = function(tab) {
     const activo = k === tab;
 
     if (sec) sec.classList.toggle('hidden', !activo);
+    if (activo && k === 'pedidos' && window.cargarPedidosAdmin) window.cargarPedidosAdmin();
     if (btn) {
       const esMensajes = k === 'mensajes';
       btn.className = activo
@@ -1326,5 +1340,5 @@ function escapar(str) {
 window.cerrarSesionAdmin = function() {
   localStorage.removeItem('usuarioLogueado');
   localStorage.removeItem('token');
-  window.location.replace('index.html');
+  window.location.replace('welcome.html');
 };

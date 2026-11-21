@@ -13,7 +13,8 @@ const app = express();
 app.use(express.json({ limit: '3mb' }));
 
 // La dirección principal (http://localhost:3000) abre el inicio de sesión
-app.get('/', (req, res) => res.redirect('/index.html'));
+// La dirección principal abre la página de inicio del salón (información, servicios, tienda)
+app.get('/', (req, res) => res.redirect('/welcome.html'));
 
 // Sirve las páginas del frontend (index.html, panel.html, etc.)
 // "no-cache": el navegador puede guardar los archivos, pero siempre pregunta si cambiaron.

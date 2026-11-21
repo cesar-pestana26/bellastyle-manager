@@ -24,9 +24,9 @@
     })();
   </script>
 
-  <link rel="stylesheet" href="css/estilos.css?v=41">
+  <link rel="stylesheet" href="css/estilos.css?v=42">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/tema.js?v=41"></script>
+  <script src="js/tema.js?v=42"></script>
 </head>
 <body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
@@ -129,6 +129,15 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- Mis pedidos de la tienda -->
+      <div class="tarjeta p-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <h3 class="font-serif font-bold text-lg text-white">Mis pedidos de la tienda</h3>
+          <a href="tienda.html" class="text-xs font-semibold text-pink-400 hover:text-pink-300">Ir a la tienda &rarr;</a>
+        </div>
+        <div id="misPedidos" class="space-y-2"><p class="text-xs text-white/60">Cargando...</p></div>
       </div>
 
       <!-- Nuestras Estilistas + Vitrina de Trabajos -->
@@ -259,9 +268,10 @@
     BellaStyle Manager · Proyecto de Aula · Ingeniería de Sistemas
   </footer>
 
-  <script src="js/api.js?v=41"></script>
+  <script src="js/api.js?v=42"></script>
   <script src="js/iconos.js"></script>
-  <script src="js/pagos.js"></script>
-  <script src="js/panel.js"></script>
+  <script src="js/pagos.js?v=42"></script>
+  <script src="js/panel.js?v=42"></script>
+  <script src="js/pedidos.js?v=42"></script>
 </body>
 </html>

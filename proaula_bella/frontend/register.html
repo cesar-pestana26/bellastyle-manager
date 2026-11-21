@@ -5,36 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crear Cuenta | BellaStyle</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="css/estilos.css?v=41">
+  <link rel="stylesheet" href="css/estilos.css?v=42">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/tema.js?v=41"></script>
+  <script src="js/tema.js?v=42"></script>
 </head>
-<body class="pagina-dividida min-h-screen bg-[#07050d] text-white">
-
-  <div class="md:grid md:min-h-screen md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-    
-    <!-- Lado Izquierdo: GIF/Vídeo manejado por js/tema.js -->
-    <aside id="ladoVideo" class="lado-video hidden md:sticky md:top-0 md:block md:h-screen">
-      <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-10 pb-20">
-        <p class="font-serif text-4xl sm:text-5xl font-bold leading-tight">Tu próxima cita<br>empieza aquí.</p>
-        <p class="mt-2 text-sm text-white/80">Únete a BellaStyle Manager en Cartagena</p>
-      </div>
-    </aside>
-
-    <!-- Lado Derecho: Formulario de Registro -->
-    <div class="flex min-h-screen flex-col px-6 py-8 justify-between">
-      
-      <header class="flex items-center justify-between pb-6 border-b border-white/10">
-        <a href="welcome.html" class="flex items-center gap-3 shrink-0">
-          <img src="img/logo.webp" alt="Logo BellaStyle" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
-          <span class="font-serif text-xl font-bold">Bella<span class="text-pink-400">Style</span></span>
-        </a>
-
-        <div class="flex items-center space-x-3">
-          <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
-          <a href="index.html" class="text-xs text-white/70 hover:text-white transition">Ya tengo cuenta &rarr;</a>
-        </div>
-      </header>
+<body class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
+  <header id="encabezado"></header>
+  <script src="js/encabezado.js?v=42"></script>
+    <div class="flex flex-1 flex-col px-4 sm:px-6 pt-4 pb-24 sm:pb-6">
 
       <main class="flex-1 flex items-center justify-center py-8">
         <section class="tarjeta w-full max-w-xl p-8 shadow-2xl">
@@ -120,9 +98,9 @@
       </footer>
 
     </div>
-  </div>
+  
 
-  <script src="js/api.js?v=41"></script>
-  <script src="js/registro.js"></script>
+  <script src="js/api.js?v=42"></script>
+  <script src="js/registro.js?v=42"></script>
 </body>
 </html>
