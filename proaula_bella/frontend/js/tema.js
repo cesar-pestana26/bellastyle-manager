@@ -14,13 +14,33 @@ function aplicarTema(tema) {
 }
 
 // 1) Aplicación inmediata antes de renderizar para evitar parpadeos
-// Las páginas están diseñadas en modo oscuro: en modo claro el texto blanco no se leía.
-aplicarTema('oscuro');
+aplicarTema(temaGuardado() || 'oscuro');
 
 // 2) Eventos de carga del DOM
 document.addEventListener('DOMContentLoaded', () => {
-  // Solo hay modo oscuro: se ocultan los botones de cambiar tema
-  document.querySelectorAll('.btn-toggle-tema').forEach(btn => { btn.style.display = 'none'; });
+  const botonesEnPagina = document.querySelectorAll('.btn-toggle-tema');
+
+  if (botonesEnPagina.length > 0) {
+    botonesEnPagina.forEach(btn => {
+      btn.addEventListener('click', () => alternarTema());
+      actualizarEstiloBoton(btn);
+    });
+  } else {
+    // Si la página no incluye un botón en la barra, crea uno flotante
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'btn-tema-flotante';
+    
+    boton.addEventListener('click', () => alternarTema());
+
+    const lugar = document.getElementById('lugarBotonTema');
+    if (lugar) {
+      lugar.appendChild(boton);
+    } else {
+      document.body.appendChild(boton);
+    }
+    actualizarEstiloBoton(boton);
+  }
 
   crearVideoDeFondo();
 });

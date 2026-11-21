@@ -152,7 +152,8 @@ function renderizarListaServicios() {
 
   const filtrados = catalogoServicios.filter((s) => {
     const pasaCat = categoriaActual === 'Todas' || s.categoria === categoriaActual;
-    const pasaPub = publicoActual === 'Todos' || s.publico === publicoActual;
+    // Los servicios Unisex también sirven para Mujer y para Hombre
+    const pasaPub = publicoActual === 'Todos' || s.publico === publicoActual || s.publico === 'Unisex';
     return pasaCat && pasaPub;
   });
 

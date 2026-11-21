@@ -8,9 +8,9 @@
   <link rel="apple-touch-icon" href="img/icono-180.png">
   <meta name="description" content="BellaStyle: agenda tu cita en el salón de belleza en minutos.">
   <meta name="theme-color" content="#f7d3e2">
-  <link rel="stylesheet" href="css/estilos.css?v=20">
-  <script src="js/tema.js?v=16"></script>
-  <script src="https://cdn.tailwindcss.com"></script>s
+  <link rel="stylesheet" href="css/estilos.css?v=41">
+  <script src="js/tema.js?v=41"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="pagina-dividida min-h-screen bg-noche-950">
 
@@ -47,7 +47,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
             </a>
-            <div class="dropdown-menu absolute left-0 top-full w-52 rounded-2xl border border-tinta/10 bg-white/95 dark:bg-noche-900/95 backdrop-blur-lg p-2 shadow-xl z-50">
+            <div class="dropdown-menu invisible opacity-0 group-hover:visible group-hover:opacity-100 transition absolute left-0 top-full w-52 rounded-2xl border border-tinta/10 bg-white/95 dark:bg-noche-900/95 backdrop-blur-lg p-2 shadow-xl z-50">
               <a href="welcome.html#servicios" class="block rounded-xl px-3 py-2 text-sm text-tinta/80 hover:bg-bella-50 hover:text-bella-700 dark:hover:bg-bella-900/30">
                 ✂️ Cortes & Peinados
               </a>
@@ -59,6 +59,8 @@
               </a>
             </div>
           </div>
+
+          <button type="button" class="btn-toggle-tema px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition flex items-center gap-1.5"></button>
 
           <!-- Enlace de retorno -->
           <a href="index.html" class="text-sm font-semibold text-bella-700 hover:text-bella-800 transition">
@@ -109,7 +111,7 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
+  <script src="js/api.js?v=41"></script>
   <script>
     document.getElementById('formRecuperar').addEventListener('submit', async (e) => {
       e.preventDefault();

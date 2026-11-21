@@ -175,7 +175,8 @@ function renderizarTarjetasServicios() {
   if (!contenedor) return;
 
   const filtrados = todosLosServicios.filter(s => {
-    const pasaPub = filtroPublico === 'Todos' || s.publico === filtroPublico;
+    // Los servicios Unisex también sirven para Mujer y para Hombre
+    const pasaPub = filtroPublico === 'Todos' || s.publico === filtroPublico || s.publico === 'Unisex';
     const pasaCat = filtroCategoria === 'Todas' || s.categoria === filtroCategoria;
     const pasaTxt = !textoBusqueda ||
       s.nombre.toLowerCase().includes(textoBusqueda) ||

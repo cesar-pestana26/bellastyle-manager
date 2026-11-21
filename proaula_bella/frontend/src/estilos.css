@@ -489,3 +489,87 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
    y el texto claro de la invitación no se leía. */
 #chatInvitacion.bg-white { background-color: rgb(var(--blanco)); }
 #chatMensajes .bg-white\/70 { background-color: rgb(var(--blanco) / 0.7); }
+
+
+/* ===== Modo claro para las páginas con colores fijos de tema oscuro =====
+   Las páginas nuevas usan clases como text-white o bg-[#120f1d] pensadas para fondo oscuro.
+   En modo claro se cambian por la tinta del tema y tonos más oscuros para que todo se lea.
+   Se usan selectores [class~="..."] para que Tailwind no los mezcle con sus utilidades. */
+html:not(.oscuro) [class~="bg-[#0a0810]"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#07050d]"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#07060b]"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#07060b]/80"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#07060b]/90"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-black"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#120f1d]"] { background-color: #ffffff; }
+html:not(.oscuro) [class~="to-[#120f1d]"] { --tw-gradient-to: #ffffff var(--tw-gradient-to-position); }
+html:not(.oscuro) [class~="text-white"] { color: rgb(34 26 39); }
+html:not(.oscuro) [class~="text-white/30"] { color: rgb(34 26 39 / 0.55); }
+html:not(.oscuro) [class~="text-white/40"] { color: rgb(34 26 39 / 0.55); }
+html:not(.oscuro) [class~="text-white/50"] { color: rgb(34 26 39 / 0.55); }
+html:not(.oscuro) [class~="text-white/60"] { color: rgb(34 26 39 / 0.60); }
+html:not(.oscuro) [class~="text-white/65"] { color: rgb(34 26 39 / 0.65); }
+html:not(.oscuro) [class~="text-white/70"] { color: rgb(34 26 39 / 0.70); }
+html:not(.oscuro) [class~="text-white/75"] { color: rgb(34 26 39 / 0.75); }
+html:not(.oscuro) [class~="text-white/80"] { color: rgb(34 26 39 / 0.80); }
+html:not(.oscuro) [class~="text-white/85"] { color: rgb(34 26 39 / 0.85); }
+html:not(.oscuro) [class~="text-white/90"] { color: rgb(34 26 39 / 0.90); }
+html:not(.oscuro) [class~="hover:text-white"]:hover { color: rgb(34 26 39); }
+html:not(.oscuro) [class~="bg-white/5"] { background-color: rgb(34 26 39 / 0.04); }
+html:not(.oscuro) [class~="hover:bg-white/5"]:hover { background-color: rgb(34 26 39 / 0.07); }
+html:not(.oscuro) [class~="border-white/5"] { border-color: rgb(34 26 39 / 0.08); }
+html:not(.oscuro) [class~="bg-white/10"] { background-color: rgb(34 26 39 / 0.06); }
+html:not(.oscuro) [class~="hover:bg-white/10"]:hover { background-color: rgb(34 26 39 / 0.09); }
+html:not(.oscuro) [class~="border-white/10"] { border-color: rgb(34 26 39 / 0.12); }
+html:not(.oscuro) [class~="bg-white/15"] { background-color: rgb(34 26 39 / 0.08); }
+html:not(.oscuro) [class~="hover:bg-white/15"]:hover { background-color: rgb(34 26 39 / 0.11); }
+html:not(.oscuro) [class~="border-white/15"] { border-color: rgb(34 26 39 / 0.16); }
+html:not(.oscuro) [class~="bg-white/20"] { background-color: rgb(34 26 39 / 0.1); }
+html:not(.oscuro) [class~="hover:bg-white/20"]:hover { background-color: rgb(34 26 39 / 0.13); }
+html:not(.oscuro) [class~="border-white/20"] { border-color: rgb(34 26 39 / 0.20); }
+html:not(.oscuro) [class~="divide-white/5"] > :not([hidden]) ~ :not([hidden]) { border-color: rgb(34 26 39 / .08); }
+html:not(.oscuro) [class~="border-white"] { border-color: rgb(34 26 39 / .2); }
+html:not(.oscuro) [class~="text-pink-200"] { color: #be185d; }
+html:not(.oscuro) [class~="hover:text-pink-200"]:hover { color: #be185d; }
+html:not(.oscuro) [class~="text-pink-300"] { color: #be185d; }
+html:not(.oscuro) [class~="hover:text-pink-300"]:hover { color: #be185d; }
+html:not(.oscuro) [class~="text-pink-400"] { color: #db2777; }
+html:not(.oscuro) [class~="hover:text-pink-400"]:hover { color: #db2777; }
+html:not(.oscuro) [class~="text-amber-200"] { color: #b45309; }
+html:not(.oscuro) [class~="hover:text-amber-200"]:hover { color: #b45309; }
+html:not(.oscuro) [class~="text-amber-300"] { color: #b45309; }
+html:not(.oscuro) [class~="hover:text-amber-300"]:hover { color: #b45309; }
+html:not(.oscuro) [class~="text-amber-400"] { color: #b45309; }
+html:not(.oscuro) [class~="hover:text-amber-400"]:hover { color: #b45309; }
+html:not(.oscuro) [class~="text-emerald-300"] { color: #047857; }
+html:not(.oscuro) [class~="hover:text-emerald-300"]:hover { color: #047857; }
+html:not(.oscuro) [class~="text-emerald-400"] { color: #047857; }
+html:not(.oscuro) [class~="hover:text-emerald-400"]:hover { color: #047857; }
+html:not(.oscuro) [class~="text-rose-200"] { color: #be123c; }
+html:not(.oscuro) [class~="hover:text-rose-200"]:hover { color: #be123c; }
+html:not(.oscuro) [class~="text-rose-300"] { color: #be123c; }
+html:not(.oscuro) [class~="hover:text-rose-300"]:hover { color: #be123c; }
+html:not(.oscuro) [class~="text-rose-400"] { color: #be123c; }
+html:not(.oscuro) [class~="hover:text-rose-400"]:hover { color: #be123c; }
+html:not(.oscuro) [class~="text-purple-100"] { color: #6b21a8; }
+html:not(.oscuro) [class~="hover:text-purple-100"]:hover { color: #6b21a8; }
+html:not(.oscuro) [class~="text-purple-300"] { color: #7e22ce; }
+html:not(.oscuro) [class~="hover:text-purple-300"]:hover { color: #7e22ce; }
+html:not(.oscuro) [class~="text-blue-300"] { color: #1d4ed8; }
+html:not(.oscuro) [class~="hover:text-blue-300"]:hover { color: #1d4ed8; }
+html:not(.oscuro) [class~="text-sky-300"] { color: #0369a1; }
+html:not(.oscuro) [class~="hover:text-sky-300"]:hover { color: #0369a1; }
+html:not(.oscuro) [class~="bg-pink-500"][class~="text-white"],
+html:not(.oscuro) [class~="bg-pink-600"][class~="text-white"],
+html:not(.oscuro) [class~="bg-rose-600"][class~="text-white"],
+html:not(.oscuro) [class~="bg-pink-500"] [class~="text-white"],
+html:not(.oscuro) [class~="bg-rose-600"] [class~="text-white"],
+html:not(.oscuro) .btn-primario[class~="text-white"],
+html:not(.oscuro) [class~="bg-black/75"][class~="text-white"],
+html:not(.oscuro) [class*="from-black"] [class~="text-white"],
+html:not(.oscuro) [class*="from-black"][class~="text-white"],
+html:not(.oscuro) [class~="bg-black/90"] [class*="text-white"] { color: #ffffff; }
+html:not(.oscuro) [class*="from-black"] [class*="text-white/"] { color: rgb(255 255 255 / .8); }
+html:not(.oscuro) [class~="bg-black/60"][class~="text-pink-300"] { color: #f9a8d4; }
+/* Cajas translúcidas oscuras (encabezados, pies de página, chats): en claro van como vidrio blanco */
+html:not(.oscuro) [class~="bg-black/20"], html:not(.oscuro) [class~="bg-black/25"], html:not(.oscuro) [class~="bg-black/30"], html:not(.oscuro) [class~="bg-black/40"] { background-color: rgb(255 255 255 / .6); }
