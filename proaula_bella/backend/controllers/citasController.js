@@ -7,7 +7,7 @@ const servicioModel = require('../models/servicioModel');
 const estilistaModel = require('../models/estilistaModel');
 const horarioModel = require('../models/horarioModel');
 const {
-    APERTURA, CIERRE, INTERVALO, aMinutos, aHora, seCruzan,
+    APERTURA, INTERVALO, TEXTO_HORARIO, cierreDelDia, aMinutos, aHora, seCruzan,
     diaDeLaSemana, ahoraColombia, fechaValida, horaValida
 } = require('../utils/agenda');
 
@@ -65,18 +65,16 @@ function validarFechaHora(fecha, hora) {
     if (!fechaValida(fecha) || fecha < ahora.fecha) {
         return 'La fecha no puede ser anterior a hoy.';
     }
-    if (diaDeLaSemana(fecha) === 0) {
-        return 'El salón no atiende los domingos.';
-    }
     if (fecha === ahora.fecha && aMinutos(hora) <= ahora.minutos) {
         return 'Esa hora ya pasó. Escoge una hora más tarde.';
     }
     return null;
 }
 
-// La cita completa debe caber entre 8:00 y 19:00
-function fueraDeHorario(inicio, fin) {
-    return inicio < APERTURA || fin > CIERRE;
+// La cita completa debe caber en el horario del salón de ese día
+// (8:00 a 19:00; los domingos solo hasta las 15:00)
+function fueraDeHorario(inicio, fin, fecha) {
+    return inicio < APERTURA || fin > cierreDelDia(diaDeLaSemana(fecha));
 }
 
 // GET /api/citas?rol=Clienta&idUsuario=3
@@ -110,7 +108,7 @@ async function disponibilidad(req, res) {
         return res.status(400).json({ success: false, message: 'Escoge el servicio y una fecha válida.' });
     }
     const ahora = ahoraColombia();
-    if (fecha < ahora.fecha || diaDeLaSemana(fecha) === 0) {
+    if (fecha < ahora.fecha) {
         return res.json({ success: true, data: { horas: [] } });
     }
 
@@ -139,7 +137,8 @@ async function disponibilidad(req, res) {
         }
 
         const horas = [];
-        for (let inicio = APERTURA; inicio + servicio.duracion_min <= CIERRE; inicio += INTERVALO) {
+        const cierre = cierreDelDia(diaDeLaSemana(fecha));
+        for (let inicio = APERTURA; inicio + servicio.duracion_min <= cierre; inicio += INTERVALO) {
             if (fecha === ahora.fecha && inicio <= ahora.minutos) continue;   // hoy: solo horas que no han pasado
             const fin = inicio + servicio.duracion_min;
             if (ocupadasClienta.some((o) => seCruzan(inicio, fin, o.inicio, o.fin))) continue;
@@ -194,14 +193,14 @@ async function crear(req, res) {
             return res.status(404).json({ success: false, message: 'El servicio no existe.' });
         }
 
-        // Regla de horario: la cita completa debe caber entre 8:00 y 19:00
+        // Regla de horario: la cita completa debe caber en el horario de ese día
         const inicio = aMinutos(hora);
         const fin = inicio + servicio.duracion_min;
-        if (fueraDeHorario(inicio, fin)) {
+        if (fueraDeHorario(inicio, fin, fecha)) {
             await conexion.rollback();
             return res.status(400).json({
                 success: false,
-                message: `El horario es de 8:00 a 19:00 y este servicio dura ${servicio.duracion_min} minutos.`
+                message: `Atendemos ${TEXTO_HORARIO}, y este servicio dura ${servicio.duracion_min} minutos.`
             });
         }
 
@@ -313,10 +312,10 @@ async function reprogramar(req, res) {
 
         const inicio = aMinutos(hora);
         const fin = inicio + cita.duracion_min;
-        if (fueraDeHorario(inicio, fin)) {
+        if (fueraDeHorario(inicio, fin, fecha)) {
             return res.status(400).json({
                 success: false,
-                message: `El horario es de 8:00 a 19:00 y este servicio dura ${cita.duracion_min} minutos.`
+                message: `Atendemos ${TEXTO_HORARIO}, y este servicio dura ${cita.duracion_min} minutos.`
             });
         }
 

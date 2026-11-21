@@ -3,7 +3,7 @@
 const db = require('../config/db');
 const horarioModel = require('../models/horarioModel');
 const estilistaModel = require('../models/estilistaModel');
-const { APERTURA, CIERRE, DIAS, aMinutos, ahoraColombia, fechaValida, horaValida } = require('../utils/agenda');
+const { APERTURA, DIAS, cierreDelDia, aMinutos, ahoraColombia, fechaValida, horaValida } = require('../utils/agenda');
 
 function errorServidor(res, err) {
     console.error('Error en horarios:', err.message);
@@ -38,12 +38,12 @@ function validarDias(dias) {
     const vistos = new Set();
     for (const d of dias) {
         const dia = Number(d.dia);
-        if (!Number.isInteger(dia) || dia < 1 || dia > 6 || vistos.has(dia)) return 'Los días deben ser de lunes a sábado, sin repetir.';
+        if (!Number.isInteger(dia) || dia < 0 || dia > 6 || vistos.has(dia)) return 'Los días deben ser de domingo a sábado, sin repetir.';
         vistos.add(dia);
         if (!horaValida(d.inicio) || !horaValida(d.fin)) return `Revisa las horas del ${DIAS[dia].toLowerCase()}.`;
         const inicio = aMinutos(d.inicio);
         const fin = aMinutos(d.fin);
-        if (inicio < APERTURA || fin > CIERRE) return `El ${DIAS[dia].toLowerCase()} debe estar entre 8:00 y 19:00.`;
+        if (inicio < APERTURA || fin > cierreDelDia(dia)) return `El ${DIAS[dia].toLowerCase()} debe estar entre 8:00 y ${dia === 0 ? '15:00' : '19:00'}.`;
         if (fin - inicio < 60) return `El ${DIAS[dia].toLowerCase()} debe tener al menos una hora de trabajo.`;
     }
     return null;

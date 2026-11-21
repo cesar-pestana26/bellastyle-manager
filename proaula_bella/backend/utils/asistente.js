@@ -31,7 +31,7 @@ const REGLAS = [
     },
     {
         palabras: ['horario', 'horarios', 'abren', 'abierto', 'cierran', 'atienden'],
-        responder: async () => 'Atendemos de lunes a sábado, de 8:00 a. m. a 7:00 p. m. Los domingos no abrimos.'
+        responder: async () => 'Atendemos de lunes a sábado de 8:00 a. m. a 7:00 p. m., y los domingos de 8:00 a. m. a 3:00 p. m.'
     },
     {
         palabras: ['cita', 'citas', 'agendar', 'agenda', 'reservar', 'reserva', 'turno', 'apartar'],

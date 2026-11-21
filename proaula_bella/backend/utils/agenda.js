@@ -2,7 +2,8 @@
 // Todas las horas se manejan en minutos desde la medianoche: "14:30" -> 870.
 
 const APERTURA = 8 * 60;   // el salón abre a las 8:00
-const CIERRE = 19 * 60;    // y cierra a las 19:00
+const CIERRE = 19 * 60;    // y cierra a las 19:00 de lunes a sábado
+const CIERRE_DOMINGO = 15 * 60;   // los domingos cierra a las 15:00 (3:00 p. m.)
 const INTERVALO = 30;      // las horas libres se ofrecen cada 30 minutos
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -30,6 +31,14 @@ function diaDeLaSemana(fecha) {
     return new Date(fecha + 'T12:00:00Z').getUTCDay();
 }
 
+// Hora de cierre de un día: 0 = domingo cierra a las 15:00; los demás a las 19:00
+function cierreDelDia(dia) {
+    return Number(dia) === 0 ? CIERRE_DOMINGO : CIERRE;
+}
+
+// Texto del horario para los mensajes de error
+const TEXTO_HORARIO = 'de lunes a sábado de 8:00 a 19:00 y los domingos de 8:00 a 15:00';
+
 // Fecha y hora actuales en Colombia (UTC-5), aunque el servidor esté en otra zona.
 function ahoraColombia() {
     const colombia = new Date(Date.now() - 5 * 60 * 60 * 1000);
@@ -54,6 +63,6 @@ function horaValida(hora) {
 }
 
 module.exports = {
-    APERTURA, CIERRE, INTERVALO, DIAS,
+    APERTURA, CIERRE, CIERRE_DOMINGO, INTERVALO, DIAS, TEXTO_HORARIO, cierreDelDia,
     aMinutos, aHora, seCruzan, diaDeLaSemana, ahoraColombia, fechaValida, horaValida
 };

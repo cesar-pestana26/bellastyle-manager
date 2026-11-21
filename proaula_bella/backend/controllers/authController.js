@@ -152,7 +152,7 @@ async function registrar(req, res) {
                 idUsuario, nombres, apellidos, especialidad: 'General'
             });
             await estilistaModel.asignarServicios(conexion, idEstilista, servicios);
-            // Horario inicial: lunes a sábado de 8:00 a 19:00 (luego ella lo puede cambiar)
+            // Horario inicial: lunes a sábado de 8:00 a 19:00 y domingo hasta las 15:00 (luego ella lo puede cambiar)
             await horarioModel.crearPorDefecto(conexion, idEstilista);
         }
 

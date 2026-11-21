@@ -11,7 +11,7 @@ let alGuardarModalAdmin = null;
 
 let conversacionAbierta = null;
 let ultimoMensajeAdmin = 0;
-const DIAS_SEMANA_ADMIN = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const DIAS_SEMANA_ADMIN = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 verificarAccesoAdmin();
 
@@ -1030,16 +1030,18 @@ window.editarHorarioAdmin = async function(idEstilista, nombre) {
   const datos = resp && resp.data;
   if (!datos) return notificarAdmin('No se pudo cargar el horario.');
 
-  const filas = [1, 2, 3, 4, 5, 6].map((dia) => {
+  // Domingo al final; ese día el salón cierra a las 15:00
+  const filas = [1, 2, 3, 4, 5, 6, 0].map((dia) => {
     const h = (datos.horario || []).find((x) => Number(x.dia_semana) === dia);
+    const cierre = dia === 0 ? 15 * 60 : 19 * 60;
     return `
       <div class="grid grid-cols-[6.5rem_1fr_1fr] items-center gap-2">
         <label class="flex items-center gap-2 text-xs text-white">
           <input type="checkbox" name="vDiaAdmin" value="${dia}" class="accent-pink-500" ${h ? 'checked' : ''}>
           ${DIAS_SEMANA_ADMIN[dia]}
         </label>
-        <select id="vIniAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_inicio : '08:00', 8 * 60, 18 * 60)}</select>
-        <select id="vFinAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_fin : '19:00', 9 * 60, 19 * 60)}</select>
+        <select id="vIniAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_inicio : '08:00', 8 * 60, cierre - 60)}</select>
+        <select id="vFinAdmin${dia}" class="campo bg-[#120f1d] py-1.5 text-xs">${opcionesHoraAdmin(h ? h.hora_fin : (dia === 0 ? '15:00' : '19:00'), 9 * 60, cierre)}</select>
       </div>
     `;
   }).join('');

@@ -310,10 +310,6 @@ async function actualizarDisponibilidadHorarios() {
     return;
   }
 
-  if (new Date(fechaVal + 'T12:00:00').getDay() === 0) {
-    grid.innerHTML = `<p class="col-span-full text-xs text-amber-300">El salón no atiende los domingos. Selecciona otro día.</p>`;
-    return;
-  }
 
   grid.innerHTML = `<p class="col-span-full text-xs text-white/60">Consultando disponibilidad en el servidor...</p>`;
 

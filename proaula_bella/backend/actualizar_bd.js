@@ -85,6 +85,11 @@ const TABLAS = [
         fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
     )`,
+    // Cambios de datos que deben hacerse una sola vez (ej: abrir los domingos)
+    `CREATE TABLE IF NOT EXISTS migraciones (
+        nombre    VARCHAR(60) PRIMARY KEY,
+        aplicada  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
     // Datos de cobro del salón (una fila): llave Bre-B, titular y QR
     `CREATE TABLE IF NOT EXISTS pago_salon (
         id          TINYINT PRIMARY KEY DEFAULT 1,
@@ -154,13 +159,29 @@ async function datosPublico(conexion) {
 }
 
 // Las estilistas que todavía no tienen horario reciben el de siempre:
-// lunes a sábado, de 8:00 a 19:00. Así nada cambia hasta que lo editen.
+// lunes a sábado de 8:00 a 19:00 y domingo de 8:00 a 15:00.
 const HORARIO_POR_DEFECTO = `
     INSERT INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
-    SELECT e.id_estilista, d.dia, '08:00', '19:00'
+    SELECT e.id_estilista, d.dia, '08:00', IF(d.dia = 0, '15:00', '19:00')
     FROM estilistas e
-    CROSS JOIN (SELECT 1 AS dia UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) d
+    CROSS JOIN (SELECT 0 AS dia UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) d
     WHERE NOT EXISTS (SELECT 1 FROM horarios h WHERE h.id_estilista = e.id_estilista)`;
+
+// Cambios de datos que se aplican una sola vez. Se anotan en la tabla migraciones
+// para no repetirlos (si una estilista luego quita el domingo, no se le vuelve a poner).
+const MIGRACIONES_DE_DATOS = [
+    ['domingos-hasta-15', `INSERT IGNORE INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
+        SELECT id_estilista, 0, '08:00', '15:00' FROM estilistas`]
+];
+
+async function migracionesDeDatos(conexion) {
+    for (const [nombre, sql] of MIGRACIONES_DE_DATOS) {
+        const [hecha] = await conexion.query('SELECT nombre FROM migraciones WHERE nombre = ?', [nombre]);
+        if (hecha.length) continue;
+        await conexion.query(sql);
+        await conexion.query('INSERT INTO migraciones (nombre) VALUES (?)', [nombre]);
+    }
+}
 
 async function actualizar() {
     const conexion = await mysql.createConnection(config.db);
@@ -184,6 +205,7 @@ async function actualizar() {
         }
     }
     const [resultado] = await conexion.query(HORARIO_POR_DEFECTO);
+    await migracionesDeDatos(conexion);
     const [tablas] = await conexion.query('SHOW TABLES');
     await conexion.end();
 

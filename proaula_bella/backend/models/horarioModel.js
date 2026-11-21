@@ -35,9 +35,10 @@ async function reemplazarHorario(conexion, idEstilista, dias) {
     }
 }
 
-// Horario de una estilista nueva: lunes a sábado, de 8:00 a 19:00
+// Horario de una estilista nueva: lunes a sábado de 8:00 a 19:00 y domingo de 8:00 a 15:00
 async function crearPorDefecto(conexion, idEstilista) {
     const dias = [1, 2, 3, 4, 5, 6].map((dia) => ({ dia, inicio: '08:00', fin: '19:00' }));
+    dias.push({ dia: 0, inicio: '08:00', fin: '15:00' });
     await reemplazarHorario(conexion, idEstilista, dias);
 }
 

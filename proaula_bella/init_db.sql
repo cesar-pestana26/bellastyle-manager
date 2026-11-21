@@ -14,6 +14,7 @@ CREATE DATABASE IF NOT EXISTS bellastylemanager
 USE bellastylemanager;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS migraciones;
 DROP TABLE IF EXISTS pago_salon;
 DROP TABLE IF EXISTS pedido_items;
 DROP TABLE IF EXISTS pedidos;
@@ -137,6 +138,13 @@ CREATE TABLE pagos (
     CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
 );
 
+-- Cambios de datos que ya se aplicaron una vez (los usa actualizar_bd.js para no repetirlos)
+CREATE TABLE migraciones (
+    nombre    VARCHAR(60) PRIMARY KEY,
+    aplicada  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO migraciones (nombre) VALUES ('domingos-hasta-15');
+
 -- Datos de cobro del salón (una sola fila): llave Bre-B, titular y la imagen del QR
 CREATE TABLE pago_salon (
     id          TINYINT PRIMARY KEY DEFAULT 1,
@@ -197,7 +205,7 @@ CREATE TABLE mensajes (
 );
 
 -- Horario de trabajo de cada estilista: una fila por cada día que trabaja.
--- dia_semana: 1 = lunes ... 6 = sábado (el salón no abre los domingos).
+-- dia_semana: 0 = domingo, 1 = lunes ... 6 = sábado (los domingos se atiende de 8:00 a 15:00).
 -- Si una estilista no tiene fila para un día, ese día no trabaja.
 CREATE TABLE horarios (
     id_horario   INT AUTO_INCREMENT PRIMARY KEY,
@@ -345,11 +353,12 @@ INSERT INTO mensajes (id_conversacion, autor, texto, leido) VALUES
 -- Horarios de prueba: cada estilista con días y horas distintos
 INSERT INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin) VALUES
 (1, 1, '08:00', '19:00'), (1, 2, '08:00', '19:00'), (1, 3, '08:00', '19:00'),
-(1, 4, '08:00', '19:00'), (1, 5, '08:00', '19:00'), (1, 6, '08:00', '19:00'),  -- Laura: lunes a sábado
+(1, 4, '08:00', '19:00'), (1, 5, '08:00', '19:00'), (1, 6, '08:00', '19:00'),
+(1, 0, '08:00', '15:00'),                                                       -- Laura: todos los días
 (2, 1, '09:00', '17:00'), (2, 2, '09:00', '17:00'), (2, 3, '09:00', '17:00'),
-(2, 4, '09:00', '17:00'), (2, 5, '09:00', '17:00'),                             -- Diana: lunes a viernes
+(2, 4, '09:00', '17:00'), (2, 5, '09:00', '17:00'), (2, 0, '09:00', '15:00'),  -- Diana: lunes a viernes y domingo
 (3, 2, '08:00', '14:00'), (3, 3, '08:00', '14:00'), (3, 4, '08:00', '14:00'),
-(3, 5, '08:00', '14:00'), (3, 6, '08:00', '14:00');                             -- Paula: martes a sábado, mañanas
+(3, 5, '08:00', '14:00'), (3, 6, '08:00', '14:00'), (3, 0, '08:00', '14:00');                             -- Paula: martes a sábado, mañanas
 
 -- Calificaciones de prueba de las citas finalizadas
 INSERT INTO calificaciones (id_cita, estrellas, comentario) VALUES

@@ -57,7 +57,7 @@ Ciudad: Cartagena, Colombia.
 Dirección: ${contacto.direccion || '(no registrada)'}
 Teléfono o WhatsApp: ${contacto.telefono || '(no registrado)'}
 Instagram: ${contacto.instagram || '(no registrado)'}
-Horario: lunes a sábado de 8:00 a. m. a 7:00 p. m. Los domingos no se atiende.
+Horario: lunes a sábado de 8:00 a. m. a 7:00 p. m. Domingos de 8:00 a. m. a 3:00 p. m.
 Servicios:
 ${listaServicios}
 Productos a la venta:
