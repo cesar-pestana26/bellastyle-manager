@@ -500,6 +500,7 @@ html:not(.oscuro) [class~="bg-[#07050d]"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#07060b]"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#07060b]/80"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#07060b]/90"] { background-color: #fbf5f8; }
+html:not(.oscuro) [class~="bg-[#07060b]/95"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-black"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#120f1d]"] { background-color: #ffffff; }
 html:not(.oscuro) [class~="to-[#120f1d]"] { --tw-gradient-to: #ffffff var(--tw-gradient-to-position); }
