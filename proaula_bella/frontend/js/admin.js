@@ -503,7 +503,7 @@ async function cargarMensajesAdmin() {
   `;
 
   const caja = document.getElementById('mensajesAdmin');
-  (resp.data.mensajes || []).forEach((m) => {
+  (resp.data.mensajes || []).filter((m) => m.id > ultimoMensajeAdmin).forEach((m) => {
     dibujarMensajeAdmin(m);
     ultimoMensajeAdmin = m.id;
   });

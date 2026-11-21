@@ -678,7 +678,8 @@ async function cargarMensajesCita() {
     caja.innerHTML = `<p class="text-center text-xs text-white/50 py-8">Todavía no hay mensajes en esta cita. Escribe el primero abajo.</p>`;
   } else if (mensajes.length > 0) {
     if (chatCita.ultimo === 0) caja.innerHTML = '';
-    mensajes.forEach((m) => {
+    // Solo mensajes más nuevos que el último dibujado (evita duplicados si dos consultas se cruzan)
+    mensajes.filter((m) => m.id > chatCita.ultimo).forEach((m) => {
       dibujarMensajeCita(m);
       chatCita.ultimo = m.id;
     });

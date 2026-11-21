@@ -125,15 +125,24 @@ function actualizarContador() {
 
 // --- Pedir mensajes nuevos al servidor ---
 
+// Si el servidor tarda más de lo que dura el intervalo, dos consultas podían traer
+// el mismo mensaje y mostrarlo dos veces. Por eso: una consulta a la vez y nunca
+// se dibuja un mensaje con id menor o igual al último mostrado.
 async function buscarMensajes() {
-    if (!chat.codigo) return;
-    const respuesta = await pedir(`/chat/${chat.codigo}?desde=${chat.ultimoId}`);
+    if (!chat.codigo || chat.consultando) return;
+    chat.consultando = true;
+    let respuesta;
+    try {
+        respuesta = await pedir(`/chat/${chat.codigo}?desde=${chat.ultimoId}`);
+    } finally {
+        chat.consultando = false;
+    }
     if (!respuesta.success) {
         // La conversación ya no existe (por ejemplo, se reinstaló la base de datos)
         if (respuesta.message === 'La conversación no existe.') reiniciarChat();
         return;
     }
-    const nuevos = respuesta.data.mensajes;
+    const nuevos = respuesta.data.mensajes.filter((m) => m.id > chat.ultimoId);
     const primeraCarga = chat.ultimoId === 0;   // al abrir la página no se cuentan como nuevos
     // Llegó una respuesta: se quita el indicador "escribiendo"
     if (chat.esperando && nuevos.some((m) => m.autor !== 'Visitante')) mostrarEscribiendo(false);
