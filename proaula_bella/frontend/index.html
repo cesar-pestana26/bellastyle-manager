@@ -15,8 +15,17 @@
     <div class="flex flex-1 flex-col px-4 sm:px-6 pt-4 pb-24 sm:pb-6">
 
       <!-- Tarjeta de Login Principal -->
-      <main class="flex-1 flex items-center justify-center py-8">
-        <div id="iniciar-sesion" class="tarjeta w-full max-w-md p-8 shadow-2xl">
+      <main class="relative flex-1 flex items-center justify-center py-8">
+        <!-- Silueta del salón de fondo (decorativa) -->
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
+          <div class="lg:-translate-x-[22rem] xl:-translate-x-[27rem]">
+            <div class="animar-flotar">
+              <img src="img/silueta-oscuro.webp" alt="" class="silueta silueta-oscuro w-[34rem] lg:w-[38rem] max-w-none opacity-50 lg:opacity-80">
+              <img src="img/silueta-claro.webp" alt="" class="silueta silueta-claro w-[34rem] lg:w-[38rem] max-w-none opacity-60 lg:opacity-90">
+            </div>
+          </div>
+        </div>
+        <div id="iniciar-sesion" class="relative z-10 tarjeta w-full max-w-md p-8 shadow-2xl">
           
           <div class="flex items-center gap-4 border-b border-white/10 pb-5">
             <img id="imagenRol" src="img/rol_clienta.svg" alt="" class="h-14 w-14 rounded-2xl object-cover shrink-0 bg-white/5 p-1 border border-white/10">

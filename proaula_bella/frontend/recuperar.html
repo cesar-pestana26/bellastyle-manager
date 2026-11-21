@@ -18,8 +18,17 @@
     <div class="flex flex-1 flex-col px-4 sm:px-6 pt-4 pb-24 sm:pb-6">
 
       <!-- Formulario principal -->
-      <main class="flex flex-1 items-center justify-center py-10">
-        <section class="tarjeta animate-aparecer w-full max-w-md p-6 sm:p-8 shadow-xl shadow-bella-200/50">
+      <main class="relative flex flex-1 items-center justify-center py-10">
+        <!-- Silueta del salón de fondo (decorativa) -->
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
+          <div class="lg:-translate-x-[22rem] xl:-translate-x-[27rem]">
+            <div class="animar-flotar">
+              <img src="img/silueta-oscuro.webp" alt="" class="silueta silueta-oscuro w-[34rem] lg:w-[38rem] max-w-none opacity-50 lg:opacity-80">
+              <img src="img/silueta-claro.webp" alt="" class="silueta silueta-claro w-[34rem] lg:w-[38rem] max-w-none opacity-60 lg:opacity-90">
+            </div>
+          </div>
+        </div>
+        <section class="relative z-10 tarjeta animate-aparecer w-full max-w-md p-6 sm:p-8 shadow-xl shadow-bella-200/50">
           <h1 class="text-3xl font-bold leading-tight">Recuperar contraseña</h1>
           <p class="mt-2 text-sm text-tinta/80">Para comprobar que la cuenta es tuya, escribe tu usuario y el teléfono o correo con el que te registraste. Tienes 3 intentos.</p>
 
