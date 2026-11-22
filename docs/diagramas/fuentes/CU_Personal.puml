@@ -19,6 +19,9 @@ rectangle "BellaStyle Manager" {
   usecase "Ver historial de servicios\nde una clienta" as UC20
   usecase "Descargar comprobante PDF" as UC12
   usecase "Responder chats\nde visitantes" as UC21
+  usecase "Configurar el QR\nde Bre-B del salón" as UC26
+  usecase "Confirmar o rechazar pagos\n(efectivo o QR)" as UC27
+  usecase "Gestionar pedidos\nde la tienda" as UC28
 }
 E -- UC1
 E -- UC13
@@ -39,4 +42,7 @@ A -- UC19
 A -- UC20
 A -- UC12
 A -- UC21
+A -- UC26
+A -- UC27
+A -- UC28
 @enduml

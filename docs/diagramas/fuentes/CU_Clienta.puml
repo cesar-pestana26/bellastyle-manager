@@ -20,6 +20,9 @@ rectangle "BellaStyle Manager" {
   usecase "Chatear con la estilista\nde la cita" as UC11
   usecase "Descargar comprobante PDF" as UC12
   usecase "Gestionar foto de perfil" as UC13
+  usecase "Pagar la cita\n(Bre-B o en el salón)" as UC23
+  usecase "Escanear el QR\nde Bre-B" as UC24
+  usecase "Comprar en la tienda\n(carrito y pedido)" as UC25
 }
 V -- UC4
 V -- UC5
@@ -33,6 +36,9 @@ C -- UC10
 C -- UC11
 C -- UC12
 C -- UC13
+C -- UC23
+C -- UC25
 UC6 ..> UC7 : <<include>>
+UC24 .> UC23 : <<extend>>
 UC4 ---- G
 @enduml

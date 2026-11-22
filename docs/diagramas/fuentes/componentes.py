@@ -28,10 +28,10 @@ class Lienzo:
         s.add(f'<rect x="{ix+8}" y="{iy}" width="26" height="22" fill="none" stroke="{ROSA}" stroke-width="1.6"/>')
         s.add(f'<rect x="{ix}" y="{iy+4}" width="14" height="5" fill="{FONDO}" stroke="{ROSA}" stroke-width="1.6"/>')
         s.add(f'<rect x="{ix}" y="{iy+13}" width="14" height="5" fill="{FONDO}" stroke="{ROSA}" stroke-width="1.6"/>')
-        lineas = ([('«' + estereo + '»', 13, 'normal', True)] if estereo else []) + [(nombre, 17, 'bold', False)] + \
+        lineas = ([('«' + estereo + '»', 13, 'normal', True)] if estereo else []) + [(nombre, 17 if w >= 230 else 14.5, 'bold', False)] + \
                  [(t, 13.5, 'normal', False) for t in sub.split('\n') if t]
         alto = sum(sz + 6 for _, sz, _, _ in lineas)
-        yy = cy - alto / 2 + lineas[0][1]
+        yy = cy - alto / 2 + lineas[0][1] + (0 if w >= 230 else 9)
         for t, sz, pe, it in lineas:
             s.texto(cx, yy, t, sz, pe, '#222' if pe == 'bold' else '#333', 'middle', it)
             yy += sz + 6
@@ -97,48 +97,49 @@ def detallado():
     L.linea([(850, 215), (1070, 215)]); L.interfaz(960, 215, 'izq', 'IClienteAPI', 960, 172, 'middle')
     # Backend
     L.marco(300, 410, 1620, 930, 'Backend (Node.js + Express)')
-    L.comp(1235, 520, 330, 100, 'Enrutador', 'routes/rutas.js (62 rutas)')
+    L.comp(1235, 520, 330, 100, 'Enrutador', 'routes/rutas.js (68 rutas)')
     L.linea([(1235, 270), (1235, 470)]); L.interfaz(1235, 365, 'arriba', 'IApiRest', 1270, 372, 'start', 'HTTPS + JSON')
     # Seguridad: el enrutador pide la sesión (token JWT) y el rol antes de llamar al controlador
     L.comp(1680, 520, 250, 100, 'Seguridad', 'middleware/seguridad.js\nsesión JWT y roles')
     L.linea([(1400, 520), (1555, 520)]); L.interfaz(1478, 520, 'izq', 'ISeguridad', 1478, 480, 'middle')
     L.comp(2170, 520, 250, 100, 'jsonwebtoken', 'firma y valida tokens', 'library')
     L.linea([(1805, 520), (2045, 520)]); L.interfaz(1955, 520, 'izq', 'IJwt', 1955, 480, 'middle')
-    xs = [445, 705, 965, 1235, 1495, 1755]
+    xs = [440, 665, 890, 1115, 1340, 1565, 1790]
     nombres = [('Autenticación', 'authController', 'IAutenticacion'),
                ('Catálogo y gestión', 'catalogo · gestion', 'ICatalogo'),
                ('Citas y agenda', 'citas · horario\ncalificacion', 'ICitas'),
                ('Perfil y fotos', 'perfil · fotoServicio', 'IPerfil'),
-               ('Pagos y PDF', 'pago · comprobante', 'IPagos'),
+               ('Pagos y PDF', 'pago (Bre-B, QR)\ncomprobante', 'IPagos'),
+               ('Tienda y pedidos', 'pedidoController', 'IPedidos'),
                ('Chats', 'chat · chatCita', 'IChat')]
     L.linea([(xs[0], 610), (xs[-1], 610)]); L.linea([(1235, 570), (1235, 610)])
     for x, (n, sub, i) in zip(xs, nombres):
         L.linea([(x, 610), (x, 700)])
-        L.interfaz(x, 655, 'arriba', i, x + 30, 661, 'start')
-        L.comp(x, 750, 235, 100, n, sub)
+        L.interfaz(x, 655, 'arriba', i, x + 26, 661, 'start')
+        L.comp(x, 750, 212, 100, n, sub)
     # utilidades
     uy = 945
-    L.comp(575, uy+10, 210, 90, 'Validadores', 'validators.js')
-    L.linea([(500, 800), (500, 850), (650, 850), (650, 800)]); L.linea([(575, 850), (575, 910)])
+    L.comp(575, uy+10, 200, 90, 'Validadores', 'validators.js')
+    L.linea([(500, 800), (500, 850), (630, 850), (630, 800)]); L.linea([(575, 850), (575, 910)])
     L.interfaz(575, 878, 'arriba', 'IValidacion', 545, 884, 'end')
-    L.comp(965, uy, 210, 90, 'Agenda', 'utils/agenda.js')
-    L.linea([(965, 800), (965, 900)]); L.interfaz(965, 860, 'arriba', 'IAgenda', 995, 866, 'start')
-    L.comp(1235, uy, 210, 90, 'Imágenes', 'utils/imagenes.js')
-    L.linea([(1235, 800), (1235, 900)]); L.interfaz(1235, 860, 'arriba', 'IImagenes', 1265, 866, 'start')
-    L.comp(1495, uy, 210, 90, 'pdfkit', 'genera PDF', 'library')
-    L.linea([(1495, 800), (1495, 900)]); L.interfaz(1495, 860, 'arriba', 'IPdf', 1525, 866, 'start')
-    L.comp(1755, uy, 210, 100, 'Asistente IA', 'asistenteIA.js\n+ asistente.js', '')
-    L.linea([(1755, 800), (1755, 895)]); L.interfaz(1755, 855, 'arriba', 'IAsistente', 1785, 861, 'start')
+    L.comp(890, uy, 186, 90, 'Agenda', 'utils/agenda.js')
+    L.linea([(890, 800), (890, 900)]); L.interfaz(890, 860, 'arriba', 'IAgenda', 920, 866, 'start')
+    L.comp(1115, uy, 186, 90, 'Imágenes', 'utils/imagenes.js')
+    L.linea([(1115, 800), (1115, 900)]); L.interfaz(1115, 860, 'arriba', 'IImagenes', 1145, 866, 'start')
+    L.comp(1340, uy, 186, 90, 'pdfkit', 'genera PDF', 'library')
+    L.linea([(1340, 800), (1340, 900)]); L.interfaz(1340, 860, 'arriba', 'IPdf', 1370, 866, 'start')
+    L.comp(1790, uy, 186, 100, 'Asistente IA', 'asistenteIA.js\n+ asistente.js', '')
+    L.linea([(1790, 800), (1790, 895)]); L.interfaz(1790, 855, 'arriba', 'IAsistente', 1820, 861, 'start')
     # bcryptjs (izquierda, fuera del marco)
     L.comp(150, 750, 200, 100, 'bcryptjs', 'hash de contraseñas', 'library')
     L.linea([(250, 750), (327, 750)]); L.interfaz(285, 750, 'der', 'ICifrado', 285, 798, 'middle')
     # Gemini (derecha, fuera del marco)
     L.comp(2170, uy, 250, 110, 'Gemini API', 'Google · Flash-Lite', 'external')
-    L.linea([(1860, uy), (2045, uy)]); L.interfaz(1955, uy, 'izq', 'IGemini', 1955, uy - 40, 'middle', '')
-    L.texto(1955, uy + 48, 'HTTPS + JSON', 13.5, 'normal', '#444')
+    L.linea([(1883, uy), (2045, uy)]); L.interfaz(1965, uy, 'izq', 'IGemini', 1965, uy - 40, 'middle', '')
+    L.texto(1965, uy + 48, 'HTTPS + JSON', 13.5, 'normal', '#444')
     # acceso a datos
     by = 1100
-    drops = [(xs[0] - 95), (xs[1] + 112), (xs[2] + 112), (xs[3] + 112), (xs[4] + 112), (xs[5] - 112)]
+    drops = [xs[0] - 96] + [x + 98 for x in xs[1:-2]] + [xs[-2], xs[-1] - 98]   # Tienda baja por el centro
     for d in drops: L.linea([(d, 800), (d, by)])
     L.linea([(drops[0], by), (drops[-1], by)])
     L.comp(965, 1240, 260, 90, 'Modelos', 'models/ (SQL de cada tabla)')
@@ -205,7 +206,7 @@ def despliegue():
     # Aiven
     nodo(L, 1640, 210, 500, 400, 'device', 'Servidor Aiven', 'servicio «bellastyle-mysql»')
     nodo(L, 1680, 320, 420, 260, 'executionEnvironment', 'MySQL Server 8.4', fondo='#FFFFFF')
-    cilindro(L, 1770, 410, 240, 140, ['bellastylemanager', '(17 tablas)'])
+    cilindro(L, 1770, 410, 240, 140, ['bellastylemanager', '(22 tablas)'])
     # Google
     nodo(L, 1640, 830, 500, 300, 'device', 'Google Cloud')
     nodo(L, 1680, 900, 420, 200, 'executionEnvironment', 'Gemini API', fondo='#FFFFFF')

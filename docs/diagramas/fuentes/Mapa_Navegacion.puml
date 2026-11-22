@@ -6,19 +6,28 @@ skinparam rectangle {
   BorderColor #B03A78
   RoundCorner 14
 }
-rectangle "Inicio de sesión\n(index.html)" as I
-rectangle "Presentación del salón\n(welcome.html)\nservicios · vitrina · productos" as W
+rectangle "Página de inicio del salón\n(welcome.html · se abre en la dirección principal)\nservicios · equipo · trabajos · productos" as W
+rectangle "Servicios\n(servicios.html)\nfiltro Mujer / Hombre / Unisex" as S
+rectangle "Galería\n(galeria.html)" as G
+rectangle "Tienda con carrito\n(tienda.html)" as T
+rectangle "Chat con Bella\n(asistente IA, en todas las páginas públicas)" as C
+rectangle "Iniciar sesión\n(index.html)" as I
 rectangle "Crear cuenta\n(register.html)" as R
 rectangle "Recuperar contraseña\n(recuperar.html)" as P
-rectangle "Chat con Bella\n(asistente IA)" as C
-rectangle "Panel de la Clienta\nAgendar · Mis citas · Mis datos\nChat con la estilista · Calificar · PDF" as PC
-rectangle "Panel de la Estilista\nCitas asignadas · Notas · Historial\nHorario y ausencias · Vitrina · Opiniones" as PE
-rectangle "Panel de la Administradora\nCitas · Estilistas · Clientas · Servicios\nProductos · Vitrina · Registrar usuario · Mensajes" as PA
-I <-right-> W : Conoce el salón /\nVolver al inicio
-I -down-> R : Crear cuenta
+rectangle "Agendar cita\n(agendar.html)\nsolo horas libres" as A
+rectangle "Panel de la Clienta\n(panel.html)\nMis citas · Pagar (Bre-B o salón)\nMis pedidos · Chat · Calificar · PDF" as PC
+rectangle "Panel de la Estilista\n(panel.html)\nCitas asignadas · Notas · Horario\nAusencias · Vitrina · Opiniones" as PE
+rectangle "Panel de la Administradora\n(admin.html)\nCitas · Pagos y QR · Pedidos · Mensajes\nLiquidación · Servicios y fotos · Productos · Equipo" as PA
+W -down-> S : menú
+W -down-> G : menú
+W -down-> T : menú
+W -right-> C : burbuja del chat
+W -down-> I : Iniciar sesión
+W -down-> R : Crear cuenta
 I -down-> P : ¿Olvidaste tu contraseña?
-I -up-> C : burbuja del chat
 I -down-> PC : Entrar (Clienta)
 I -down-> PE : Entrar (Estilista)
 I -down-> PA : Entrar (Administradora)
+PC -down-> A : Agendar cita
+T -down-> PC : Hacer pedido\n(con sesión de clienta)
 @enduml

@@ -27,7 +27,7 @@ node "Servidor Render (nube)\nservicio web «bellastyle»" <<device>> as RENDER 
 
 node "Servidor Aiven (nube)\nservicio «bellastyle-mysql»" <<device>> as AIVEN {
   node "MySQL Server 8.4" <<executionEnvironment>> as MYSQL {
-    database "bellastylemanager\n(17 tablas)" <<schema>> as BD
+    database "bellastylemanager\n(22 tablas)" <<schema>> as BD
   }
 }
 

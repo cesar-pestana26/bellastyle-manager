@@ -1,6 +1,6 @@
 @startuml Modelo_Datos
 !include skin.iuml
-title Modelo relacional — base de datos bellastylemanager (18 tablas)
+title Modelo relacional — base de datos bellastylemanager (22 tablas)
 skinparam linetype ortho
 left to right direction
 entity usuarios {
@@ -37,6 +37,7 @@ entity servicios {
   nombre : VARCHAR(100)
   precio : DECIMAL(10,2)
   duracion_min : INT
+  publico : ENUM (Mujer, Hombre, Unisex)
   estado : ENUM
 }
 entity productos {
@@ -145,7 +146,38 @@ entity pagos {
   metodo : ENUM
   monto : DECIMAL(10,2)
   estado : ENUM
+  comprobante : VARCHAR(40)
   fecha_pago : TIMESTAMP
+}
+entity pago_salon {
+  * id : TINYINT <<PK>> (siempre 1)
+  --
+  llave : VARCHAR(80)
+  titular : VARCHAR(100)
+  qr_tipo : VARCHAR(20)
+  qr_datos : MEDIUMBLOB
+  actualizado : TIMESTAMP
+}
+entity pedidos {
+  * id_pedido : INT <<PK>>
+  --
+  id_clienta : INT <<FK>>
+  total : DECIMAL(10,2)
+  estado : ENUM
+  creado_en : TIMESTAMP
+}
+entity pedido_items {
+  * id_item : INT <<PK>>
+  --
+  id_pedido : INT <<FK>>
+  id_producto : INT <<FK>>
+  cantidad : INT
+  precio : DECIMAL(10,2)
+}
+entity migraciones {
+  * nombre : VARCHAR(60) <<PK>>
+  --
+  aplicada : TIMESTAMP
 }
 usuarios ||--o| clientas
 usuarios ||--o| estilistas
@@ -164,4 +196,7 @@ citas ||--o| pagos
 conversaciones ||--o{ mensajes
 servicios ||--o{ fotos_servicio
 productos ||--o| fotos_producto
+clientas ||--o{ pedidos
+pedidos ||--|{ pedido_items
+productos ||--o{ pedido_items
 @enduml

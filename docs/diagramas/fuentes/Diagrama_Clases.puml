@@ -12,8 +12,16 @@ enum Rol <<enumeration>> {
 }
 enum EstadoPago <<enumeration>> {
   Pagado
+  PorVerificar
   PendienteEnSalon
+  Rechazado
   Reembolsado
+}
+enum EstadoPedido <<enumeration>> {
+  Pendiente
+  ListoParaRecoger
+  Entregado
+  Cancelado
 }
 enum EstadoCita <<enumeration>> {
   Pendiente
@@ -94,6 +102,7 @@ class Servicio {
   -nombre : String
   -precio : decimal
   -duracionMin : int
+  -publico : String
   -estado : String
   +listarDisponibles()
   +crear(datos)
@@ -165,10 +174,31 @@ class Pago {
   -metodo : String
   -monto : decimal
   -estado : EstadoPago
+  -comprobante : String
   +crear(datos)
   +buscarPorCita(idCita)
   +listar(rol, idUsuario)
-  +actualizarEstado(id, estado)
+  +actualizarEstado(id, estado, metodo)
+}
+class CobroSalon {
+  -llave : String
+  -titular : String
+  -qr : byte[]
+  +datosSalon()
+  +guardarDatosSalon(datos)
+}
+class Pedido {
+  -idPedido : int
+  -total : decimal
+  -estado : EstadoPedido
+  -creadoEn : Timestamp
+  +crear(idClienta, items)
+  +listar(rol, idUsuario)
+  +cambiarEstado(id, estado)
+}
+class ItemPedido {
+  -cantidad : int
+  -precio : decimal
 }
 class Seguridad <<servicio>> {
   +crearToken(usuario)
@@ -204,6 +234,11 @@ Cita "1" *-- "0..1" Calificacion : recibe >
 Cita "1" *-- "0..*" MensajeCita : chat >
 Cita "1" *-- "0..1" Pago : se paga con >
 Pago --> EstadoPago
+Pago ..> CobroSalon : muestra el QR
+Clienta "1" -- "0..*" Pedido : hace >
+Pedido "1" *-- "1..*" ItemPedido : contiene >
+ItemPedido "0..*" -- "1" Producto : de >
+Pedido --> EstadoPedido
 Seguridad ..> Usuario : valida sesión y rol
 Conversacion "1" *-- "1..*" Mensaje : contiene >
 AsistenteIA ..> Servicio : consulta precios
