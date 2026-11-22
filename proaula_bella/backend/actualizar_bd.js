@@ -174,7 +174,8 @@ const HORARIO_POR_DEFECTO = `
 const MIGRACIONES_DE_DATOS = [
     ['domingos-hasta-15', `INSERT IGNORE INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
         SELECT id_estilista, 0, '08:00', '15:00' FROM estilistas`],
-    ['fotos-servicios-iniciales', (conexion) => cargarFotosIniciales(conexion)]
+    ['fotos-servicios-iniciales', (conexion) => cargarFotosIniciales(conexion)],
+    ['fotos-productos-iniciales', (conexion) => cargarFotosProductos(conexion)]
 ];
 
 // Fotos iniciales de los servicios: carpeta proaula_bella/img/<CARPETA>/ → servicio por su nombre.
@@ -222,6 +223,32 @@ async function cargarFotosIniciales(conexion) {
                 [filas[0].id_servicio, tipo, datos]);
             puestas++;
         }
+    }
+    return true;
+}
+
+// Foto inicial de cada producto de la tienda (una por producto), solo si aún no tiene foto.
+const FOTOS_POR_PRODUCTO = [
+    ['Shampoo Hidratante', 'SHAMPOO/SHAMPOO.jfif'],
+    ['Mascarilla Capilar', 'MASCARILLA CAPILAR/MASCARILLA.jfif'],
+    ['Esmalte Premium', 'ESMALTE PREMIUM/ESMALTE 1.jfif'],
+    ['Spray Fijador', 'SPRAY/SPRAY.jfif']
+];
+
+async function cargarFotosProductos(conexion) {
+    if (!fs.existsSync(CARPETA_FOTOS)) return false;
+    for (const [producto, archivo] of FOTOS_POR_PRODUCTO) {
+        const ruta = path.join(CARPETA_FOTOS, archivo);
+        if (!fs.existsSync(ruta)) continue;
+        const datos = fs.readFileSync(ruta);
+        const tipo = tipoDeImagen(datos);
+        if (!tipo || datos.length > MAX_BYTES_FOTO) continue;
+        // INSERT ... SELECT: solo si existe el producto y todavía no tiene foto
+        await conexion.query(
+            `INSERT INTO fotos_producto (id_producto, tipo, datos)
+             SELECT p.id_producto, ?, ? FROM productos p
+             WHERE p.nombre = ? AND NOT EXISTS (SELECT 1 FROM fotos_producto f WHERE f.id_producto = p.id_producto)
+             LIMIT 1`, [tipo, datos, producto]);
     }
     return true;
 }
