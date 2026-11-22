@@ -381,7 +381,9 @@ function renderizarTablaPagos() {
       </td>
       <td class="p-3.5 text-right space-x-1 whitespace-nowrap">
         <button type="button" onclick="verComprobantePago(${p.id_cita})" class="px-2.5 py-1 rounded bg-white/10 text-white hover:bg-white/20 text-xs font-semibold">Comprobante</button>
-        ${p.estado === 'Pendiente en Salón' || p.estado === 'Por verificar' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">${p.estado === 'Por verificar' ? 'Llegó: confirmar' : 'Confirmar Cobro'}</button>` : ''}
+        ${p.estado === 'Por verificar' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">Llegó: confirmar</button>` : ''}
+        ${p.estado === 'Pendiente en Salón' ? `<button type="button" onclick="confirmarCobroAdmin(${p.id_pago}, 'Efectivo / Salón')" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-semibold">Cobrado: efectivo</button>
+        <button type="button" onclick="confirmarCobroAdmin(${p.id_pago}, 'Bre-B')" class="px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 text-xs font-semibold">Cobrado: QR</button>` : ''}
         ${p.estado === 'Por verificar' ? `<button type="button" onclick="rechazarPagoAdmin(${p.id_pago})" class="px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30 text-xs font-semibold">No llegó</button>` : ''}
       </td>
     </tr>
@@ -396,8 +398,10 @@ window.rechazarPagoAdmin = async function(idPago) {
   renderizarTablaPagos();
 };
 
-window.confirmarCobroAdmin = async function(idPago) {
-  const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', { estado: 'Pagado' });
+// metodo (opcional): cómo pagó en el salón, 'Efectivo / Salón' o 'Bre-B' (QR)
+window.confirmarCobroAdmin = async function(idPago, metodo) {
+  const datos = metodo ? { estado: 'Pagado', metodo } : { estado: 'Pagado' };
+  const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', datos);
   if (!resp || !resp.success) {
     notificarAdmin((resp && resp.message) || 'No se pudo confirmar el cobro');
     return;

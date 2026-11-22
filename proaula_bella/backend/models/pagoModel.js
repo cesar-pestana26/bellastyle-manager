@@ -72,10 +72,11 @@ async function crear({ idCita, referencia, metodo, monto, estado, comprobante = 
     return { duplicado: false, pago: await buscarPorCita(idCita) };
 }
 
-async function actualizarEstado(idPago, estado) {
+// metodo (opcional): cómo se cobró en el salón; si no viene, se deja el que tenía
+async function actualizarEstado(idPago, estado, metodo = null) {
     const [resultado] = await db.query(
-        'UPDATE pagos SET estado = ?, fecha_pago = CURRENT_TIMESTAMP WHERE id_pago = ?',
-        [estado, idPago]
+        'UPDATE pagos SET estado = ?, metodo = COALESCE(?, metodo), fecha_pago = CURRENT_TIMESTAMP WHERE id_pago = ?',
+        [estado, metodo, idPago]
     );
     return resultado.affectedRows > 0;
 }

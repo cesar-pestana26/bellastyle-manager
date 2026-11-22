@@ -112,7 +112,16 @@ async function cambiarEstado(req, res) {
             return res.status(400).json({ success: false, message: 'Estado de pago no válido.' });
         }
 
-        const actualizado = await pagoModel.actualizarEstado(idPago, estado);
+        // Al cobrar en el salón la administradora indica si fue en efectivo o con el QR de Bre-B
+        let metodo = null;
+        if (req.body.metodo !== undefined) {
+            metodo = String(req.body.metodo).trim();
+            if (estado !== 'Pagado' || !['Efectivo / Salón', 'Bre-B'].includes(metodo)) {
+                return res.status(400).json({ success: false, message: 'Método de cobro no válido.' });
+            }
+        }
+
+        const actualizado = await pagoModel.actualizarEstado(idPago, estado, metodo);
         if (!actualizado) {
             return res.status(404).json({ success: false, message: 'Pago no encontrado.' });
         }

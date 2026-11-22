@@ -189,15 +189,7 @@ function renderizarCamposMetodoPago(metodo) {
     const monto = formatearMonedaPago(Number(citaEnProcesoPago && (citaEnProcesoPago.precio || citaEnProcesoPago.valor) || 0));
     cont.innerHTML = `
       <div class="grid gap-4 sm:grid-cols-[10rem_1fr] items-start">
-        ${d.qr ? `<div class="space-y-2">
-          <button type="button" id="btnAmpliarQR" class="block w-40 mx-auto" aria-label="Ver el QR en grande">
-            <img src="${d.qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 rounded-xl bg-white p-2 object-contain">
-          </button>
-          <div class="grid grid-cols-2 gap-1.5 w-40 mx-auto">
-            <button type="button" id="btnVerQRGrande" class="btn-secundario text-[10px] px-2 py-1.5">Ver grande</button>
-            <a href="${d.qr}" download="QR-BreB-BellaStyle.png" class="btn-secundario text-[10px] px-2 py-1.5 text-center">Descargar</a>
-          </div>
-        </div>` : ''}
+        ${d.qr ? htmlQRSalon(d.qr) : ''}
         <div class="space-y-2 text-[11px] ${d.qr ? '' : 'sm:col-span-2'}">
           <p class="text-white/70">1. Abre la app de tu banco o billetera (Nequi, Daviplata, Bancolombia...) y paga <strong class="text-amber-300">${monto}</strong> ${d.qr && d.llave ? 'escaneando el QR o con la llave Bre-B:' : d.qr ? 'escaneando el QR.' : 'con la llave Bre-B:'}</p>
           ${d.llave ? `<div class="flex items-center gap-2">
@@ -213,10 +205,7 @@ function renderizarCamposMetodoPago(metodo) {
         <input id="numeroComprobante" required maxlength="40" placeholder="Ej: M123456789" class="campo" autocomplete="off">
       </div>
       <p class="text-[11px] text-white/50">El pago queda <strong>por verificar</strong> hasta que el salón confirme que recibió el dinero.</p>`;
-    ['btnAmpliarQR', 'btnVerQRGrande'].forEach((id) => {
-      const b = document.getElementById(id);
-      if (b) b.addEventListener('click', () => verQRGrande(d.qr));
-    });
+    activarBotonesQR(cont, d.qr);
     const copiar = document.getElementById('btnCopiarLlave');
     if (copiar) copiar.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(d.llave); copiar.textContent = '¡Copiada!'; }
@@ -225,12 +214,35 @@ function renderizarCamposMetodoPago(metodo) {
     });
   } else {
     if (btn) { btn.classList.remove('hidden'); btn.textContent = 'Pagar en el salón'; }
+    const d = datosCobroSalon;
     cont.innerHTML = `
       <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-[11px]">
-        Pagas en recepción (efectivo, datáfono o Bre-B) cuando termine tu servicio.
+        Pagas en el salón cuando termine tu servicio: en efectivo${d && d.qr ? ' o escaneando el QR de Bre-B' : ''}. No tienes que enviar comprobante: el salón confirma el pago allá.
       </div>
+      ${d && d.qr ? `<div class="grid gap-3 sm:grid-cols-[10rem_1fr] items-center">
+        ${htmlQRSalon(d.qr)}
+        <p class="text-[11px] text-white/60">Este es el QR del salón. También aparece en tu comprobante, para que lo tengas a mano el día de la cita.</p>
+      </div>` : ''}
     `;
+    if (d && d.qr) activarBotonesQR(cont, d.qr);
   }
+}
+
+// QR del salón con botones "Ver grande" y "Descargar" (se usa al pagar y en el comprobante)
+function htmlQRSalon(qr) {
+  return `<div class="space-y-2">
+    <button type="button" data-qr-ampliar class="block w-40 mx-auto" aria-label="Ver el QR en grande">
+      <img src="${qr}" alt="Código QR Bre-B del salón" class="w-40 h-40 rounded-xl bg-white p-2 object-contain">
+    </button>
+    <div class="grid grid-cols-2 gap-1.5 w-40 mx-auto">
+      <button type="button" data-qr-ampliar class="btn-secundario text-[10px] px-2 py-1.5">Ver grande</button>
+      <a href="${qr}" download="QR-BreB-BellaStyle.png" class="btn-secundario text-[10px] px-2 py-1.5 text-center">Descargar</a>
+    </div>
+  </div>`;
+}
+
+function activarBotonesQR(caja, qr) {
+  caja.querySelectorAll('[data-qr-ampliar]').forEach((b) => b.addEventListener('click', () => verQRGrande(qr)));
 }
 
 // Muestra el QR a pantalla completa para que el celular lo pueda leer desde el computador.
@@ -322,6 +334,12 @@ window.verComprobantePago = async function(idCita) {
   if (!cont) return;
 
   const pagado = pago.estado === 'Pagado';
+  const enSalon = pago.estado === 'Pendiente en Salón';
+  if (enSalon && !datosCobroSalon) {
+    const r = await pedir('/pago-salon', 'GET').catch(() => null);
+    datosCobroSalon = (r && r.success) ? r.data : null;
+  }
+  const qrSalon = enSalon && datosCobroSalon && datosCobroSalon.qr ? datosCobroSalon.qr : null;
 
   cont.innerHTML = `
     <div class="text-center space-y-1 pb-3 border-b border-white/10">
@@ -336,7 +354,7 @@ window.verComprobantePago = async function(idCita) {
 
     <div class="space-y-2">
       <div class="flex justify-between"><span class="text-white/50">Referencia:</span><strong class="font-mono text-pink-300">${escaparTextoPago(pago.referencia)}</strong></div>
-      <div class="flex justify-between"><span class="text-white/50">Fecha de Pago:</span><span class="text-white">${escaparTextoPago(pago.fecha_pago)}</span></div>
+      <div class="flex justify-between"><span class="text-white/50">${pagado ? 'Fecha de Pago:' : 'Fecha de registro:'}</span><span class="text-white">${escaparTextoPago(pago.fecha_pago)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Clienta:</span><span class="text-white font-semibold">${escaparTextoPago(pago.cliente)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Servicio:</span><span class="text-white">${escaparTextoPago(pago.servicio)}</span></div>
       <div class="flex justify-between"><span class="text-white/50">Especialista:</span><span class="text-white">${escaparTextoPago(pago.estilista)}</span></div>
@@ -348,7 +366,12 @@ window.verComprobantePago = async function(idCita) {
       <span class="text-white/70 font-semibold">Valor Total</span>
       <strong class="text-xl font-serif text-amber-300">${formatearMonedaPago(pago.monto)}</strong>
     </div>
+    ${enSalon ? `<div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-3">
+      <p class="text-[11px] text-amber-200">Paga en el salón el día de tu cita${qrSalon ? ': en efectivo o escaneando este QR de Bre-B con la app de tu banco' : ''}. El salón confirmará tu pago allá.</p>
+      ${qrSalon ? htmlQRSalon(qrSalon) : ''}
+    </div>` : ''}
   `;
+  if (qrSalon) activarBotonesQR(cont, qrSalon);
 
   const modal = document.getElementById('modalComprobantePago');
   if (modal && !modal.open) modal.showModal();
