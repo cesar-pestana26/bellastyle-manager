@@ -5,6 +5,8 @@
 // Uso:  node actualizar_bd.js
 // Usa la misma configuración que el servidor (config/config.js o variables de entorno),
 // así sirve igual para el MySQL de tu PC y para el de la nube (Aiven).
+const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
 const config = require('./config/config');
 
@@ -171,14 +173,68 @@ const HORARIO_POR_DEFECTO = `
 // para no repetirlos (si una estilista luego quita el domingo, no se le vuelve a poner).
 const MIGRACIONES_DE_DATOS = [
     ['domingos-hasta-15', `INSERT IGNORE INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
-        SELECT id_estilista, 0, '08:00', '15:00' FROM estilistas`]
+        SELECT id_estilista, 0, '08:00', '15:00' FROM estilistas`],
+    ['fotos-servicios-iniciales', (conexion) => cargarFotosIniciales(conexion)]
 ];
 
+// Fotos iniciales de los servicios: carpeta proaula_bella/img/<CARPETA>/ → servicio por su nombre.
+// Solo se cargan en los servicios que aún no tienen fotos (no pisa lo que suba la administradora).
+const CARPETA_FOTOS = path.join(__dirname, '..', 'img');
+const FOTOS_POR_SERVICIO = [
+    ['Corte de Cabello', 'CORTE DE CABELLO (UNISEX)'],
+    ['Corte Caballero', 'CORTE DE CABELLO'],
+    ['Tinte / Coloración', 'TINTE'],
+    ['Mechas / Balayage', 'MECHAS BALAYAGE'],
+    ['Peinado para Evento', 'PEINADO PARA EVENTOS'],
+    ['Manicure', 'MANICURE'],
+    ['Pedicure', 'PEDICURE'],
+    ['Tratamiento Capilar', 'TRATAMIENTO CAPILAR'],
+    ['Arreglo de Barba', 'ARREGLO DE BARBA']
+];
+const MAX_FOTOS = 6;                       // igual que fotoServicioModel.MAX_POR_SERVICIO
+const MAX_BYTES_FOTO = 1.5 * 1024 * 1024;  // igual que utils/imagenes.js
+
+function tipoDeImagen(buffer) {
+    if (buffer[0] === 0xff && buffer[1] === 0xd8) return 'image/jpeg';
+    if (buffer.slice(0, 4).toString('hex') === '89504e47') return 'image/png';
+    if (buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP') return 'image/webp';
+    return null;
+}
+
+// Devuelve false si la carpeta img no está (por ejemplo, en una imagen de Docker vieja): así se intenta de nuevo luego.
+async function cargarFotosIniciales(conexion) {
+    if (!fs.existsSync(CARPETA_FOTOS)) return false;
+    for (const [servicio, carpeta] of FOTOS_POR_SERVICIO) {
+        const dir = path.join(CARPETA_FOTOS, carpeta);
+        if (!fs.existsSync(dir)) continue;
+        const [filas] = await conexion.query(
+            `SELECT s.id_servicio, (SELECT COUNT(*) FROM fotos_servicio f WHERE f.id_servicio = s.id_servicio) AS fotos
+             FROM servicios s WHERE s.nombre = ? LIMIT 1`, [servicio]);
+        if (!filas.length || Number(filas[0].fotos) > 0) continue;
+        const archivos = fs.readdirSync(dir).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+        let puestas = 0;
+        for (const archivo of archivos) {
+            if (puestas >= MAX_FOTOS) break;
+            const datos = fs.readFileSync(path.join(dir, archivo));
+            const tipo = tipoDeImagen(datos);
+            if (!tipo || datos.length > MAX_BYTES_FOTO) continue;
+            await conexion.query('INSERT INTO fotos_servicio (id_servicio, tipo, datos) VALUES (?, ?, ?)',
+                [filas[0].id_servicio, tipo, datos]);
+            puestas++;
+        }
+    }
+    return true;
+}
+
 async function migracionesDeDatos(conexion) {
-    for (const [nombre, sql] of MIGRACIONES_DE_DATOS) {
+    for (const [nombre, tarea] of MIGRACIONES_DE_DATOS) {
         const [hecha] = await conexion.query('SELECT nombre FROM migraciones WHERE nombre = ?', [nombre]);
         if (hecha.length) continue;
-        await conexion.query(sql);
+        if (typeof tarea === 'function') {
+            if (await tarea(conexion) === false) continue;
+        } else {
+            await conexion.query(tarea);
+        }
         await conexion.query('INSERT INTO migraciones (nombre) VALUES (?)', [nombre]);
     }
 }

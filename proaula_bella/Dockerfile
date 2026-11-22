@@ -13,6 +13,7 @@ RUN cd backend && npm ci --omit=dev
 # 4. Se copia el resto del código (lo de .dockerignore no entra)
 COPY backend/ backend/
 COPY frontend/ frontend/
+COPY img/ img/
 COPY init_db.sql ./
 
 # 5. Variables por defecto (Render las reemplaza con las suyas)
