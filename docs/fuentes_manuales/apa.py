@@ -129,7 +129,8 @@ class DocAPA:
             self.parrafo('**%s**' % subtitulo, sangria=False, alinear='centro')
         self.d.add_paragraph()
         for linea in [autores, institucion, curso, profesor, fecha]:
-            self.parrafo(linea, sangria=False, alinear='centro')
+            if linea:
+                self.parrafo(linea, sangria=False, alinear='centro')
         self.salto()
 
     # ---------- tabla de contenido ----------
