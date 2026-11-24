@@ -103,8 +103,13 @@ function guardarSesion(usuario, token = null) {
   }
 }
 
+// Cierra la sesión y lleva a "Iniciar sesión" con la pestaña del rol que tenía,
+// para poder entrar otra vez o escoger otro rol (Clienta, Estilista o Administradora).
 function cerrarSesion() {
+  let rol = '';
+  try { rol = String((JSON.parse(localStorage.getItem('usuarioLogueado')) || {}).rol || '').toLowerCase(); } catch (e) { rol = ''; }
+  const pestana = rol.startsWith('admin') ? 'admin' : rol.startsWith('estilista') ? 'estilista' : 'cliente';
   localStorage.removeItem('usuarioLogueado');
   localStorage.removeItem('token');
-  window.location.href = 'welcome.html';
+  window.location.replace('index.html?rol=' + pestana);
 }

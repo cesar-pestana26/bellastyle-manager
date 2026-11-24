@@ -1253,7 +1253,5 @@ function escapar(str) {
 }
 
 window.cerrarSesionPanel = function() {
-  localStorage.removeItem('usuarioLogueado');
-  localStorage.removeItem('token');
-  window.location.replace('welcome.html');
+  cerrarSesion();   // api.js: vuelve a "Iniciar sesión" con la pestaña del rol
 };
