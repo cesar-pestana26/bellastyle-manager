@@ -54,6 +54,7 @@
           <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
           <span id="contadorCarrito" class="absolute -right-1.5 -top-1.5 hidden min-w-[1.15rem] rounded-full bg-pink-500 px-1 text-center text-[10px] font-bold leading-[1.15rem] text-white">0</span>
         </a>
+        <button type="button" data-instalar-app class="hidden whitespace-nowrap px-3 py-1.5 text-xs font-semibold rounded-full bg-pink-500 text-white hover:bg-pink-400 transition" title="Instalar BellaStyle como aplicación">Instalar app</button>
         <button type="button" class="btn-toggle-tema hidden lg:flex whitespace-nowrap px-3 py-1.5 text-xs font-semibold rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition items-center gap-1.5"></button>
         ${sesionEscritorio}
         <button type="button" id="btnMenuMovil" class="lg:hidden rounded-full border border-white/15 bg-white/5 p-2 text-white" aria-label="Abrir menú" aria-expanded="false" aria-controls="menuMovil">
