@@ -34,4 +34,18 @@ async function contactosRegistrados(idUsuario) {
     return lista;
 }
 
-module.exports = { buscarPorUsername, crear, actualizarPassword, contactosRegistrados };
+async function buscarPorId(idUsuario) {
+    const [filas] = await db.query('SELECT * FROM usuarios WHERE id_usuario = ?', [idUsuario]);
+    return filas[0] || null;
+}
+
+// Cambia la contraseña y, si viene, el teléfono de recuperación de la cuenta
+async function actualizarCuenta(idUsuario, passwordHash, telefono) {
+    if (telefono) {
+        await db.query('UPDATE usuarios SET password = ?, telefono = ? WHERE id_usuario = ?', [passwordHash, telefono, idUsuario]);
+    } else {
+        await db.query('UPDATE usuarios SET password = ? WHERE id_usuario = ?', [passwordHash, idUsuario]);
+    }
+}
+
+module.exports = { buscarPorUsername, buscarPorId, crear, actualizarPassword, actualizarCuenta, contactosRegistrados };

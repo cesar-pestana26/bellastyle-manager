@@ -26,7 +26,7 @@
 
   <link rel="stylesheet" href="css/estilos.css?v=45">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/tema.js?v=42"></script>
+  <script src="js/tema.js?v=51"></script>
 </head>
 <body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
@@ -48,7 +48,7 @@
           <span class="sm:hidden">+ Cita</span><span class="hidden sm:inline">+ Agendar Cita</span>
         </a>
 
-        <button type="button" class="btn-toggle-tema p-2 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition"></button>
+        <button type="button" class="btn-toggle-tema tema-compacto flex items-center gap-1.5 whitespace-nowrap p-2 md:px-3 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition"></button>
 
         <div class="relative menu-perfil">
           <button type="button" aria-haspopup="true" aria-expanded="false" class="menu-perfil-boton flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 transition text-xs font-semibold">
@@ -59,6 +59,7 @@
 
           <div class="menu-perfil-lista absolute right-0 mt-2 w-48 rounded-xl border border-white/15 bg-[#120f1d] p-1.5 shadow-2xl backdrop-blur-xl hidden z-50">
             <a href="welcome.html" class="block px-3 py-2 text-xs text-white/80 hover:bg-white/10 rounded-lg transition">Ir al Inicio</a>
+            <div class="my-1 border-t border-white/10"></div>
             <button type="button" onclick="cerrarSesionPanel()" class="w-full text-left px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition font-semibold">
               Cerrar Sesión
             </button>
@@ -271,6 +272,8 @@
   <script src="js/api.js?v=51"></script>
 
   <script src="js/menuPerfil.js?v=43"></script>
+  <script src="js/cambiarPassword.js?v=51"></script>
+  <script src="js/ojoPassword.js?v=51"></script>
   <script src="js/iconos.js"></script>
   <script src="js/pagos.js?v=50"></script>
   <script src="js/panel.js?v=51"></script>

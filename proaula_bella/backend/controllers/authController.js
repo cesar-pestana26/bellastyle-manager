@@ -210,4 +210,46 @@ async function recuperarPassword(req, res) {
     }
 }
 
-module.exports = { login, registrar, recuperarPassword };
+// Cambiar la contraseña con la sesión iniciada (cualquier rol).
+// Pide la contraseña actual; opcionalmente guarda un teléfono para poder recuperarla luego.
+async function cambiarPassword(req, res) {
+    const { actual, nueva } = req.body;
+    const telefono = typeof req.body.telefono === 'string' ? req.body.telefono.trim() : '';
+    if (typeof actual !== 'string' || !actual || !passwordValida(nueva)) {
+        return res.status(400).json({ success: false, message: 'Escribe tu contraseña actual y una nueva de al menos 6 caracteres.' });
+    }
+    if (telefono && !telefonoValido(telefono)) {
+        return res.status(400).json({ success: false, message: 'El teléfono debe tener 10 dígitos.' });
+    }
+    if (actual === nueva) {
+        return res.status(400).json({ success: false, message: 'La contraseña nueva debe ser distinta a la actual.' });
+    }
+
+    const clave = 'cambio:' + req.usuario.id;
+    const espera = minutosBloqueado(clave);
+    if (espera > 0) {
+        return res.status(429).json({ success: false, message: `Demasiados intentos fallidos. Espera ${espera} minuto(s) e inténtalo de nuevo.` });
+    }
+
+    try {
+        const usuario = await usuarioModel.buscarPorId(req.usuario.id);
+        if (!usuario) return res.status(404).json({ success: false, message: 'La cuenta no existe.' });
+        if (!bcrypt.compareSync(actual, usuario.password)) {
+            const quedan = registrarFallo(clave);
+            // 400 y no 401: un 401 haría que el navegador cierre la sesión
+            return res.status(400).json({ success: false, message: quedan > 0
+                ? `La contraseña actual no es correcta. Te quedan ${quedan} intento(s).`
+                : 'La contraseña actual no es correcta. Por seguridad, espera 3 minutos para volver a intentarlo.' });
+        }
+        limpiarIntentos(clave);
+        await usuarioModel.actualizarCuenta(usuario.id_usuario, bcrypt.hashSync(nueva, 10), telefono || null);
+        return res.json({ success: true, message: telefono
+            ? 'Contraseña cambiada y teléfono de recuperación guardado.'
+            : 'Contraseña cambiada.' });
+    } catch (err) {
+        console.error('Error al cambiar la contraseña:', err.message);
+        return res.status(500).json({ success: false, message: 'Error interno del servidor.' });
+    }
+}
+
+module.exports = { login, registrar, recuperarPassword, cambiarPassword };

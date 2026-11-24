@@ -28,7 +28,7 @@
 
   <link rel="stylesheet" href="css/estilos.css?v=45">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="js/tema.js?v=42"></script>
+  <script src="js/tema.js?v=51"></script>
 </head>
 <body data-sin-video class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
@@ -45,11 +45,11 @@
       </div>
 
       <nav class="flex shrink-0 items-center gap-2 sm:gap-4 text-sm font-medium">
-        <button type="button" class="btn-toggle-tema p-2 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition"></button>
+        <button type="button" class="btn-toggle-tema tema-compacto flex items-center gap-1.5 whitespace-nowrap p-2 md:px-3 text-xs rounded-full border border-white/15 bg-white/5 hover:bg-white/15 text-white transition"></button>
         <div class="relative menu-perfil">
           <button type="button" aria-haspopup="true" aria-expanded="false" class="menu-perfil-boton flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/15 transition text-xs font-semibold">
             <img id="fotoAdminHeader" src="img/logo.webp" alt="" class="h-5 w-5 rounded-full object-cover">
-            <span id="nombreAdminHeader">Administradora</span>
+            <span id="nombreAdminHeader" class="hidden sm:inline max-w-[9rem] truncate">Administradora</span>
             <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
           <div class="menu-perfil-lista absolute right-0 mt-2 w-52 rounded-xl border border-white/15 bg-[#120f1d] p-1.5 shadow-2xl backdrop-blur-xl hidden z-50">
@@ -364,6 +364,8 @@
   <script src="js/api.js?v=51"></script>
 
   <script src="js/menuPerfil.js?v=43"></script>
+  <script src="js/cambiarPassword.js?v=51"></script>
+  <script src="js/ojoPassword.js?v=51"></script>
   <script src="js/iconos.js"></script>
   <script src="js/pagos.js?v=50"></script>
   <script src="js/admin.js?v=51"></script>

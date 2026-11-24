@@ -59,9 +59,11 @@ function alternarTema() {
 function actualizarEstiloBoton(btn) {
   if (!btn) return;
   const oscuro = document.documentElement.classList.contains('oscuro');
-  btn.innerHTML = oscuro 
-    ? `${ICONO_SOL} <span>Modo claro</span>` 
-    : `${ICONO_LUNA} <span>Modo oscuro</span>`;
+  // En los paneles (botón .tema-compacto) en celular solo se ve el ícono, para no montarse sobre el encabezado
+  const claseTexto = btn.classList.contains('tema-compacto') ? ' class="hidden md:inline"' : '';
+  btn.innerHTML = oscuro
+    ? `${ICONO_SOL} <span${claseTexto}>Modo claro</span>`
+    : `${ICONO_LUNA} <span${claseTexto}>Modo oscuro</span>`;
   btn.title = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
   btn.setAttribute('aria-label', btn.title);
 }

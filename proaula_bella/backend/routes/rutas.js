@@ -76,6 +76,8 @@ router.get('/citas/:id/comprobante', sesion, cita, comprobantes.comprobante);
 router.put('/usuarios/:id/foto', sesion, mismaCuenta(), perfil.cambiarFoto);
 router.delete('/usuarios/:id/foto', sesion, mismaCuenta(), perfil.quitarFoto);
 router.put('/usuarios/:id/nombre', sesion, mismaCuenta(), perfil.cambiarNombre);
+// Cambiar la contraseña: siempre la de la cuenta que inició sesión (pide la contraseña actual)
+router.put('/mi-cuenta/password', sesion, auth.cambiarPassword);
 router.get('/estilistas/usuario/:idUsuario', sesion, mismaCuenta('idUsuario'), catalogo.estilistaPorUsuario);
 router.get('/clientas/usuario/:idUsuario', sesion, mismaCuenta('idUsuario'), catalogo.clientaPorUsuario);
 router.put('/clientas/:id', sesion, mismaClienta(), gestion.editarClienta);
