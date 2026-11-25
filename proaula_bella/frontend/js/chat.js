@@ -49,7 +49,8 @@ document.body.insertAdjacentHTML('beforeend', `
     </div>
 
     <!-- Saludo pequeño: aparece a los 10 segundos. Al tocarlo se abren las opciones -->
-    <div id="chatSaludo" class="hidden items-center gap-1 rounded-full border border-tinta/10 bg-white py-1 pl-1 pr-1 shadow-lg shadow-tinta/20 animate-aparecer">
+    <!-- El fondo usa la variable del tema (--blanco) para verse bien en modo claro y oscuro -->
+    <div id="chatSaludo" style="background-color: rgb(var(--blanco))" class="hidden items-center gap-1 rounded-full border border-tinta/10 py-1 pl-1 pr-1 shadow-lg shadow-tinta/20 animate-aparecer">
       <button type="button" id="chatSaludoAbrir" class="flex items-center gap-2 rounded-full pr-1 text-left">
         <img src="img/logo.webp" alt="" class="h-8 w-8 shrink-0 rounded-full">
         <span class="text-xs leading-tight text-tinta"><span class="font-semibold">¡Hola! 👋</span> ¿Precios o una cita? Te ayudo</span>
