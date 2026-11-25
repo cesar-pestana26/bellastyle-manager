@@ -48,13 +48,22 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
     </div>
 
-    <!-- Invitación: aparece a los 10 segundos con preguntas rápidas -->
-    <div id="chatInvitacion" class="hidden w-[19rem] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-tinta/10 bg-white p-4 shadow-2xl shadow-tinta/20 animate-aparecer">
+    <!-- Saludo pequeño: aparece a los 10 segundos. Al tocarlo se abren las opciones -->
+    <div id="chatSaludo" class="hidden items-center gap-1 rounded-full border border-tinta/10 bg-white py-1 pl-1 pr-1 shadow-lg shadow-tinta/20 animate-aparecer">
+      <button type="button" id="chatSaludoAbrir" class="flex items-center gap-2 rounded-full pr-1 text-left">
+        <img src="img/logo.webp" alt="" class="h-8 w-8 shrink-0 rounded-full">
+        <span class="text-xs leading-tight text-tinta"><span class="font-semibold">¡Hola! 👋</span> ¿Precios o una cita? Te ayudo</span>
+      </button>
+      <button type="button" id="chatSaludoCerrar" class="rounded-full px-1.5 text-lg leading-none text-tinta/60 hover:bg-tinta/10" aria-label="Cerrar saludo">&times;</button>
+    </div>
+
+    <!-- Opciones rápidas: se muestran al tocar el saludo -->
+    <div id="chatInvitacion" class="hidden w-[17rem] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-tinta/10 bg-white p-3 shadow-2xl shadow-tinta/20 animate-aparecer">
       <div class="flex items-start gap-3">
-        <img src="img/logo.webp" alt="" class="h-10 w-10 shrink-0 rounded-full">
+        <img src="img/logo.webp" alt="" class="h-8 w-8 shrink-0 rounded-full">
         <div class="min-w-0 flex-1">
-          <p class="text-sm font-semibold text-tinta">¡Hola! Soy Bella 👋</p>
-          <p class="text-sm text-tinta/80">¿Te ayudo con algo? Elige una opción:</p>
+          <p class="text-sm font-semibold text-tinta">Soy Bella 👋</p>
+          <p class="text-xs text-tinta/80">Elige una opción:</p>
         </div>
         <button type="button" id="chatInvitacionCerrar" class="-mr-1 -mt-1 rounded-lg px-1.5 text-xl leading-none text-tinta/60 hover:bg-tinta/10" aria-label="Cerrar">&times;</button>
       </div>
@@ -257,10 +266,19 @@ document.getElementById('chatFormMensaje').addEventListener('submit', async (e) 
 });
 
 // --- Invitación automática: a los 10 segundos de entrar, Bella saluda ---
-// Sale una sola vez por visita (sessionStorage) y no aparece si el chat ya está abierto.
+// Primero sale un saludo pequeño (carita + mensaje corto). Al tocarlo se muestran
+// las opciones rápidas. Sale una sola vez por visita (sessionStorage) y no aparece
+// si el chat ya está abierto.
 const invitacion = document.getElementById('chatInvitacion');
+const saludo = document.getElementById('chatSaludo');
+
+function ocultarSaludo() {
+    saludo.classList.add('hidden');
+    saludo.classList.remove('flex');
+}
 
 function ocultarInvitacion() {
+    ocultarSaludo();
     invitacion.classList.add('hidden');
     try { sessionStorage.setItem('bellaInvitacion', 'vista'); } catch (e) { /* sin guardado */ }
 }
@@ -271,9 +289,15 @@ function yaSeMostroInvitacion() {
 
 setTimeout(() => {
     if (chat.abierto || yaSeMostroInvitacion()) return;
-    invitacion.classList.remove('hidden');
+    saludo.classList.remove('hidden');
+    saludo.classList.add('flex');
 }, 10000);
 
+document.getElementById('chatSaludoAbrir').addEventListener('click', () => {
+    ocultarSaludo();
+    invitacion.classList.remove('hidden');
+});
+document.getElementById('chatSaludoCerrar').addEventListener('click', ocultarInvitacion);
 document.getElementById('chatInvitacionCerrar').addEventListener('click', ocultarInvitacion);
 burbuja.addEventListener('click', ocultarInvitacion);
 invitacion.querySelectorAll('[data-pregunta]').forEach((boton) => boton.addEventListener('click', () => {
