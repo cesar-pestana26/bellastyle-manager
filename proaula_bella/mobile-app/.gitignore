@@ -4,3 +4,4 @@ dist/
 .idea/
 cambios_web.zip
 src/entrypoint/gui/views/HomeView.vue
+vista_previa.zip
