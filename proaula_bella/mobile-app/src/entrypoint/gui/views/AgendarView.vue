@@ -13,7 +13,7 @@ const fotos = ref<FotoServicio[]>([]);
 const filtro = ref<'Todos' | 'Mujer' | 'Hombre'>('Todos');
 
 const idServicio = ref(0);
-const idEstilista = ref(0);          // 0 = Cualquiera disponible
+const idEstilista = ref(0);
 const fecha = ref(hoyColombia());
 const horas = ref<string[]>([]);
 const hora = ref('');
@@ -28,7 +28,7 @@ const exito = ref('');
 const serviciosFiltrados = computed(() =>
   servicios.value.filter((s) => filtro.value === 'Todos' || s.publico === filtro.value || s.publico === 'Unisex'));
 const servicio = computed(() => servicios.value.find((s) => s.id_servicio === idServicio.value));
-// Solo las estilistas que saben hacer el servicio elegido
+
 const estilistasDelServicio = computed(() =>
   estilistas.value.filter((e) => String(e.ids_servicios || '').split(',').map(Number).includes(idServicio.value)));
 

@@ -1,10 +1,5 @@
-// js/catalogo.js - Piezas compartidas del inicio, la galería y la tienda:
-// tarjetas de productos con foto real (o un ícono si no tiene) y el carrito.
-// El carrito se guarda en el navegador (localStorage) hasta que la clienta hace el pedido.
-
 const CLAVE_CARRITO = 'carritoBellaStyle';
 
-// Ícono según el nombre del producto, para los que aún no tienen foto
 function iconoProducto(nombre) {
   const n = String(nombre || '').toLowerCase();
   if (/shampoo|champ/.test(n)) return '🧴';
@@ -22,18 +17,16 @@ function imagenProducto(p, alto = 'h-40') {
     : `<div class="${alto} w-full rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-5xl" aria-hidden="true">${iconoProducto(p.nombre)}</div>`;
 }
 
-// ---------- Carrito ----------
 function leerCarrito() {
   try { return JSON.parse(localStorage.getItem(CLAVE_CARRITO)) || []; } catch (e) { return []; }
 }
 
 function guardarCarrito(items) {
-  try { localStorage.setItem(CLAVE_CARRITO, JSON.stringify(items)); } catch (e) { /* sin almacenamiento */ }
+  try { localStorage.setItem(CLAVE_CARRITO, JSON.stringify(items)); } catch (e) {  }
   if (window.actualizarContadorCarrito) window.actualizarContadorCarrito();
   document.dispatchEvent(new CustomEvent('carrito-cambio'));
 }
 
-// Agrega un producto (o suma uno más si ya estaba). No deja pasar del stock.
 function agregarAlCarrito(p) {
   const items = leerCarrito();
   const existente = items.find((i) => i.id === p.id_producto);

@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crear Cuenta | BellaStyle</title>
-  <!-- Vista previa al compartir el enlace (WhatsApp, Facebook, etc.) -->
   <meta name="description" content="Salón de belleza en Cartagena de Indias. Agenda tu cita en línea, paga con QR Bre-B y compra productos. Descarga la app para Android.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="BellaStyle">
@@ -38,7 +37,6 @@
     <div class="flex flex-1 flex-col px-4 sm:px-6 pt-4 pb-24 sm:pb-6">
 
       <main class="relative flex-1 flex items-center justify-center py-8">
-        <!-- Silueta del salón de fondo (decorativa) -->
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
           <div class="md:-translate-x-[16rem] lg:-translate-x-[22rem] xl:-translate-x-[27rem]">
             <div class="animar-flotar">
@@ -49,7 +47,6 @@
         </div>
         <section class="relative z-10 tarjeta w-full max-w-xl p-8 shadow-2xl">
 
-          <!-- Selector de Rol dinámico -->
           <div id="selectorRol" class="grid grid-cols-3 gap-1 rounded-xl bg-white/5 p-1 text-xs"></div>
 
           <div class="mt-6 flex items-center gap-4">
@@ -79,7 +76,6 @@
               </div>
             </div>
 
-            <!-- Contacto (todos los roles): se usa para recuperar la contraseña -->
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label for="telefono" class="etiqueta">Teléfono</label>
@@ -92,7 +88,6 @@
               <p class="sm:col-span-2 -mt-2 text-xs text-white/60">Escribe al menos uno: lo necesitarás si olvidas tu contraseña.</p>
             </div>
 
-            <!-- Campos solo para Clienta -->
             <div data-solo="cliente" class="grid gap-4 sm:grid-cols-2">
               <div class="sm:col-span-2">
                 <label for="profesion" class="etiqueta">Profesión u ocupación (opcional)</label>
@@ -105,7 +100,6 @@
               </div>
             </div>
 
-            <!-- Campos solo para Estilista -->
             <div data-solo="estilista" class="space-y-2">
               <label class="etiqueta">Servicios que dominas</label>
               <div id="listaServicios" class="grid gap-2 sm:grid-cols-2 max-h-48 overflow-y-auto p-2 bg-white/5 rounded-xl border border-white/10 text-xs">
@@ -113,7 +107,6 @@
               </div>
             </div>
 
-            <!-- Campos solo para Administradora -->
             <div data-solo="admin">
               <label for="codigo" class="etiqueta">Código de administradora</label>
               <input id="codigo" class="campo" type="password" placeholder="Código maestro entregado por la dueña">
@@ -130,7 +123,6 @@
       </footer>
 
     </div>
-  
 
   <script src="js/api.js?v=51"></script>
   <script src="js/registro.js?v=49"></script>

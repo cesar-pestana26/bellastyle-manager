@@ -1,4 +1,3 @@
-// Modelo de la tabla calificaciones (estrellas que deja la clienta después de su cita)
 const db = require('../config/db');
 
 async function crear({ idCita, estrellas, comentario }) {
@@ -14,7 +13,6 @@ async function buscarPorCita(idCita) {
     return filas[0] || null;
 }
 
-// Opiniones que ha recibido una estilista, la más reciente primero
 async function listarPorEstilista(idEstilista) {
     const [filas] = await db.query(`
         SELECT cal.estrellas, cal.comentario,

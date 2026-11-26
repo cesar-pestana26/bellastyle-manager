@@ -1,5 +1,3 @@
-
-
 let usuarioAdmin = null;
 let citasGlobales = [];
 let serviciosGlobales = [];
@@ -73,10 +71,6 @@ function verificarAccesoAdmin() {
   }
 }
 
-// ---------------------------------------------------------------
-// FOTO DE PERFIL ADMINISTRADORA (/api/usuarios/:id/foto)
-// ---------------------------------------------------------------
-
 function fotoDeUsuario(idUsuario) {
   return `/api/usuarios/${idUsuario}/foto?v=${versionFotoAdmin}`;
 }
@@ -149,10 +143,6 @@ function comprimirImagenAdmin(archivo, maxLado = 1200) {
   });
 }
 
-// ---------------------------------------------------------------
-// CARGA REAL DESDE MYSQL
-// ---------------------------------------------------------------
-
 function normalizarCitaAdmin(c) {
   return {
     id: c.id_cita ?? c.id,
@@ -218,10 +208,6 @@ async function cargarDatosAdministrador() {
     console.error('Error cargando datos del panel administrador:', e);
   }
 }
-
-// ---------------------------------------------------------------
-// MÉTRICAS Y TABLA DE CITAS
-// ---------------------------------------------------------------
 
 function renderizarMetricasGanancias() {
   const contenedor = document.getElementById('metricasAdminPanel');
@@ -349,10 +335,6 @@ window.actualizarEstado = async function(idCita, nuevoEstado) {
   renderizarTablaGanancias();
 };
 
-// ---------------------------------------------------------------
-// PAGOS EN MYSQL (/api/pagos)
-// ---------------------------------------------------------------
-
 function renderizarTablaPagos() {
   const tabla = document.getElementById('tablaPagosAdmin');
   if (!tabla) return;
@@ -390,7 +372,6 @@ function renderizarTablaPagos() {
   `).join('');
 }
 
-// La transferencia Bre-B no aparece en la cuenta: se rechaza y la clienta puede pagar de nuevo
 window.rechazarPagoAdmin = async function(idPago) {
   const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', { estado: 'Rechazado' });
   notificarAdmin((resp && resp.message) || 'No se pudo actualizar el pago');
@@ -398,7 +379,6 @@ window.rechazarPagoAdmin = async function(idPago) {
   renderizarTablaPagos();
 };
 
-// metodo (opcional): cómo pagó en el salón, 'Efectivo / Salón' o 'Bre-B' (QR)
 window.confirmarCobroAdmin = async function(idPago, metodo) {
   const datos = metodo ? { estado: 'Pagado', metodo } : { estado: 'Pagado' };
   const resp = await pedir(`/pagos/${idPago}/estado`, 'PUT', datos);
@@ -410,10 +390,6 @@ window.confirmarCobroAdmin = async function(idPago, metodo) {
   pagosGlobales = await cargarPagosDesdeServidor('Administradora');
   renderizarTablaPagos();
 };
-
-// ---------------------------------------------------------------
-// BANDEJA DE MENSAJES DE BELLA (/conversaciones)
-// ---------------------------------------------------------------
 
 async function cargarConversaciones() {
   const lista = document.getElementById('listaConversacionesAdmin');
@@ -566,10 +542,6 @@ function prepararChatAdmin() {
   }, 5000);
 }
 
-// ---------------------------------------------------------------
-// HISTORIAL DE CLIENTA Y NOTAS DEL SERVICIO
-// ---------------------------------------------------------------
-
 window.verHistorialClienta = async function(idClienta) {
   const resp = await pedir(`/clientas/${idClienta}/historial`, 'GET');
   const datos = resp && resp.data;
@@ -643,10 +615,6 @@ window.editarNotasServicio = function(idCita) {
   );
 };
 
-// ---------------------------------------------------------------
-// LIQUIDACIÓN Y COMISIONES (60/40)
-// ---------------------------------------------------------------
-
 function renderizarTablaGanancias() {
   const tabla = document.getElementById('tablaGananciasAdmin');
   if (!tabla) return;
@@ -685,10 +653,6 @@ function renderizarTablaGanancias() {
     </tr>
   `).join('');
 }
-
-// ---------------------------------------------------------------
-// SERVICIOS Y FOTOS DE SERVICIOS (/servicios/:id/fotos)
-// ---------------------------------------------------------------
 
 function renderizarTablaServicios() {
   const tabla = document.getElementById('tablaServiciosAdmin');
@@ -843,10 +807,6 @@ window.modalEditarServicio = function(idServicio) {
   );
 };
 
-// ---------------------------------------------------------------
-// PRODUCTOS Y FOTOS DE PRODUCTOS (/productos/:id/foto)
-// ---------------------------------------------------------------
-
 function renderizarTablaProductos() {
   const tabla = document.getElementById('tablaProductosAdmin');
   if (!tabla) return;
@@ -983,10 +943,6 @@ window.modalEditarProducto = function(idProducto) {
   );
 };
 
-// ---------------------------------------------------------------
-// EQUIPO, HORARIOS, AUSENCIAS Y CALIFICACIONES
-// ---------------------------------------------------------------
-
 function renderizarTablaEquipo() {
   const tabla = document.getElementById('tablaEquipoAdmin');
   if (!tabla) return;
@@ -1034,7 +990,6 @@ window.editarHorarioAdmin = async function(idEstilista, nombre) {
   const datos = resp && resp.data;
   if (!datos) return notificarAdmin('No se pudo cargar el horario.');
 
-  // Domingo al final; ese día el salón cierra a las 15:00
   const filas = [1, 2, 3, 4, 5, 6, 0].map((dia) => {
     const h = (datos.horario || []).find((x) => Number(x.dia_semana) === dia);
     const cierre = dia === 0 ? 15 * 60 : 19 * 60;
@@ -1135,10 +1090,6 @@ window.verOpinionesEstilistaAdmin = async function(idEstilista, nombre) {
 
   abrirModalAdmin(`Calificaciones · ${nombre}`, html, null);
 };
-
-// ---------------------------------------------------------------
-// VITRINA DEL SALÓN (/vitrina?todas=1)
-// ---------------------------------------------------------------
 
 function verFotoGrandeAdmin(url, texto) {
   const visor = document.getElementById('visorFotoAdmin');
@@ -1244,10 +1195,6 @@ window.agregarAVitrinaSalon = function() {
     await cargarVitrinaSalon();
   });
 };
-
-// ---------------------------------------------------------------
-// NAVEGACIÓN DE PESTAÑAS, MODAL Y UTILIDADES
-// ---------------------------------------------------------------
 
 window.switchTabAdmin = function(tab) {
   const secciones = {
@@ -1356,5 +1303,5 @@ function escapar(str) {
 }
 
 window.cerrarSesionAdmin = function() {
-  cerrarSesion();   // api.js: vuelve a "Iniciar sesión" con la pestaña del rol
+  cerrarSesion();
 };

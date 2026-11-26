@@ -1,7 +1,6 @@
 import type { SessionStore } from '../../domain/ports/out/SessionStore';
 import type { BellaSession, ItemCarritoBella } from '../../domain/model/BellaModels';
 
-// Adaptador de almacenamiento: guarda la sesión (con el token) y el carrito en el celular
 export const SESSION_KEY = 'bellaSesionMovil';
 export const CART_KEY = 'bellaCarritoMovil';
 

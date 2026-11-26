@@ -1,6 +1,3 @@
-// js/cambiarPassword.js - "Cambiar contraseña" en el menú del nombre (paneles de los tres roles).
-// Pide la contraseña actual y la nueva dos veces. Opcional: un teléfono de 10 dígitos para
-// poder recuperar la contraseña después. Llama a PUT /api/mi-cuenta/password.
 (function () {
   const listas = document.querySelectorAll('.menu-perfil-lista');
   if (!listas.length) return;
@@ -73,7 +70,6 @@
     setTimeout(() => ventana.close(), 1600);
   });
 
-  // Opción en el menú, justo antes de la línea que separa "Cerrar Sesión"
   listas.forEach((lista) => {
     const opcion = document.createElement('button');
     opcion.type = 'button';

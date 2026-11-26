@@ -1,12 +1,7 @@
-// Modelo de la tabla fotos_servicio: fotos que la administradora sube para cada servicio.
-// La imagen se guarda DENTRO de la base de datos (columna MEDIUMBLOB) y no en una carpeta,
-// porque en servidores gratis (Render, Railway) los archivos subidos se borran
-// cada vez que el servidor se reinicia; la base de datos (Aiven) sí los conserva.
 const db = require('../config/db');
 
 const MAX_POR_SERVICIO = 6;
 
-// Lista sin la imagen (solo ids), para armar las direcciones /api/fotos/:id
 async function listar(idServicio) {
     const sql = idServicio
         ? 'SELECT id_foto, id_servicio FROM fotos_servicio WHERE id_servicio = ? ORDER BY id_foto'

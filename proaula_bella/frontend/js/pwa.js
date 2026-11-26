@@ -1,7 +1,3 @@
-// js/pwa.js - Convierte BellaStyle en aplicación instalable (PWA).
-// 1. Registra el service worker (sw.js) para que la app abra rápido y avise si no hay internet.
-// 2. Cuando el navegador permite instalar, muestra los botones "Instalar app"
-//    (los que tienen data-instalar-app y una opción en el menú del perfil de los paneles).
 (function () {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -9,7 +5,7 @@
     });
   }
 
-  let aviso = null;   // evento beforeinstallprompt guardado para usarlo al tocar el botón
+  let aviso = null;
 
   function instalar() {
     if (!aviso) return;
@@ -22,7 +18,6 @@
   }
 
   function prepararBotones() {
-    // Opción en el menú del nombre de los paneles (clienta, estilista y administradora)
     document.querySelectorAll('.menu-perfil-lista').forEach((lista) => {
       if (lista.querySelector('[data-instalar-app]')) return;
       const b = document.createElement('button');

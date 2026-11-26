@@ -1,9 +1,5 @@
-// Modelo de las tablas horarios (días y horas de trabajo) y ausencias (vacaciones, permisos)
 const db = require('../config/db');
 
-// --- Horarios ---
-
-// Horario semanal de una estilista, de lunes a sábado
 async function obtenerHorario(idEstilista) {
     const [filas] = await db.query(
         `SELECT dia_semana, TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio, TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin
@@ -13,7 +9,6 @@ async function obtenerHorario(idEstilista) {
     return filas;
 }
 
-// Horario de un solo día, o null si ese día no trabaja
 async function horarioDelDia(idEstilista, diaSemana) {
     const [filas] = await db.query(
         `SELECT TIME_FORMAT(hora_inicio, '%H:%i') AS hora_inicio, TIME_FORMAT(hora_fin, '%H:%i') AS hora_fin
@@ -23,8 +18,6 @@ async function horarioDelDia(idEstilista, diaSemana) {
     return filas[0] || null;
 }
 
-// Reemplaza el horario completo (se usa dentro de una transacción).
-// dias: [{ dia: 1, inicio: '08:00', fin: '19:00' }, ...]
 async function reemplazarHorario(conexion, idEstilista, dias) {
     await conexion.query('DELETE FROM horarios WHERE id_estilista = ?', [idEstilista]);
     for (const d of dias) {
@@ -35,14 +28,11 @@ async function reemplazarHorario(conexion, idEstilista, dias) {
     }
 }
 
-// Horario de una estilista nueva: lunes a sábado de 8:00 a 19:00 y domingo de 8:00 a 15:00
 async function crearPorDefecto(conexion, idEstilista) {
     const dias = [1, 2, 3, 4, 5, 6].map((dia) => ({ dia, inicio: '08:00', fin: '19:00' }));
     dias.push({ dia: 0, inicio: '08:00', fin: '15:00' });
     await reemplazarHorario(conexion, idEstilista, dias);
 }
-
-// --- Ausencias ---
 
 async function listarAusencias(idEstilista) {
     const [filas] = await db.query(
@@ -54,7 +44,6 @@ async function listarAusencias(idEstilista) {
     return filas;
 }
 
-// ¿La estilista está ausente ese día?
 async function ausenteEn(idEstilista, fecha) {
     const [filas] = await db.query(
         'SELECT COUNT(*) AS total FROM ausencias WHERE id_estilista = ? AND ? BETWEEN fecha_inicio AND fecha_fin',
@@ -71,7 +60,6 @@ async function crearAusencia({ idEstilista, desde, hasta, motivo }) {
     return resultado.insertId;
 }
 
-// Citas activas (pendientes o confirmadas) de la estilista entre dos fechas
 async function citasActivasEntre(idEstilista, desde, hasta) {
     const [filas] = await db.query(
         `SELECT COUNT(*) AS total FROM citas

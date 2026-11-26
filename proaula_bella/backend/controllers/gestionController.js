@@ -1,4 +1,3 @@
-// Controlador de gestión: crear y editar servicios, productos, estilistas y clientas
 const db = require('../config/db');
 const servicioModel = require('../models/servicioModel');
 const productoModel = require('../models/productoModel');
@@ -6,7 +5,6 @@ const estilistaModel = require('../models/estilistaModel');
 const clienteModel = require('../models/clienteModel');
 const { nombreValido, telefonoValido } = require('../utils/validators');
 
-// Revisa que un número sea entero y no negativo (precio, stock, duración)
 function numeroValido(valor) {
     return Number.isInteger(Number(valor)) && Number(valor) >= 0;
 }
@@ -20,13 +18,8 @@ function errorServidor(res, err) {
     res.status(500).json({ success: false, message: 'No se pudo guardar el cambio.' });
 }
 
-// ---------------------------------------------------------------
-// SERVICIOS
-// ---------------------------------------------------------------
-
 const PUBLICOS = ['Mujer', 'Hombre', 'Unisex'];
 
-// El panel envía duracion_min; se acepta también duracion. El público por defecto es Unisex.
 function normalizarServicio(body) {
     if (body.duracion === undefined && body.duracion_min !== undefined) body.duracion = body.duracion_min;
     if (!body.publico) body.publico = 'Unisex';
@@ -43,7 +36,6 @@ function validarServicio(body) {
     return null;
 }
 
-// POST /api/servicios   Recibe: { nombre, precio, duracion }
 async function crearServicio(req, res) {
     const error = validarServicio(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -54,7 +46,6 @@ async function crearServicio(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// PUT /api/servicios/:id   Recibe: { nombre, precio, duracion }
 async function editarServicio(req, res) {
     const error = validarServicio(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -66,7 +57,6 @@ async function editarServicio(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// PUT /api/servicios/:id/estado   Recibe: { estado: 'Disponible' | 'No disponible' }
 async function estadoServicio(req, res) {
     const { estado } = req.body;
     if (!['Disponible', 'No disponible'].includes(estado)) {
@@ -79,10 +69,6 @@ async function estadoServicio(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// ---------------------------------------------------------------
-// PRODUCTOS
-// ---------------------------------------------------------------
-
 function validarProducto(body) {
     if (!textoValido(body.nombre)) return 'El nombre debe tener entre 2 y 100 caracteres.';
     if (!numeroValido(body.precio) || Number(body.precio) === 0) return 'El precio debe ser un número mayor que cero.';
@@ -90,7 +76,6 @@ function validarProducto(body) {
     return null;
 }
 
-// POST /api/productos   Recibe: { nombre, precio, stock }
 async function crearProducto(req, res) {
     const error = validarProducto(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -101,7 +86,6 @@ async function crearProducto(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// PUT /api/productos/:id   Recibe: { nombre, precio, stock }
 async function editarProducto(req, res) {
     const error = validarProducto(req.body);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -113,7 +97,6 @@ async function editarProducto(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// PUT /api/productos/:id/estado   Recibe: { estado: 'Activo' | 'Inactivo' }
 async function estadoProducto(req, res) {
     const { estado } = req.body;
     if (!['Activo', 'Inactivo'].includes(estado)) {
@@ -126,12 +109,6 @@ async function estadoProducto(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// ---------------------------------------------------------------
-// ESTILISTAS
-// ---------------------------------------------------------------
-
-// PUT /api/estilistas/:id/estado   Recibe: { estado: 'Activo' | 'Inactivo' }
-// Una estilista inactiva no recibe citas nuevas.
 async function estadoEstilista(req, res) {
     const { estado } = req.body;
     if (!['Activo', 'Inactivo'].includes(estado)) {
@@ -144,14 +121,12 @@ async function estadoEstilista(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// PUT /api/estilistas/:id/servicios   Recibe: { servicios: [1, 4, 7] }
 async function serviciosEstilista(req, res) {
     const servicios = Array.isArray(req.body.servicios) ? req.body.servicios.map(Number) : [];
     if (servicios.length === 0) {
         return res.status(400).json({ success: false, message: 'Selecciona al menos un servicio.' });
     }
 
-    // Transacción: se borran los servicios anteriores y se guardan los nuevos juntos
     const conexion = await db.getConnection();
     try {
         await conexion.beginTransaction();
@@ -166,11 +141,6 @@ async function serviciosEstilista(req, res) {
     }
 }
 
-// ---------------------------------------------------------------
-// CLIENTAS
-// ---------------------------------------------------------------
-
-// PUT /api/clientas/:id   Recibe: { nombres, apellidos, telefono, email, profesion }
 async function editarClienta(req, res) {
     const { nombres, apellidos, telefono, email } = req.body;
     const profesion = typeof req.body.profesion === 'string' ? req.body.profesion.trim() : '';

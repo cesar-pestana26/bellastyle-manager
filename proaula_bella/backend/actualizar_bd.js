@@ -1,10 +1,3 @@
-// Agrega las tablas nuevas (horarios, ausencias, calificaciones, chat de citas, fotos de servicios y productos, fotos de perfil, vitrina,
-// profesión de la clienta, notas del servicio y límite de reprogramación)
-// a una base que ya existe, SIN borrar ningún dato.
-// Se puede ejecutar varias veces: si una tabla ya existe, no la toca.
-// Uso:  node actualizar_bd.js
-// Usa la misma configuración que el servidor (config/config.js o variables de entorno),
-// así sirve igual para el MySQL de tu PC y para el de la nube (Aiven).
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -87,12 +80,12 @@ const TABLAS = [
         fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
     )`,
-    // Cambios de datos que deben hacerse una sola vez (ej: abrir los domingos)
+
     `CREATE TABLE IF NOT EXISTS migraciones (
         nombre    VARCHAR(60) PRIMARY KEY,
         aplicada  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
-    // Datos de cobro del salón (una fila): llave Bre-B, titular y QR
+
     `CREATE TABLE IF NOT EXISTS pago_salon (
         id          TINYINT PRIMARY KEY DEFAULT 1,
         llave       VARCHAR(80),
@@ -101,7 +94,7 @@ const TABLAS = [
         qr_datos    MEDIUMBLOB,
         actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`,
-    // Pedidos de la tienda: el encabezado del pedido y sus productos
+
     `CREATE TABLE IF NOT EXISTS pedidos (
         id_pedido   INT AUTO_INCREMENT PRIMARY KEY,
         id_clienta  INT NOT NULL,
@@ -121,30 +114,24 @@ const TABLAS = [
     )`
 ];
 
-// Columnas nuevas en tablas que ya existen: [tabla, columna, definición].
-// MySQL no tiene "ADD COLUMN IF NOT EXISTS", así que primero se pregunta si ya está.
 const COLUMNAS = [
     ['clientas', 'profesion', 'VARCHAR(80) NULL'],
     ['citas', 'notas_servicio', 'VARCHAR(500) NULL'],
     ['citas', 'reprogramaciones', 'TINYINT NOT NULL DEFAULT 0'],
-    // Teléfono y correo de cada cuenta (estilistas y administradora), para recuperar la contraseña
+
     ['usuarios', 'telefono', 'VARCHAR(30) NULL'],
     ['usuarios', 'email', 'VARCHAR(120) NULL'],
-    // Para quién es cada servicio: filtra el catálogo por Mujer, Hombre o Unisex
+
     ['servicios', 'publico', "ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex'"],
-    // Número de la transferencia Bre-B que escribe la clienta al pagar con el QR
+
     ['pagos', 'comprobante', 'VARCHAR(40) NULL']
 ];
 
-// Listas (ENUM) que crecieron: se amplían sin perder los valores que ya existen
 const ENUMS = [
     ['pagos', 'metodo', "ENUM('Bre-B','Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón'", 'Bre-B'],
     ['pagos', 'estado', "ENUM('Pagado','Por verificar','Pendiente en Salón','Rechazado','Reembolsado') NOT NULL DEFAULT 'Pagado'", 'Por verificar']
 ];
 
-// Se ejecuta una sola vez, cuando se crea la columna servicios.publico:
-// marca los servicios de mujer y agrega dos servicios de caballero,
-// asignados a las estilistas que ya hacen "Corte de Cabello".
 async function datosPublico(conexion) {
     await conexion.query(`UPDATE servicios SET publico = 'Mujer'
         WHERE nombre IN ('Manicure', 'Pedicure', 'Mechas / Balayage', 'Peinado para Evento')`);
@@ -160,8 +147,6 @@ async function datosPublico(conexion) {
     }
 }
 
-// Las estilistas que todavía no tienen horario reciben el de siempre:
-// lunes a sábado de 8:00 a 19:00 y domingo de 8:00 a 15:00.
 const HORARIO_POR_DEFECTO = `
     INSERT INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
     SELECT e.id_estilista, d.dia, '08:00', IF(d.dia = 0, '15:00', '19:00')
@@ -169,8 +154,6 @@ const HORARIO_POR_DEFECTO = `
     CROSS JOIN (SELECT 0 AS dia UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) d
     WHERE NOT EXISTS (SELECT 1 FROM horarios h WHERE h.id_estilista = e.id_estilista)`;
 
-// Cambios de datos que se aplican una sola vez. Se anotan en la tabla migraciones
-// para no repetirlos (si una estilista luego quita el domingo, no se le vuelve a poner).
 const MIGRACIONES_DE_DATOS = [
     ['domingos-hasta-15', `INSERT IGNORE INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin)
         SELECT id_estilista, 0, '08:00', '15:00' FROM estilistas`],
@@ -178,8 +161,6 @@ const MIGRACIONES_DE_DATOS = [
     ['fotos-productos-iniciales', (conexion) => cargarFotosProductos(conexion)]
 ];
 
-// Fotos iniciales de los servicios: carpeta proaula_bella/img/<CARPETA>/ → servicio por su nombre.
-// Solo se cargan en los servicios que aún no tienen fotos (no pisa lo que suba la administradora).
 const CARPETA_FOTOS = path.join(__dirname, '..', 'img');
 const FOTOS_POR_SERVICIO = [
     ['Corte de Cabello', 'CORTE DE CABELLO (UNISEX)'],
@@ -192,8 +173,8 @@ const FOTOS_POR_SERVICIO = [
     ['Tratamiento Capilar', 'TRATAMIENTO CAPILAR'],
     ['Arreglo de Barba', 'ARREGLO DE BARBA']
 ];
-const MAX_FOTOS = 6;                       // igual que fotoServicioModel.MAX_POR_SERVICIO
-const MAX_BYTES_FOTO = 1.5 * 1024 * 1024;  // igual que utils/imagenes.js
+const MAX_FOTOS = 6;
+const MAX_BYTES_FOTO = 1.5 * 1024 * 1024;
 
 function tipoDeImagen(buffer) {
     if (buffer[0] === 0xff && buffer[1] === 0xd8) return 'image/jpeg';
@@ -202,7 +183,6 @@ function tipoDeImagen(buffer) {
     return null;
 }
 
-// Devuelve false si la carpeta img no está (por ejemplo, en una imagen de Docker vieja): así se intenta de nuevo luego.
 async function cargarFotosIniciales(conexion) {
     if (!fs.existsSync(CARPETA_FOTOS)) return false;
     for (const [servicio, carpeta] of FOTOS_POR_SERVICIO) {
@@ -227,7 +207,6 @@ async function cargarFotosIniciales(conexion) {
     return true;
 }
 
-// Foto inicial de cada producto de la tienda (una por producto), solo si aún no tiene foto.
 const FOTOS_POR_PRODUCTO = [
     ['Shampoo Hidratante', 'SHAMPOO/SHAMPOO.jfif'],
     ['Mascarilla Capilar', 'MASCARILLA CAPILAR/MASCARILLA.jfif'],
@@ -243,7 +222,7 @@ async function cargarFotosProductos(conexion) {
         const datos = fs.readFileSync(ruta);
         const tipo = tipoDeImagen(datos);
         if (!tipo || datos.length > MAX_BYTES_FOTO) continue;
-        // INSERT ... SELECT: solo si existe el producto y todavía no tiene foto
+
         await conexion.query(
             `INSERT INTO fotos_producto (id_producto, tipo, datos)
              SELECT p.id_producto, ?, ? FROM productos p
@@ -296,10 +275,8 @@ async function actualizar() {
     console.log(`Horarios por defecto creados: ${resultado.affectedRows} filas.`);
 }
 
-// El servidor (app.js) la llama al arrancar, así Render/Aiven reciben las tablas nuevas solos.
 module.exports = actualizar;
 
-// Si se ejecuta a mano: node actualizar_bd.js
 if (require.main === module) {
     actualizar().catch((err) => {
         console.error('No se pudo actualizar la base de datos:', err.message);

@@ -1,7 +1,3 @@
-// js/menuPerfil.js - Menú de la foto y el nombre (paneles).
-// Antes se abría al pasar el mouse y se cerraba al bajar hacia las opciones.
-// Ahora se abre y se cierra con un clic (también funciona en celular)
-// y se cierra al hacer clic afuera, al elegir una opción o con la tecla Esc.
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.menu-perfil').forEach((menu) => {
     const boton = menu.querySelector('.menu-perfil-boton');

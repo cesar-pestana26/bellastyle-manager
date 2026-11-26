@@ -1,10 +1,3 @@
--- =====================================================================
--- BellaStyle Manager - Creación de la base de datos
--- Ejecutar en MySQL Workbench (rayo amarillo) o con:
---   mysql -u root -p < init_db.sql
--- OJO: borra las tablas si ya existen y vuelve a cargar los datos de prueba.
--- =====================================================================
-
 SET NAMES utf8mb4;
 
 CREATE DATABASE IF NOT EXISTS bellastylemanager
@@ -39,7 +32,6 @@ DROP TABLE IF EXISTS clientas;
 DROP TABLE IF EXISTS usuarios;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- Cuentas para iniciar sesión. La contraseña se guarda cifrada con bcrypt.
 CREATE TABLE usuarios (
     id_usuario  INT AUTO_INCREMENT PRIMARY KEY,
     nombre      VARCHAR(100) NOT NULL,
@@ -47,13 +39,11 @@ CREATE TABLE usuarios (
     password    VARCHAR(255) NOT NULL,
     rol         ENUM('Administradora','Estilista','Clienta') NOT NULL DEFAULT 'Clienta',
     foto        VARCHAR(255),
-    telefono    VARCHAR(30),          -- para recuperar la contraseña
+    telefono    VARCHAR(30),
     email       VARCHAR(120),
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Datos de las clientas. id_usuario la une con su cuenta (puede ser NULL
--- si la clienta fue registrada en el salón y no tiene cuenta).
 CREATE TABLE clientas (
     id_clienta  INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario  INT UNIQUE,
@@ -61,12 +51,11 @@ CREATE TABLE clientas (
     apellidos   VARCHAR(80) NOT NULL,
     telefono    VARCHAR(30),
     email       VARCHAR(120),
-    profesion   VARCHAR(80),          -- ocupación: ayuda a la estilista a recomendar (ej: enfermera -> peinados prácticos)
+    profesion   VARCHAR(80),
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_clientas_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
 );
 
--- Datos de las estilistas, unidas a su cuenta por id_usuario
 CREATE TABLE estilistas (
     id_estilista INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario   INT UNIQUE,
@@ -78,17 +67,15 @@ CREATE TABLE estilistas (
     CONSTRAINT fk_estilistas_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
 );
 
--- Catálogo de servicios del salón
 CREATE TABLE servicios (
     id_servicio  INT AUTO_INCREMENT PRIMARY KEY,
     nombre       VARCHAR(100) NOT NULL,
     precio       DECIMAL(10,2) NOT NULL DEFAULT 0,
     duracion_min INT NOT NULL DEFAULT 60,
-    publico      ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex',  -- para quién es
+    publico      ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex',
     estado       ENUM('Disponible','No disponible') NOT NULL DEFAULT 'Disponible'
 );
 
--- Productos que vende o usa el salón
 CREATE TABLE productos (
     id_producto INT AUTO_INCREMENT PRIMARY KEY,
     nombre      VARCHAR(100) NOT NULL,
@@ -97,8 +84,6 @@ CREATE TABLE productos (
     estado      ENUM('Activo','Inactivo') NOT NULL DEFAULT 'Activo'
 );
 
--- Qué servicios sabe hacer cada estilista (relación muchos a muchos).
--- Es la base de la asignación automática de citas.
 CREATE TABLE estilista_servicios (
     id_estilista INT NOT NULL,
     id_servicio  INT NOT NULL,
@@ -107,7 +92,6 @@ CREATE TABLE estilista_servicios (
     CONSTRAINT fk_es_servicio  FOREIGN KEY (id_servicio)  REFERENCES servicios(id_servicio)   ON DELETE CASCADE
 );
 
--- Citas agendadas
 CREATE TABLE citas (
     id_cita       INT AUTO_INCREMENT PRIMARY KEY,
     id_cliente    INT NOT NULL,
@@ -115,11 +99,11 @@ CREATE TABLE citas (
     id_servicio   INT NOT NULL,
     fecha         DATE NOT NULL,
     hora          TIME NOT NULL,
-    precio        DECIMAL(10,2) NOT NULL DEFAULT 0,   -- precio del servicio el día que se agendó
+    precio        DECIMAL(10,2) NOT NULL DEFAULT 0,
     estado        ENUM('Pendiente','Confirmada','Finalizada','Cancelada') NOT NULL DEFAULT 'Pendiente',
     observaciones TEXT,
-    notas_servicio VARCHAR(500),        -- lo que hizo la estilista (productos, tono, técnica): historial de la clienta
-    reprogramaciones TINYINT NOT NULL DEFAULT 0,   -- la clienta puede reprogramar una sola vez
+    notas_servicio VARCHAR(500),
+    reprogramaciones TINYINT NOT NULL DEFAULT 0,
     creado_en     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_citas_cliente   FOREIGN KEY (id_cliente)   REFERENCES clientas(id_clienta),
     CONSTRAINT fk_citas_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista),
@@ -133,19 +117,17 @@ CREATE TABLE pagos (
     metodo      ENUM('Bre-B','Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón',
     monto       DECIMAL(10,2) NOT NULL DEFAULT 0,
     estado      ENUM('Pagado','Por verificar','Pendiente en Salón','Rechazado','Reembolsado') NOT NULL DEFAULT 'Pagado',
-    comprobante VARCHAR(40),          -- número de la transferencia Bre-B que escribe la clienta
+    comprobante VARCHAR(40),
     fecha_pago  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_pagos_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
 );
 
--- Cambios de datos que ya se aplicaron una vez (los usa actualizar_bd.js para no repetirlos)
 CREATE TABLE migraciones (
     nombre    VARCHAR(60) PRIMARY KEY,
     aplicada  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 INSERT INTO migraciones (nombre) VALUES ('domingos-hasta-15');
 
--- Datos de cobro del salón (una sola fila): llave Bre-B, titular y la imagen del QR
 CREATE TABLE pago_salon (
     id          TINYINT PRIMARY KEY DEFAULT 1,
     llave       VARCHAR(80),
@@ -155,7 +137,6 @@ CREATE TABLE pago_salon (
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Pedidos de la tienda (carrito). El precio se copia al pedido: si mañana cambia, el pedido conserva el cobrado.
 CREATE TABLE pedidos (
     id_pedido   INT AUTO_INCREMENT PRIMARY KEY,
     id_clienta  INT NOT NULL,
@@ -175,38 +156,27 @@ CREATE TABLE pedido_items (
     CONSTRAINT fk_items_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
 );
 
-
-
--- Chat de la página de inicio. Un visitante escribe sin tener cuenta.
--- El "codigo" es un texto aleatorio que se guarda en su navegador y sirve
--- para reconocer su conversación cuando vuelve a la página.
 CREATE TABLE conversaciones (
     id_conversacion INT AUTO_INCREMENT PRIMARY KEY,
     codigo          CHAR(32)     NOT NULL UNIQUE,
     nombre          VARCHAR(60)  NOT NULL,
-    contacto        VARCHAR(120),               -- teléfono o correo (opcional)
+    contacto        VARCHAR(120),
     estado          ENUM('Abierta','Cerrada') NOT NULL DEFAULT 'Abierta',
     creado_en       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- hora del último mensaje
+    actualizado_en  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Mensajes de cada conversación.
--- autor: Visitante (quien escribe en la página), Salon (la administradora)
--- o Asistente (respuestas automáticas del sistema).
 CREATE TABLE mensajes (
     id_mensaje      INT AUTO_INCREMENT PRIMARY KEY,
     id_conversacion INT NOT NULL,
     autor           ENUM('Visitante','Salon','Asistente') NOT NULL,
     texto           VARCHAR(500) NOT NULL,
-    leido           BOOLEAN NOT NULL DEFAULT FALSE,   -- la administradora ya lo vio
+    leido           BOOLEAN NOT NULL DEFAULT FALSE,
     creado_en       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_mensajes_conversacion FOREIGN KEY (id_conversacion)
         REFERENCES conversaciones(id_conversacion) ON DELETE CASCADE
 );
 
--- Horario de trabajo de cada estilista: una fila por cada día que trabaja.
--- dia_semana: 0 = domingo, 1 = lunes ... 6 = sábado (los domingos se atiende de 8:00 a 15:00).
--- Si una estilista no tiene fila para un día, ese día no trabaja.
 CREATE TABLE horarios (
     id_horario   INT AUTO_INCREMENT PRIMARY KEY,
     id_estilista INT NOT NULL,
@@ -217,7 +187,6 @@ CREATE TABLE horarios (
     CONSTRAINT fk_horarios_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista) ON DELETE CASCADE
 );
 
--- Días en que una estilista no trabaja: vacaciones, permisos, incapacidades.
 CREATE TABLE ausencias (
     id_ausencia  INT AUTO_INCREMENT PRIMARY KEY,
     id_estilista INT NOT NULL,
@@ -228,8 +197,6 @@ CREATE TABLE ausencias (
     CONSTRAINT fk_ausencias_estilista FOREIGN KEY (id_estilista) REFERENCES estilistas(id_estilista) ON DELETE CASCADE
 );
 
--- Calificación que deja la clienta cuando su cita queda Finalizada.
--- id_cita es UNIQUE: cada cita se califica una sola vez.
 CREATE TABLE calificaciones (
     id_calificacion INT AUTO_INCREMENT PRIMARY KEY,
     id_cita         INT NOT NULL UNIQUE,
@@ -240,8 +207,6 @@ CREATE TABLE calificaciones (
     CONSTRAINT fk_calificaciones_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
 );
 
--- Chat entre la clienta y la estilista de una cita.
--- Se puede escribir mientras la cita esté Pendiente o Confirmada.
 CREATE TABLE mensajes_cita (
     id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
     id_cita    INT NOT NULL,
@@ -252,8 +217,6 @@ CREATE TABLE mensajes_cita (
     CONSTRAINT fk_mensajes_cita FOREIGN KEY (id_cita) REFERENCES citas(id_cita) ON DELETE CASCADE
 );
 
--- Fotos de cada servicio (las sube la administradora). La imagen se guarda en la base
--- de datos para que no se pierda cuando el servidor en la nube se reinicia.
 CREATE TABLE fotos_servicio (
     id_foto     INT AUTO_INCREMENT PRIMARY KEY,
     id_servicio INT NOT NULL,
@@ -263,7 +226,6 @@ CREATE TABLE fotos_servicio (
     CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 );
 
--- Foto de cada producto (una por producto)
 CREATE TABLE fotos_producto (
     id_producto INT PRIMARY KEY,
     tipo        VARCHAR(20) NOT NULL,
@@ -271,7 +233,6 @@ CREATE TABLE fotos_producto (
     CONSTRAINT fk_fotos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
 );
 
--- Foto de perfil de cada cuenta (una por usuario)
 CREATE TABLE fotos_perfil (
     id_usuario    INT PRIMARY KEY,
     tipo          VARCHAR(20) NOT NULL,
@@ -280,7 +241,6 @@ CREATE TABLE fotos_perfil (
     CONSTRAINT fk_fotos_perfil_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
--- Vitrina: fotos de trabajos de cada estilista y del salón (administradora)
 CREATE TABLE vitrina (
     id_foto     INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario  INT NOT NULL,
@@ -290,11 +250,6 @@ CREATE TABLE vitrina (
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_vitrina_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
-
--- =====================================================================
--- DATOS DE PRUEBA
--- Contraseñas: admin123, est123, diana123, paula123, cli123
--- =====================================================================
 
 INSERT INTO usuarios (id_usuario, nombre, username, password, rol, foto, telefono, email) VALUES
 (1, 'Admin',     'admin',     '$2a$10$7O3CX9v7kC.M0uWTje439.EQoFP/nNOfSQRGVmwIkL4e6WS.cDqSu', 'Administradora', 'img/rol_admin.svg', '3005550001', 'admin@bellastyle.com'),
@@ -331,17 +286,16 @@ INSERT INTO productos (nombre, precio, stock) VALUES
 ('Spray Fijador',      22000, 18);
 
 INSERT INTO estilista_servicios (id_estilista, id_servicio) VALUES
-(1, 2), (1, 3),          -- Laura: tinte y mechas
-(2, 1), (2, 4), (2, 7),  -- Diana: corte, peinado y tratamiento
-(2, 8), (2, 9),          -- Diana: corte caballero y barba
-(3, 5), (3, 6);          -- Paula: manicure y pedicure
+(1, 2), (1, 3),
+(2, 1), (2, 4), (2, 7),
+(2, 8), (2, 9),
+(3, 5), (3, 6);
 
 INSERT INTO citas (id_cliente, id_estilista, id_servicio, fecha, hora, precio, estado, observaciones) VALUES
 (1, 2, 1, '2026-05-25', '10:00:00',  35000, 'Finalizada', 'Cita de ejemplo'),
 (2, 1, 2, '2026-05-26', '14:00:00', 120000, 'Finalizada', NULL),
 (3, 3, 5, '2026-05-27', '09:00:00',  25000, 'Cancelada',  NULL);
 
--- Conversación de ejemplo para ver la pestaña Mensajes del panel
 INSERT INTO conversaciones (id_conversacion, codigo, nombre, contacto) VALUES
 (1, '0123456789abcdef0123456789abcdef', 'Valentina Ruiz', '3105556677');
 
@@ -350,17 +304,15 @@ INSERT INTO mensajes (id_conversacion, autor, texto, leido) VALUES
 (1, 'Visitante', 'Hola, ¿hacen peinados para quinceañera a domicilio?', FALSE),
 (1, 'Asistente', 'Gracias por escribirnos. Una asesora del salón te responderá por aquí en breve.', TRUE);
 
--- Horarios de prueba: cada estilista con días y horas distintos
 INSERT INTO horarios (id_estilista, dia_semana, hora_inicio, hora_fin) VALUES
 (1, 1, '08:00', '19:00'), (1, 2, '08:00', '19:00'), (1, 3, '08:00', '19:00'),
 (1, 4, '08:00', '19:00'), (1, 5, '08:00', '19:00'), (1, 6, '08:00', '19:00'),
-(1, 0, '08:00', '15:00'),                                                       -- Laura: todos los días
+(1, 0, '08:00', '15:00'),
 (2, 1, '09:00', '17:00'), (2, 2, '09:00', '17:00'), (2, 3, '09:00', '17:00'),
-(2, 4, '09:00', '17:00'), (2, 5, '09:00', '17:00'), (2, 0, '09:00', '15:00'),  -- Diana: lunes a viernes y domingo
+(2, 4, '09:00', '17:00'), (2, 5, '09:00', '17:00'), (2, 0, '09:00', '15:00'),
 (3, 2, '08:00', '14:00'), (3, 3, '08:00', '14:00'), (3, 4, '08:00', '14:00'),
-(3, 5, '08:00', '14:00'), (3, 6, '08:00', '14:00'), (3, 0, '08:00', '14:00');                             -- Paula: martes a sábado, mañanas
+(3, 5, '08:00', '14:00'), (3, 6, '08:00', '14:00'), (3, 0, '08:00', '14:00');
 
--- Calificaciones de prueba de las citas finalizadas
 INSERT INTO calificaciones (id_cita, estrellas, comentario) VALUES
 (1, 5, 'Excelente corte, muy puntual.'),
 (2, 4, 'Me encantó el color.');

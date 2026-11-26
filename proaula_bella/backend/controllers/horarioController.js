@@ -1,5 +1,3 @@
-// Controlador de horarios: días y horas de trabajo de cada estilista y sus ausencias.
-// Lo usan la estilista (su propio horario) y la administradora (el de cualquiera).
 const db = require('../config/db');
 const horarioModel = require('../models/horarioModel');
 const estilistaModel = require('../models/estilistaModel');
@@ -10,14 +8,12 @@ function errorServidor(res, err) {
     res.status(500).json({ success: false, message: 'No se pudo guardar el cambio.' });
 }
 
-// Busca la estilista de la URL. Si no existe, responde 404 y devuelve null.
 async function estilistaDeLaRuta(req, res) {
     const estilista = await estilistaModel.buscarPorId(req.params.id);
     if (!estilista) res.status(404).json({ success: false, message: 'La estilista no existe.' });
     return estilista;
 }
 
-// GET /api/estilistas/:id/horario   Devuelve { horario, ausencias }
 async function obtener(req, res) {
     try {
         const estilista = await estilistaDeLaRuta(req, res);
@@ -32,7 +28,6 @@ async function obtener(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// Revisa la lista de días. Devuelve el mensaje de error, o null si está bien.
 function validarDias(dias) {
     if (!Array.isArray(dias) || dias.length === 0) return 'Escoge al menos un día de trabajo.';
     const vistos = new Set();
@@ -49,8 +44,6 @@ function validarDias(dias) {
     return null;
 }
 
-// PUT /api/estilistas/:id/horario   Recibe: { dias: [{ dia: 1, inicio: '08:00', fin: '19:00' }, ...] }
-// Los días que no vienen en la lista son días libres.
 async function guardar(req, res) {
     const error = validarDias(req.body.dias);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -61,7 +54,6 @@ async function guardar(req, res) {
         if (!estilista) return;
     } catch (err) { return errorServidor(res, err); }
 
-    // Transacción: se borra el horario anterior y se guarda el nuevo, todo o nada
     const dias = req.body.dias.map((d) => ({ dia: Number(d.dia), inicio: d.inicio, fin: d.fin }));
     const conexion = await db.getConnection();
     try {
@@ -77,7 +69,6 @@ async function guardar(req, res) {
     }
 }
 
-// POST /api/estilistas/:id/ausencias   Recibe: { desde, hasta, motivo }
 async function crearAusencia(req, res) {
     const { desde, hasta } = req.body;
     const motivo = typeof req.body.motivo === 'string' ? req.body.motivo.trim() : '';
@@ -100,7 +91,6 @@ async function crearAusencia(req, res) {
         if (!estilista) return;
         await horarioModel.crearAusencia({ idEstilista: estilista.id_estilista, desde, hasta, motivo });
 
-        // Aviso si ya tenía citas en esas fechas: hay que reprogramarlas o cancelarlas
         const pendientes = await horarioModel.citasActivasEntre(estilista.id_estilista, desde, hasta);
         const aviso = pendientes > 0
             ? ` Ojo: tiene ${pendientes} cita(s) en esas fechas; reprográmalas o cancélalas.`
@@ -109,7 +99,6 @@ async function crearAusencia(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// DELETE /api/ausencias/:id
 async function eliminarAusencia(req, res) {
     try {
         const borrada = await horarioModel.eliminarAusencia(req.params.id);

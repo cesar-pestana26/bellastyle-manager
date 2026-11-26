@@ -1,11 +1,6 @@
 import type { SessionStore } from '../../domain/ports/out/SessionStore';
 import { ApiError, UnauthorizedError } from '../../domain/exceptions/errors';
 
-// Adaptador HTTP: única puerta de salida hacia la API REST de BellaStyle.
-// - Agrega el token JWT en la cabecera Authorization: Bearer <token>.
-// - Si el servidor responde 401 (token vencido o inválido) cierra la sesión.
-// - Espera hasta 60 s: el plan gratis de Render puede tardar en "despertar".
-// En el celular, Capacitor (CapacitorHttp) hace la petición de forma nativa, por eso no hay problema de CORS.
 export class HttpClient {
   constructor(
     private readonly baseUrl: string,

@@ -1,8 +1,6 @@
-// js/pagos.js - Pasarela de Pagos y Comprobantes conectada 100% a MySQL (/api/pagos)
-
 let citaEnProcesoPago = null;
 let metodoPagoSeleccionado = 'BreB';
-let datosCobroSalon = null;   // llave Bre-B, titular y QR del salón (GET /api/pago-salon)
+let datosCobroSalon = null;
 let callbackPagoCompletado = null;
 let cachePagosPorCita = {};
 
@@ -147,7 +145,6 @@ window.abrirPasarelaPago = function(cita, onSuccess = null) {
   const modal = document.getElementById('modalPasarelaPago');
   if (modal && !modal.open) modal.showModal();
 
-  // Datos de cobro del salón: se leen cada vez que se abre, por si la administradora los cambió
   pedir('/pago-salon').then((r) => {
     datosCobroSalon = (r && r.success) ? r.data : null;
     if (metodoPagoSeleccionado === 'BreB') renderizarCamposMetodoPago('BreB');
@@ -228,7 +225,6 @@ function renderizarCamposMetodoPago(metodo) {
   }
 }
 
-// QR del salón con botones "Ver grande" y "Descargar" (se usa al pagar y en el comprobante)
 function htmlQRSalon(qr) {
   return `<div class="space-y-2">
     <button type="button" data-qr-ampliar class="block w-40 mx-auto" aria-label="Ver el QR en grande">
@@ -245,14 +241,12 @@ function activarBotonesQR(caja, qr) {
   caja.querySelectorAll('[data-qr-ampliar]').forEach((b) => b.addEventListener('click', () => verQRGrande(qr)));
 }
 
-// Muestra el QR a pantalla completa para que el celular lo pueda leer desde el computador.
-// Si la clienta está en el celular, mejor lo descarga y en su banco elige "pagar con QR desde la galería".
 function verQRGrande(src) {
   let visor = document.getElementById('visorQRBreB');
   if (!visor) {
     visor = document.createElement('dialog');
     visor.id = 'visorQRBreB';
-    // Colores fijos (no del tema): el QR siempre se lee mejor sobre blanco
+
     visor.style.cssText = 'padding:0;border:0;border-radius:1rem;background:#fff;max-width:95vw;max-height:95vh';
     visor.innerHTML = `<div style="padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.75rem">
         <img id="imgVisorQR" alt="Código QR Bre-B del salón" style="display:block;width:min(85vw,78vh);height:min(85vw,78vh);object-fit:contain;background:#fff">

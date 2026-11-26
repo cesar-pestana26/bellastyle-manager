@@ -44,7 +44,7 @@ async function entrar() {
 
 async function registrarse() {
   if (busy.value) return;
-  // Mismas reglas que la web: nombre solo letras y teléfono de 10 dígitos
+
   if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]{3,80}$/.test(regNombre.value.trim())) {
     error.value = 'El nombre solo puede tener letras y espacios.';
     return;

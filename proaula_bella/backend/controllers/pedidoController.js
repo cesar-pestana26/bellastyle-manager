@@ -1,13 +1,9 @@
-// Pedidos de la tienda (/api/pedidos).
-// La clienta arma el carrito en el navegador y lo envía; el servidor vuelve a leer
-// los precios y el stock en MySQL (nunca confía en el precio que mande el navegador).
 const db = require('../config/db');
 const pedidoModel = require('../models/pedidoModel');
 const clienteModel = require('../models/clienteModel');
 
 const ESTADOS = ['Pendiente', 'Listo para recoger', 'Entregado', 'Cancelado'];
 
-// GET /api/pedidos  -> la clienta ve los suyos; la administradora, todos
 async function listar(req, res) {
     try {
         if (req.usuario.rol === 'Administradora') return res.json({ success: true, data: await pedidoModel.listar() });
@@ -19,9 +15,6 @@ async function listar(req, res) {
     }
 }
 
-// POST /api/pedidos   Recibe: { items: [{ id, cantidad }] }
-// Todo va en una transacción: se bloquean los productos (FOR UPDATE), se revisa el stock,
-// se guarda el pedido y se descuenta el stock. Si algo falla, no se guarda nada.
 async function crear(req, res) {
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     const limpios = items
@@ -73,8 +66,6 @@ async function crear(req, res) {
     }
 }
 
-// PUT /api/pedidos/:id/estado   Recibe: { estado }  (solo administradora)
-// Si se cancela, las unidades vuelven al stock.
 async function cambiarEstado(req, res) {
     const { estado } = req.body;
     if (!ESTADOS.includes(estado)) return res.status(400).json({ success: false, message: 'Estado no válido.' });

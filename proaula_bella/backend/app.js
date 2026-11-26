@@ -1,4 +1,3 @@
-// Servidor principal de BellaStyle Manager
 const express = require('express');
 const path = require('path');
 const config = require('./config/config');
@@ -8,28 +7,18 @@ const actualizarBD = require('./actualizar_bd');
 
 const app = express();
 
-// Permite leer JSON en el cuerpo de las peticiones
-// Límite de 3 MB: alcanza para las fotos de los servicios (van en base64)
 app.use(express.json({ limit: '3mb' }));
 
-// La dirección principal (http://localhost:3000) abre el inicio de sesión
-// La dirección principal abre la página de inicio del salón (información, servicios, tienda)
 app.get('/', (req, res) => res.redirect('/welcome.html'));
 
-// Sirve las páginas del frontend (index.html, panel.html, etc.)
-// "no-cache": el navegador puede guardar los archivos, pero siempre pregunta si cambiaron.
-// Así, después de actualizar el código, nadie ve una versión vieja de las páginas.
 app.use(express.static(path.join(__dirname, '../frontend'), {
     setHeaders: (res, ruta) => {
         if (/\.(html|js|css)$/.test(ruta)) res.setHeader('Cache-Control', 'no-cache');
     }
 }));
 
-// Todas las rutas de la API empiezan por /api
 app.use('/api', rutas);
 
-// Revisa que la base de datos sea la versión actual (contraseñas cifradas).
-// Si es la versión vieja, el login no funcionaría.
 async function revisarBaseDeDatos() {
     const [columnas] = await db.query("SHOW COLUMNS FROM citas LIKE 'precio'");
     const [chat] = await db.query("SHOW TABLES LIKE 'mensajes'");
@@ -46,8 +35,6 @@ async function revisarBaseDeDatos() {
     }
 }
 
-// Antes de arrancar, se comprueba que MySQL responda
-// y se crean las tablas nuevas que falten (no borra datos)
 db.query('SELECT 1')
     .then(() => actualizarBD().catch((err) => console.error('No se pudo actualizar la base de datos:', err.message)))
     .then(revisarBaseDeDatos)

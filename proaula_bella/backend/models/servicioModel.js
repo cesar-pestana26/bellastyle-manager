@@ -1,4 +1,3 @@
-// Modelo de la tabla servicios
 const db = require('../config/db');
 
 async function listarDisponibles() {
@@ -6,7 +5,6 @@ async function listarDisponibles() {
     return filas;
 }
 
-// Todos, incluso los no disponibles (para la administradora)
 async function listarTodos() {
     const [filas] = await db.query('SELECT * FROM servicios ORDER BY nombre');
     return filas;

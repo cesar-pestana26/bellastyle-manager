@@ -1,5 +1,3 @@
-// js/servicios.js - Catálogo de servicios cargado 100% desde MySQL (GET /api/servicios)
-
 let catalogoServicios = [];
 let fotosPorServicio = {};
 let categoriaActual = 'Todas';
@@ -152,7 +150,7 @@ function renderizarListaServicios() {
 
   const filtrados = catalogoServicios.filter((s) => {
     const pasaCat = categoriaActual === 'Todas' || s.categoria === categoriaActual;
-    // Los servicios Unisex también sirven para Mujer y para Hombre
+
     const pasaPub = publicoActual === 'Todos' || s.publico === publicoActual || s.publico === 'Unisex';
     return pasaCat && pasaPub;
   });
@@ -239,7 +237,6 @@ function actualizarPanelDetalleServicio(srv) {
     btnAgendar.href = `agendar.html?servicio=${encodeURIComponent(srv.nombre)}`;
   }
 
-  // Galería real del servicio si la administradora subió fotos en MySQL
   let galeriaEl = document.getElementById('galeriaDetalleServicio');
   if (!galeriaEl) {
     const incluyeBox = document.getElementById('detalleIncluyeBox');

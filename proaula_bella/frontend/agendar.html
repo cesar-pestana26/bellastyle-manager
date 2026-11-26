@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agendar Cita | BellaStyle</title>
-  <!-- Vista previa al compartir el enlace (WhatsApp, Facebook, etc.) -->
   <meta name="description" content="Salón de belleza en Cartagena de Indias. Agenda tu cita en línea, paga con QR Bre-B y compra productos. Descarga la app para Android.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="BellaStyle">
@@ -34,18 +33,15 @@
 </head>
 <body class="bg-[#07050d] text-white min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- Header Global -->
   <header id="encabezado"></header>
   <script src="js/encabezado.js?v=53"></script>
 
   <main class="max-w-4xl mx-auto px-6 py-10 flex-1 w-full">
-    
-    <!-- Título y Progreso -->
+
     <div class="text-center mb-8">
       <span class="text-xs font-semibold tracking-widest text-pink-400 uppercase">Reserva tu experiencia</span>
       <h1 class="text-3xl sm:text-4xl font-serif font-bold mt-1">Agendar Cita</h1>
-      
-      <!-- Indicador de pasos -->
+
       <div class="flex items-center justify-center gap-3 mt-6 text-xs font-semibold">
         <div id="pasoIndicador1" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-black">
           <span class="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px]">1</span>
@@ -64,11 +60,9 @@
       </div>
     </div>
 
-    <!-- Tarjeta Principal del Agendador -->
     <div class="tarjeta p-6 sm:p-8 relative">
       <div id="alertaAgendamiento" class="alerta mb-6"></div>
 
-      <!-- PASO 1: Selección de Servicio -->
       <section id="paso1" class="space-y-6">
         <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">1. Selecciona el servicio</h2>
         <div id="contenedorServiciosAgendar" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,11 +76,9 @@
         </div>
       </section>
 
-      <!-- PASO 2: Selección de Estilista -->
       <section id="paso2" class="space-y-6 hidden">
         <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">2. Selecciona tu estilista</h2>
         <div id="contenedorEstilistasAgendar" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <!-- Cargado por agendar.js -->
         </div>
         <div class="flex justify-between pt-4">
           <button type="button" onclick="irAPaso(1)" class="btn-secundario text-xs px-5 py-2">&larr; Volver</button>
@@ -96,12 +88,10 @@
         </div>
       </section>
 
-      <!-- PASO 3: Fecha, Hora y Confirmación -->
       <section id="paso3" class="space-y-6 hidden">
         <h2 class="text-xl font-bold font-serif border-b border-white/10 pb-3">3. Elige fecha, hora y confirma</h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Fecha y Horario -->
           <div class="space-y-4">
             <div>
               <label for="fechaCita" class="etiqueta">Fecha de la cita</label>
@@ -111,7 +101,6 @@
             <div>
               <label class="etiqueta">Horarios disponibles</label>
               <div id="gridHorarios" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 bg-white/5 rounded-xl border border-white/10 text-xs">
-                <!-- Generado por JS -->
               </div>
             </div>
 
@@ -121,11 +110,10 @@
             </div>
           </div>
 
-          <!-- Resumen Glassmorphism -->
           <div class="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
             <div>
               <span class="text-xs uppercase tracking-wider text-pink-400 font-semibold">Resumen de tu reserva</span>
-              
+
               <div class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between border-b border-white/10 pb-2">
                   <span class="text-white/60">Servicio:</span>

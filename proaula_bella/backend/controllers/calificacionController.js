@@ -1,4 +1,3 @@
-// Controlador de calificaciones: la clienta califica la atención de una cita finalizada
 const citaModel = require('../models/citaModel');
 const calificacionModel = require('../models/calificacionModel');
 
@@ -7,7 +6,6 @@ function errorServidor(res, err) {
     res.status(500).json({ success: false, message: 'No se pudo guardar la calificación.' });
 }
 
-// POST /api/citas/:id/calificacion   Recibe: { idUsuario, estrellas (1 a 5), comentario (opcional) }
 async function calificar(req, res) {
     const estrellas = Number(req.body.estrellas);
     const comentario = typeof req.body.comentario === 'string' ? req.body.comentario.trim() : '';
@@ -24,7 +22,7 @@ async function calificar(req, res) {
         if (!cita) {
             return res.status(404).json({ success: false, message: 'La cita no existe.' });
         }
-        // Solo la clienta de la cita puede calificarla
+
         if (String(cita.id_usuario_clienta) !== String(req.body.idUsuario)) {
             return res.status(403).json({ success: false, message: 'Solo la clienta de la cita puede calificarla.' });
         }
@@ -40,7 +38,6 @@ async function calificar(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// GET /api/estilistas/:id/calificaciones   Opiniones que ha recibido una estilista
 async function deEstilista(req, res) {
     try {
         res.json({ success: true, data: await calificacionModel.listarPorEstilista(req.params.id) });

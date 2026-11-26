@@ -1,16 +1,13 @@
-// Modelos del dominio: la forma de los datos que devuelve la API de BellaStyle Manager
-// (https://bellastyle.onrender.com/api). Cada interfaz coincide con una respuesta del backend.
-
 export type BellaRole = 'Clienta' | 'Estilista' | 'Administradora';
 export type PortalRol = 'cliente' | 'estilista' | 'admin';
 
 export interface BellaSession {
-  id: number;            // id_usuario
+  id: number;
   nombre: string;
   username: string;
   rol: BellaRole;
   foto?: string;
-  token: string;         // JWT que firma el backend (vence en 8 horas)
+  token: string;
 }
 
 export interface ServicioBella {
@@ -25,7 +22,7 @@ export interface ServicioBella {
 export interface FotoServicio {
   id_foto: number;
   id_servicio: number;
-  url: string;           // ruta relativa: /api/fotos/:id
+  url: string;
 }
 
 export interface EstilistaBella {
@@ -36,7 +33,7 @@ export interface EstilistaBella {
   especialidad: string;
   estado: string;
   servicios?: string;
-  ids_servicios?: string; // "1,4,7"
+  ids_servicios?: string;
   promedio?: string | null;
 }
 
@@ -60,8 +57,8 @@ export interface CitaBella {
   estilista: string;
   servicio: string;
   precio: number | string;
-  fecha: string;         // YYYY-MM-DD
-  hora: string;          // HH:mm
+  fecha: string;
+  hora: string;
   estado: EstadoCita;
   observaciones?: string | null;
   calificacion?: number | null;
@@ -81,7 +78,7 @@ export interface DatosCobroSalon {
   llave: string | null;
   titular: string | null;
   tieneQr: boolean;
-  qr: string | null;     // ruta relativa de la imagen del QR
+  qr: string | null;
 }
 
 export interface PedidoBella {
@@ -89,14 +86,14 @@ export interface PedidoBella {
   total: number | string;
   estado: 'Pendiente' | 'Listo para recoger' | 'Entregado' | 'Cancelado';
   fecha: string;
-  detalle: string;       // "2 × Shampoo, 1 × Esmalte"
+  detalle: string;
   unidades: number;
 }
 
 export interface FotoVitrina {
   id_foto: number;
   autor?: string;
-  url: string;           // ruta relativa de la imagen
+  url: string;
   descripcion?: string | null;
 }
 

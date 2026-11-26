@@ -1,8 +1,3 @@
-// js/tienda.js - Tienda con carrito (tienda.html).
-// 1. Muestra los productos activos de MySQL con su foto, precio y unidades disponibles.
-// 2. "Agregar" los guarda en el carrito del navegador (js/catalogo.js).
-// 3. "Hacer pedido" los envía a POST /api/pedidos (hay que iniciar sesión como clienta).
-
 let productosTienda = [];
 
 function tarjetaTienda(p) {
@@ -99,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnHacerPedido').addEventListener('click', hacerPedido);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') abrirCarrito(false); });
   document.addEventListener('carrito-cambio', pintarCarrito);
-  // El ícono del carrito del menú lleva a tienda.html#carrito
+
   const menu = document.getElementById('btnCarritoMenu');
   if (menu) menu.addEventListener('click', (e) => { e.preventDefault(); abrirCarrito(true); });
   pintarCarrito();

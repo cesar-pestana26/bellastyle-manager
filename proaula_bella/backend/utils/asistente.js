@@ -1,6 +1,3 @@
-// Asistente del chat: responde solo las preguntas frecuentes.
-// Busca palabras clave en el mensaje; si no entiende, avisa que
-// una asesora (la administradora) responderá.
 const config = require('../config/config');
 const servicioModel = require('../models/servicioModel');
 const productoModel = require('../models/productoModel');
@@ -11,15 +8,12 @@ function pesos(valor) {
     return '$' + Number(valor).toLocaleString('es-CO');
 }
 
-// "¿Cuánto CUESTA?" -> "cuanto cuesta" (minúsculas y sin tildes ni signos)
 function normalizar(texto) {
     return texto.toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9ñ ]/g, ' ');
 }
 
-// Cada regla tiene palabras clave y una función que arma la respuesta.
-// Se revisan en orden: la primera que coincide responde.
 const REGLAS = [
     {
         palabras: ['precio', 'precios', 'cuesta', 'cuestan', 'costo', 'valor', 'vale', 'cuanto', 'cotizacion', 'cotizar'],
@@ -67,8 +61,6 @@ const REGLAS = [
     }
 ];
 
-// Devuelve el texto de la respuesta, o null si no hay que responder nada.
-// ultimoAviso: último mensaje del asistente, para no repetir el aviso.
 async function responder(texto, ultimoAviso) {
     const palabras = normalizar(texto).split(/\s+/);
     for (const regla of REGLAS) {
@@ -76,7 +68,7 @@ async function responder(texto, ultimoAviso) {
             return await regla.responder();
         }
     }
-    // No entendió la pregunta: avisa una sola vez que responderá una persona
+
     return ultimoAviso === AVISO_ASESORA ? null : AVISO_ASESORA;
 }
 

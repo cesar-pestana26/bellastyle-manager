@@ -1,6 +1,3 @@
-// js/bienvenida.js - Página de inicio (welcome.html).
-// Llena con datos reales de MySQL: servicios con precio, el equipo, la vitrina y productos.
-
 const ETIQUETA_PUBLICO = {
   Mujer: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
   Hombre: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
@@ -11,7 +8,6 @@ function sinDatos(texto) {
   return `<p class="col-span-full rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-sm text-white/60">${texto}</p>`;
 }
 
-// Primero los de todo público, luego mujer y luego caballero
 function ordenarServicios(lista) {
   const orden = { Unisex: 0, Mujer: 1, Hombre: 2 };
   return lista.slice().sort((a, b) => (orden[a.publico] ?? 0) - (orden[b.publico] ?? 0));

@@ -1,5 +1,3 @@
-// js/tema.js - Control global de tema (Claro/Oscuro) y reproducción de fondo
-
 const ICONO_LUNA = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 const ICONO_SOL = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 
@@ -13,10 +11,8 @@ function aplicarTema(tema) {
   document.documentElement.classList.toggle('dark', esOscuro);
 }
 
-// 1) Aplicación inmediata antes de renderizar para evitar parpadeos
 aplicarTema(temaGuardado() || 'oscuro');
 
-// 2) Eventos de carga del DOM
 document.addEventListener('DOMContentLoaded', () => {
   const botonesEnPagina = document.querySelectorAll('.btn-toggle-tema');
 
@@ -26,11 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
       actualizarEstiloBoton(btn);
     });
   } else {
-    // Si la página no incluye un botón en la barra, crea uno flotante
     const boton = document.createElement('button');
     boton.type = 'button';
     boton.className = 'btn-tema-flotante';
-    
+
     boton.addEventListener('click', () => alternarTema());
 
     const lugar = document.getElementById('lugarBotonTema');
@@ -48,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function alternarTema() {
   const esOscuro = document.documentElement.classList.contains('oscuro');
   const nuevoTema = esOscuro ? 'claro' : 'oscuro';
-  
+
   aplicarTema(nuevoTema);
   try { localStorage.setItem('tema', nuevoTema); } catch (e) {}
 
@@ -59,7 +54,7 @@ function alternarTema() {
 function actualizarEstiloBoton(btn) {
   if (!btn) return;
   const oscuro = document.documentElement.classList.contains('oscuro');
-  // En los paneles (botón .tema-compacto) en celular solo se ve el ícono, para no montarse sobre el encabezado
+
   const claseTexto = btn.classList.contains('tema-compacto') ? ' class="hidden md:inline"' : '';
   btn.innerHTML = oscuro
     ? `${ICONO_SOL} <span${claseTexto}>Modo claro</span>`
@@ -81,12 +76,10 @@ function crearVideoDeFondo() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (document.body.hasAttribute('data-sin-video')) return;
 
-  // La silueta ya no va de fondo en toda la página: solo dentro de un #ladoVideo si la página lo tiene
   const destino = document.getElementById('ladoVideo');
   if (!destino) return;
   if (destino.id === 'ladoVideo' && getComputedStyle(destino).display === 'none') return;
 
-  // Evita duplicar elementos si ya fueron creados previamente
   if (destino.querySelector('.fondo-video')) return;
 
   destino.insertAdjacentHTML('afterbegin',

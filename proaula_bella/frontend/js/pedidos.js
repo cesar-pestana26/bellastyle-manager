@@ -1,6 +1,3 @@
-// js/pedidos.js - Pedidos de la tienda en los paneles.
-// Administradora: pestaña "Pedidos tienda" (ve todos y cambia el estado).
-// Clienta: sección "Mis pedidos" de su panel.
 const COLOR_PEDIDO = {
   'Pendiente': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
   'Listo para recoger': 'bg-sky-500/20 text-sky-300 border-sky-500/30',

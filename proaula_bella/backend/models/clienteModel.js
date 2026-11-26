@@ -1,4 +1,3 @@
-// Modelo de la tabla clientas
 const db = require('../config/db');
 
 async function crear(conexion, { idUsuario, nombres, apellidos, telefono, email, profesion }) {
@@ -27,8 +26,6 @@ async function actualizar(idClienta, { nombres, apellidos, telefono, email, prof
     return resultado.affectedRows > 0;
 }
 
-// Historial de servicios de una clienta: citas finalizadas, la más reciente primero.
-// Lo usa la estilista para saber qué le hicieron la vez pasada.
 async function historial(idClienta) {
     const [filas] = await db.query(`
         SELECT c.id_cita AS id, DATE_FORMAT(c.fecha, '%Y-%m-%d') AS fecha, s.nombre AS servicio,

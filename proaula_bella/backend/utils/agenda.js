@@ -1,45 +1,35 @@
-// Funciones de tiempo que usan las citas y los horarios.
-// Todas las horas se manejan en minutos desde la medianoche: "14:30" -> 870.
-
-const APERTURA = 8 * 60;   // el salón abre a las 8:00
-const CIERRE = 19 * 60;    // y cierra a las 19:00 de lunes a sábado
-const CIERRE_DOMINGO = 15 * 60;   // los domingos cierra a las 15:00 (3:00 p. m.)
-const INTERVALO = 30;      // las horas libres se ofrecen cada 30 minutos
+const APERTURA = 8 * 60;
+const CIERRE = 19 * 60;
+const CIERRE_DOMINGO = 15 * 60;
+const INTERVALO = 30;
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-// "14:30" o "14:30:00" -> 870
 function aMinutos(hora) {
     const [h, m] = String(hora).split(':').map(Number);
     return h * 60 + m;
 }
 
-// 870 -> "14:30"
 function aHora(minutos) {
     const h = String(Math.floor(minutos / 60)).padStart(2, '0');
     const m = String(minutos % 60).padStart(2, '0');
     return `${h}:${m}`;
 }
 
-// Dos rangos se cruzan si uno empieza antes de que el otro termine
 function seCruzan(inicioA, finA, inicioB, finB) {
     return inicioA < finB && inicioB < finA;
 }
 
-// Día de la semana de una fecha "2026-11-03": 0 = domingo ... 6 = sábado
 function diaDeLaSemana(fecha) {
     return new Date(fecha + 'T12:00:00Z').getUTCDay();
 }
 
-// Hora de cierre de un día: 0 = domingo cierra a las 15:00; los demás a las 19:00
 function cierreDelDia(dia) {
     return Number(dia) === 0 ? CIERRE_DOMINGO : CIERRE;
 }
 
-// Texto del horario para los mensajes de error
 const TEXTO_HORARIO = 'de lunes a sábado de 8:00 a 19:00 y los domingos de 8:00 a 15:00';
 
-// Fecha y hora actuales en Colombia (UTC-5), aunque el servidor esté en otra zona.
 function ahoraColombia() {
     const colombia = new Date(Date.now() - 5 * 60 * 60 * 1000);
     return {
@@ -48,14 +38,12 @@ function ahoraColombia() {
     };
 }
 
-// Fecha válida con formato AAAA-MM-DD
 function fechaValida(fecha) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) return false;
     const d = new Date(fecha + 'T12:00:00Z');
     return !isNaN(d) && d.toISOString().slice(0, 10) === fecha;
 }
 
-// Hora válida con formato HH:MM, entre 00:00 y 23:59
 function horaValida(hora) {
     if (!/^\d{2}:\d{2}$/.test(hora || '')) return false;
     const [h, m] = hora.split(':').map(Number);

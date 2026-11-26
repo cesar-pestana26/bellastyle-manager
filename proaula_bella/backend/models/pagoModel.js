@@ -1,4 +1,3 @@
-// Modelo de la tabla pagos (transacciones asociadas a una cita)
 const db = require('../config/db');
 
 async function buscarPorCita(idCita) {
@@ -72,7 +71,6 @@ async function crear({ idCita, referencia, metodo, monto, estado, comprobante = 
     return { duplicado: false, pago: await buscarPorCita(idCita) };
 }
 
-// metodo (opcional): cómo se cobró en el salón; si no viene, se deja el que tenía
 async function actualizarEstado(idPago, estado, metodo = null) {
     const [resultado] = await db.query(
         'UPDATE pagos SET estado = ?, metodo = COALESCE(?, metodo), fecha_pago = CURRENT_TIMESTAMP WHERE id_pago = ?',
@@ -81,7 +79,6 @@ async function actualizarEstado(idPago, estado, metodo = null) {
     return resultado.affectedRows > 0;
 }
 
-// ---------- Datos de cobro del salón (tabla pago_salon, una sola fila) ----------
 async function datosSalon() {
     const [filas] = await db.query(
         "SELECT llave, titular, qr_tipo IS NOT NULL AS tiene_qr, UNIX_TIMESTAMP(actualizado) AS version FROM pago_salon WHERE id = 1");
@@ -93,7 +90,6 @@ async function qrSalon() {
     return filas[0] || null;
 }
 
-// Guarda la llave y el titular; la imagen solo si llega una nueva
 async function guardarDatosSalon({ llave, titular, qrTipo, qrDatos }) {
     await db.query(`INSERT INTO pago_salon (id, llave, titular, qr_tipo, qr_datos) VALUES (1, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE llave = VALUES(llave), titular = VALUES(titular),

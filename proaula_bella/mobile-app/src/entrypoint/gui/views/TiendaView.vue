@@ -53,7 +53,7 @@ async function pedir() {
   exito.value = '';
   try {
     exito.value = await app.hacerPedido();
-    await cargar();   // el stock ya bajó en el servidor
+    await cargar();
   } catch (e) {
     error.value = errorMessage(e);
   } finally {

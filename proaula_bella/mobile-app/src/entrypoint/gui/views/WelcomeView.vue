@@ -5,7 +5,6 @@ import { IonPage, IonContent, IonRefresher, IonRefresherContent, onIonViewWillEn
 import { useApplication, errorMessage, pesos } from '../context';
 import type { ServicioBella, EstilistaBella, ProductoBella, FotoVitrina } from '../../../domain/model/BellaModels';
 
-// Página de inicio pública (igual que welcome.html de la web): se ve sin iniciar sesión
 const app = useApplication();
 const router = useRouter();
 const session = ref(app.currentSession());
@@ -42,7 +41,6 @@ async function refrescar(ev: CustomEvent) {
   (ev.target as HTMLIonRefresherElement).complete();
 }
 
-// Si la estilista no ha subido foto, se muestra el logo del salón
 function sinFoto(ev: Event) {
   (ev.target as HTMLImageElement).src = '/logo.webp';
 }
@@ -59,7 +57,6 @@ onIonViewWillEnter(cargar);
     <IonContent>
       <IonRefresher slot="fixed" @ionRefresh="refrescar"><IonRefresherContent /></IonRefresher>
 
-      <!-- Encabezado como el de la web -->
       <header class="encabezado">
         <div class="logo-mini"><img src="/logo.webp" alt="" /><b>Bella<span>Style</span></b></div>
         <RouterLink v-if="session" to="/mis-citas" class="chip-blanco">Mi panel</RouterLink>
@@ -67,7 +64,6 @@ onIonViewWillEnter(cargar);
       </header>
 
       <main class="page-content">
-        <!-- 1. Portada -->
         <section class="hero">
           <p class="eyebrow">Salón de belleza · Cartagena de Indias</p>
           <p v-if="session" class="saludo">Hola, {{ session.nombre.split(' ')[0] }}</p>
@@ -88,7 +84,6 @@ onIonViewWillEnter(cargar);
         <p v-if="error" class="error" role="alert">{{ error }} <button class="button secondary full" style="margin-top:8px;" @click="cargar">Reintentar</button></p>
         <p v-if="cargando" class="muted">Cargando… (si el servidor estaba dormido puede tardar hasta un minuto)</p>
 
-        <!-- 2. Servicios -->
         <section v-if="servicios.length" class="bloque">
           <div class="row between">
             <div><p class="eyebrow">Nuestros servicios</p><h2 class="titulo-serif">Lo que hacemos por ti</h2></div>
@@ -103,7 +98,6 @@ onIonViewWillEnter(cargar);
           </article>
         </section>
 
-        <!-- 3. Cómo funciona -->
         <section class="bloque">
           <p class="eyebrow">Cómo funciona</p>
           <h2 class="titulo-serif">Tu cita en tres pasos</h2>
@@ -114,7 +108,6 @@ onIonViewWillEnter(cargar);
           </div>
         </section>
 
-        <!-- 4. Equipo -->
         <section v-if="estilistas.length" class="bloque">
           <p class="eyebrow">Nuestro equipo</p>
           <h2 class="titulo-serif">Estilistas profesionales</h2>
@@ -128,7 +121,6 @@ onIonViewWillEnter(cargar);
           </article>
         </section>
 
-        <!-- 5. Trabajos del salón -->
         <section v-if="vitrina.length" class="bloque">
           <p class="eyebrow">Nuestro portafolio</p>
           <h2 class="titulo-serif">Trabajos del salón</h2>
@@ -140,7 +132,6 @@ onIonViewWillEnter(cargar);
           </div>
         </section>
 
-        <!-- 6. Tienda -->
         <section v-if="productos.length" class="bloque">
           <div class="row between">
             <div><p class="eyebrow">Tienda</p><h2 class="titulo-serif">Productos recomendados</h2></div>
@@ -156,7 +147,6 @@ onIonViewWillEnter(cargar);
           </div>
         </section>
 
-        <!-- 7. Visítanos -->
         <section class="bloque panel">
           <p class="eyebrow">Visítanos</p>
           <h2 class="titulo-serif">BellaStyle · Cartagena de Indias</h2>

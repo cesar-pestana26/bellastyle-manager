@@ -1,21 +1,13 @@
-// Modelo de la personalización de cada cuenta:
-//  - fotos_perfil: la foto de perfil de cada usuario (una por usuario)
-//  - vitrina: fotos de trabajos que muestra cada estilista y las del salón (administradora)
-// Las imágenes se guardan en la base de datos (MEDIUMBLOB) para que no se pierdan
-// cuando el servidor gratis de la nube se reinicia.
 const db = require('../config/db');
 
-const MAX_VITRINA = 12;   // fotos por persona
+const MAX_VITRINA = 12;
 
 async function buscarUsuario(idUsuario) {
     const [filas] = await db.query('SELECT id_usuario, nombre, rol FROM usuarios WHERE id_usuario = ?', [idUsuario]);
     return filas[0] || null;
 }
 
-// --- Foto de perfil ---
-
 async function guardarFotoPerfil(idUsuario, tipo, datos) {
-    // REPLACE: si ya tenía foto, la cambia
     await db.query('REPLACE INTO fotos_perfil (id_usuario, tipo, datos) VALUES (?, ?, ?)', [idUsuario, tipo, datos]);
 }
 
@@ -28,10 +20,6 @@ async function quitarFotoPerfil(idUsuario) {
     await db.query('DELETE FROM fotos_perfil WHERE id_usuario = ?', [idUsuario]);
 }
 
-// --- Vitrina ---
-
-// Lista sin las imágenes. Con idUsuario: la vitrina de esa persona.
-// Sin idUsuario: las más recientes de todas (galería de la página de inicio).
 async function listarVitrina(idUsuario, limite = 24) {
     const sql = `
         SELECT v.id_foto, v.id_usuario, v.descripcion, u.nombre AS autor, u.rol

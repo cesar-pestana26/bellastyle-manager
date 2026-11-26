@@ -1,8 +1,3 @@
-// sw.js - Service worker de la PWA de BellaStyle (aplicación instalable).
-// Reglas:
-//  - /api/... nunca se guarda: los datos (citas, pagos, pedidos) siempre vienen del servidor.
-//  - Páginas HTML: primero la red; si no hay internet, la copia guardada o la página "sin conexión".
-//  - CSS, JS, imágenes y fuentes: se muestran desde la copia guardada y se actualizan por detrás.
 const VERSION = 'bellastyle-v1';
 const BASICOS = ['/offline.html', '/img/logo.webp', '/img/app/icono-192.png', '/css/estilos.css?v=45'];
 
@@ -23,8 +18,8 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   const mismoSitio = url.origin === self.location.origin;
-  if (mismoSitio && url.pathname.startsWith('/api/')) return;      // datos: siempre en vivo
-  if (mismoSitio && url.pathname.startsWith('/descargas/')) return; // el APK se descarga directo, sin guardarlo en caché
+  if (mismoSitio && url.pathname.startsWith('/api/')) return;
+  if (mismoSitio && url.pathname.startsWith('/descargas/')) return;
 
   if (req.mode === 'navigate') {
     e.respondWith(

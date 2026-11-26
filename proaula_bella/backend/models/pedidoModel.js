@@ -1,8 +1,5 @@
-// Modelo de los pedidos de la tienda (tablas pedidos y pedido_items)
 const db = require('../config/db');
 
-// Lista de pedidos con el nombre de la clienta y el detalle en texto.
-// idClienta = null trae todos (administradora).
 async function listar(idClienta = null) {
     const [filas] = await db.query(`
         SELECT p.id_pedido, p.total, p.estado,

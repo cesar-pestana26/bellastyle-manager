@@ -1,5 +1,3 @@
-// js/login.js - Autenticación real contra MySQL, selector de roles y bloqueo de rol cruzado
-
 const ROLES_LOGIN = typeof ROLES !== 'undefined' ? ROLES : {
   cliente: {
     titulo: 'Clienta',
@@ -150,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // El servidor responde "user" (con respaldo por compatibilidad)
       const cuenta = resp.user || resp.usuario;
       if (!cuenta) {
         mostrarAlertaLogin(alerta, 'El servidor no devolvió los datos del usuario.', 'error');
@@ -158,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // BLOQUEO ESTRICTO: La cuenta solo puede entrar con el rol con el que fue creada
       const rolRealCuenta = normalizarClaveRolLogin(cuenta.rol);
 
       if (rolSeleccionado !== rolRealCuenta) {
@@ -191,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (rolRealCuenta === 'estilista') {
           window.location.replace('panel.html?rol=estilista');
         } else if (redirect && /^[a-z]+\.html(#[a-z]+)?$/.test(redirect)) {
-          // Solo páginas propias (ej: tienda.html#carrito), nunca otro sitio
           window.location.replace(redirect);
         } else {
           window.location.replace('panel.html?rol=cliente');

@@ -1,6 +1,3 @@
-/* Archivo fuente de estilos. NO se enlaza directo en el HTML:
-   se compila con "npm run css" y genera css/estilos.css */
-/* Fuentes guardadas en la carpeta fonts/ para que funcionen sin internet */
 @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('../fonts/dm-sans-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('../fonts/dm-sans-latin-500-normal.woff2') format('woff2'); }
 @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('../fonts/dm-sans-latin-600-normal.woff2') format('woff2'); }
@@ -14,7 +11,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* Colores del modo claro (en números R G B para poder usar opacidad: text-tinta/60) */
+
   :root {
     --tinta: 43 29 49;
     --blanco: 255 255 255;
@@ -38,7 +35,7 @@
     --noche-950: 255 255 255;
     --oro: 160 118 52;
   }
-  /* Colores del modo oscuro: se activan con la clase "oscuro" en <html> */
+
   .oscuro {
     --tinta: 243 233 240;
     --blanco: 34 26 39;
@@ -66,16 +63,13 @@
   body {
     @apply bg-noche-950 font-sans text-tinta antialiased;
   }
-  /* Imagen de fondo de toda la app (img/fondo.webp).
-     Va en una capa fija detrás de todo; encima lleva un velo blanco
-     para que los textos se sigan leyendo bien. */
+
   body::before {
     content: '';
     @apply pointer-events-none fixed inset-0 -z-20 bg-cover bg-center;
     background-image: linear-gradient(rgba(255,255,255,.2), rgba(255,255,255,.2)), url('../img/fondo.webp');
   }
-  /* Video de fondo del modo claro (lo crea js/tema.js). Va encima de la imagen;
-     si el video no carga, se sigue viendo la imagen. */
+
   .fondo-video {
     @apply pointer-events-none fixed inset-0 overflow-hidden;
     z-index: -15;
@@ -83,7 +77,7 @@
   .fondo-video video {
     @apply h-full w-full object-cover;
   }
-  /* Velo encima del video para que los textos se lean bien */
+
   .fondo-video::after {
     content: '';
     @apply absolute inset-0;
@@ -92,7 +86,7 @@
   .fondo-video-oscuro::after {
     background: rgba(18, 12, 26, .35);
   }
-  /* Cada tema muestra solo su video */
+
   .fondo-video-oscuro,
   .oscuro .fondo-video-claro {
     display: none;
@@ -100,12 +94,11 @@
   .oscuro .fondo-video-oscuro {
     display: block;
   }
-  /* Si la persona pidió "reducir movimiento" en su sistema, tampoco */
+
   @media (prefers-reduced-motion: reduce) {
     .fondo-video, .oscuro .fondo-video-oscuro { display: none; }
   }
-  /* Páginas divididas: el video va en un panel a un lado (#ladoVideo)
-     y el contenido queda sobre un fondo liso, sin distracciones */
+
   .pagina-dividida::before {
     display: none;
   }
@@ -123,23 +116,23 @@
   .lado-video .fondo-video::after {
     background: transparent;
   }
-  /* Texto blanco sobre el video (no cambia con el tema) */
+
   .texto-sobre-video {
     color: #fff;
     text-shadow: 0 2px 16px rgba(40, 20, 45, .45);
   }
-  /* En modo oscuro el velo es oscuro */
+
   .oscuro body::before {
     background-image: linear-gradient(rgba(18,12,26,.35), rgba(18,12,26,.35)), url('../img/fondo-oscuro.webp');
   }
   h1, h2, h3 {
     @apply font-titulo;
   }
-  /* Números normales (no "estilo antiguo") en la letra de títulos: el 1 no parece una I */
+
   h1, h2, h3, .font-titulo {
     font-variant-numeric: lining-nums;
   }
-  /* Borde visible al navegar con el teclado (accesibilidad) */
+
   a:focus-visible, button:focus-visible {
     @apply outline-none ring-2 ring-bella-400 ring-offset-2;
   }
@@ -155,7 +148,7 @@
   @media (prefers-reduced-motion: reduce) {
     .revelar { opacity: 1; transform: none; }
   }
-  /* Chrome pinta de color los campos que autocompleta: así se mantienen transparentes */
+
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
@@ -168,11 +161,8 @@
   }
 }
 
-/* Componentes reutilizables: en vez de repetir 15 clases en cada botón,
-   se define una sola clase (.btn-primario) con @apply */
 @layer components {
 
-  /* Tarjetas de colores de la galería del login */
   .galeria {
     @apply flex h-28 flex-col justify-between rounded-2xl sm:h-auto sm:aspect-[4/5] border border-tinta/10 bg-tinta/[.03] p-4 text-sm
            font-semibold text-tinta/80 transition duration-300 hover:-translate-y-1 hover:border-bella-400/30;
@@ -189,7 +179,7 @@
   .btn-secundario {
     @apply btn border border-bella-300 bg-white/20 text-bella-800 hover:border-bella-400 hover:bg-white/50;
   }
-  /* Botones de las horas libres al agendar una cita */
+
   .hora-libre {
     @apply rounded-lg border border-tinta/20 bg-white/15 py-2 text-sm font-semibold tabular-nums text-tinta transition
            hover:border-bella-400 hover:bg-white/40;
@@ -203,7 +193,7 @@
   .btn-mini-gris {
     @apply border border-tinta/20 bg-white/15 text-tinta hover:border-bella-300 hover:bg-white/40;
   }
-  /* Título de cada tarjeta con su ícono */
+
   .titulo-seccion {
     @apply flex items-center gap-3 text-2xl font-bold text-tinta;
   }
@@ -259,7 +249,7 @@
   .pestana-activa {
     @apply bg-white/50 text-bella-800 shadow-sm ring-1 ring-bella-200 hover:bg-white/50;
   }
-  /* Panel de trabajo: tarjetas, tablas y formularios más opacos para leer cómodo */
+
   .zona-trabajo .tarjeta {
     @apply bg-white/65 backdrop-blur-md;
   }
@@ -271,29 +261,29 @@
   .zona-trabajo .hora-libre.hora-escogida {
     @apply bg-bella-700;
   }
-  /* Botones del menú de servicios (js/servicios.js) */
+
   .boton-servicio {
     @apply border-tinta/15 bg-white/80 text-tinta/80 hover:border-bella-400 hover:text-tinta;
   }
   .boton-servicio.boton-servicio-activo {
     @apply border-bella-700 bg-bella-700 text-white shadow-md shadow-bella-300/40;
   }
-  /* Opciones rápidas de la invitación del chat */
+
   .opcion-chat {
     @apply rounded-xl border border-bella-200 bg-bella-50 px-3 py-2 text-left text-sm font-medium text-bella-800 transition hover:border-bella-400 hover:bg-bella-100;
   }
-  /* Barra gris animada mientras cargan los datos ("esqueleto") */
+
   .esqueleto {
     @apply h-4 animate-pulse rounded-full bg-tinta/10;
   }
-  /* Elementos que aparecen al hacer scroll (js en welcome.html les agrega "visible") */
+
   .revelar {
     @apply translate-y-8 opacity-0 transition duration-700 ease-out;
   }
   .revelar.visible {
     @apply translate-y-0 opacity-100;
   }
-  /* Botón para cambiar entre modo claro y oscuro (lo crea js/tema.js) */
+
   .btn-tema {
     @apply fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border-2 border-bella-300 bg-white/70 backdrop-blur-md
            px-4 py-2.5 text-sm font-semibold text-bella-800 shadow-lg shadow-tinta/15 transition
@@ -307,7 +297,6 @@
   }
 }
 
-/* ---------- Modo oscuro: colores de estados, alertas y botones de acción ---------- */
 .oscuro .bg-amber-50, .oscuro .bg-amber-100 { background-color: rgb(245 158 11 / .14); }
 .oscuro .bg-emerald-50, .oscuro .bg-emerald-100, .oscuro .hover\:bg-emerald-100:hover { background-color: rgb(16 185 129 / .14); }
 .oscuro .bg-sky-50, .oscuro .bg-sky-100, .oscuro .hover\:bg-sky-100:hover { background-color: rgb(14 165 233 / .14); }
@@ -322,7 +311,6 @@
 .oscuro .text-red-700 { color: #fca5a5; }
 .oscuro .mix-blend-multiply { mix-blend-mode: normal; }
 
-/* ---------- Ventanas: aparecen con una animación suave ---------- */
 dialog[open] {
   animation: abrirVentana .22s ease-out;
 }
@@ -338,16 +326,13 @@ dialog[open]::backdrop {
   to   { opacity: 1; }
 }
 
-/* ---------- Celular (menos de 640 px) ---------- */
 @media (max-width: 639px) {
-  /* Espacio abajo para que los botones flotantes no tapen el contenido */
+
   body { padding-bottom: 5rem; }
-  /* El botón de tema muestra solo el ícono */
+
   .btn-tema { padding: .7rem; }
   .btn-tema span { display: none; }
 
-  /* Las tablas se muestran como tarjetas: una por fila.
-     Cada celda muestra su título con data-label (lo pone js/panel.js). */
   .tabla thead { display: none; }
   .tabla, .tabla tbody, .tabla tr, .tabla td { display: block; width: 100%; }
   .tabla tbody tr {
@@ -376,14 +361,11 @@ dialog[open]::backdrop {
     letter-spacing: .05em;
     color: rgb(var(--tinta) / .6);
   }
-  /* La celda de botones (sin título) va a la derecha y puede bajar de línea */
+
   .tabla td[data-label=""] { justify-content: flex-end; flex-wrap: wrap; }
   .tabla td[colspan] { display: block; text-align: center; }
 }
 
-/* ---------- Modo claro: lectura cómoda ----------
-   El video se ve con más color (velo suave) y los cuadros son casi blancos,
-   así el texto oscuro siempre tiene buen contraste. */
 html:not(.oscuro) .tarjeta {
   background-color: rgb(255 255 255 / .74);
   border-color: rgb(255 255 255 / .9);
@@ -398,24 +380,20 @@ html:not(.oscuro) .hora-libre:not(.hora-escogida) { background-color: rgb(255 25
 html:not(.oscuro) .tabla th { background-color: rgb(253 245 248 / .9); color: rgb(var(--tinta) / .8); }
 html:not(.oscuro) #pestanas { background-color: rgb(255 255 255 / .7); }
 html:not(.oscuro) #chatVentana { background-color: rgb(255 255 255 / .9); }
-/* Textos grises un poco más oscuros */
+
 html:not(.oscuro) .text-tinta\/45,
 html:not(.oscuro) .text-tinta\/60,
 html:not(.oscuro) .text-tinta\/65,
 html:not(.oscuro) .text-tinta\/70,
 html:not(.oscuro) .text-tinta\/75 { color: rgb(var(--tinta) / .82); }
-/* Texto que va directo sobre el video: un halo blanco suave detrás de las letras */
+
 html:not(.oscuro) .sobre-video { text-shadow: 0 0 18px rgb(255 255 255 / .95), 0 0 4px rgb(255 255 255 / .8); }
 html:not(.oscuro) .sobre-video .btn-primario,
 html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
 
-/* ---------- Celular: páginas divididas ----------
-   En pantallas angostas no cabe el video al lado. No se pone de fondo (distrae):
-   se oculta y la página queda con fondo liso. Desde 768 px (tableta y PC) va a un lado. */
 @media (max-width: 767px) {
   .pagina-dividida aside.lado-video { display: none; }
-  /* Página de inicio en celular: la silueta va arriba como una tarjeta redondeada
-     (no de fondo), igual que en "Conoce el salón" */
+
   .pagina-dividida aside.lado-video.lado-video-movil {
     display: block;
     height: 17rem;
@@ -427,8 +405,6 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
   .lado-video-movil > div:not(.fondo-video) p:first-child { font-size: 1.9rem; }
 }
 
-/* ---------- Paneles (panel.html): fondo liso con un brillo suave, sin imagen ----------
-   La silueta del fondo distraía al trabajar con tablas y formularios. */
 .zona-trabajo::before {
   background-image:
     radial-gradient(60rem 30rem at 0% 0%, rgb(var(--bella-100)) 0%, transparent 70%),
@@ -440,7 +416,7 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
     radial-gradient(60rem 30rem at 0% 0%, rgb(var(--bella-100)) 0%, transparent 70%),
     radial-gradient(50rem 30rem at 100% 0%, rgb(var(--lavanda-100)) 0%, transparent 70%);
 }
-/* Franja de color de la portada de perfil (arriba de la foto) */
+
 .portada-fondo {
   background:
     radial-gradient(circle at 15% 30%, rgb(255 255 255 / .55) 0 2px, transparent 3px),
@@ -448,7 +424,7 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
     radial-gradient(circle at 88% 20%, rgb(255 255 255 / .5) 0 1.5px, transparent 2.5px),
     linear-gradient(115deg, rgb(var(--bella-300)), rgb(var(--lavanda-300)) 60%, rgb(var(--bella-200)));
 }
-/* Botón de tema dentro de la barra del panel (no flota sobre el contenido) */
+
 .btn-tema.btn-tema-barra {
   position: static;
   padding: .4rem .8rem;
@@ -459,7 +435,6 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
   .btn-tema.btn-tema-barra { padding: .45rem; }
 }
 
-/* ---------- Agregados del rediseño (GIF y grillas) ---------- */
 .fondo-video img {
   @apply h-full w-full object-cover;
 }
@@ -482,19 +457,9 @@ html:not(.oscuro) .sobre-video .texto-brillo { text-shadow: none; }
   cursor: pointer;
 }
 
-
-
-/* Chat de Bella: usa el color de tarjeta del tema oscuro.
-   Las páginas que cargan Tailwind desde el CDN pintan bg-white de blanco puro
-   y el texto claro de la invitación no se leía. */
 #chatInvitacion.bg-white { background-color: rgb(var(--blanco)); }
 #chatMensajes .bg-white\/70 { background-color: rgb(var(--blanco) / 0.7); }
 
-
-/* ===== Modo claro para las páginas con colores fijos de tema oscuro =====
-   Las páginas nuevas usan clases como text-white o bg-[#120f1d] pensadas para fondo oscuro.
-   En modo claro se cambian por la tinta del tema y tonos más oscuros para que todo se lea.
-   Se usan selectores [class~="..."] para que Tailwind no los mezcle con sus utilidades. */
 html:not(.oscuro) [class~="bg-[#0a0810]"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#07050d]"] { background-color: #fbf5f8; }
 html:not(.oscuro) [class~="bg-[#07060b]"] { background-color: #fbf5f8; }
@@ -572,12 +537,9 @@ html:not(.oscuro) [class*="from-black"][class~="text-white"],
 html:not(.oscuro) [class~="bg-black/90"] [class*="text-white"] { color: #ffffff; }
 html:not(.oscuro) [class*="from-black"] [class*="text-white/"] { color: rgb(255 255 255 / .8); }
 html:not(.oscuro) [class~="bg-black/60"][class~="text-pink-300"] { color: #f9a8d4; }
-/* Cajas translúcidas oscuras (encabezados, pies de página, chats): en claro van como vidrio blanco */
+
 html:not(.oscuro) [class~="bg-black/20"], html:not(.oscuro) [class~="bg-black/25"], html:not(.oscuro) [class~="bg-black/30"], html:not(.oscuro) [class~="bg-black/40"] { background-color: rgb(255 255 255 / .6); }
 
-/* ===== Fondo de la app =====
-   La silueta ya no va de fondo (distraía al leer): ahora va al lado, en el inicio.
-   El fondo es un degradado suave con los colores del salón. */
 body::before {
   background-image:
     radial-gradient(55rem 35rem at 90% -10%, rgb(244 114 182 / .22), transparent 60%),
@@ -591,7 +553,6 @@ html.oscuro body::before {
     linear-gradient(#07050d, #07050d) !important;
 }
 
-/* Silueta del inicio: una imagen por tema, con bordes difuminados y un movimiento muy suave */
 .silueta { -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 55%, transparent 71%); mask-image: radial-gradient(circle at 50% 48%, #000 55%, transparent 71%); }
 .silueta-oscuro { display: none; }
 html.oscuro .silueta-oscuro { display: block; }

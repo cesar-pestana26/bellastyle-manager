@@ -1,5 +1,3 @@
-// js/registro.js - Registro real en MySQL sin cuentas quemadas ni usuarios ficticios en localStorage
-
 const ROLES_REGISTRO = typeof ROLES !== 'undefined' ? ROLES : {
   cliente: { titulo: 'Clienta', imagen: 'img/rol_clienta.svg' },
   estilista: { titulo: 'Estilista', imagen: 'img/logo.webp' },
@@ -101,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formRegistro');
   if (!form) return;
 
-  // Mientras escribe: el nombre solo acepta letras y espacios, y el teléfono solo números
   const soloPermitido = (id, quitar) => {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', () => {

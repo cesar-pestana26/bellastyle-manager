@@ -1,4 +1,3 @@
-// Modelo de las tablas estilistas y estilista_servicios
 const db = require('../config/db');
 
 async function crear(conexion, { idUsuario, nombres, apellidos, especialidad }) {
@@ -9,7 +8,6 @@ async function crear(conexion, { idUsuario, nombres, apellidos, especialidad }) 
     return resultado.insertId;
 }
 
-// Guarda qué servicios sabe hacer la estilista
 async function asignarServicios(conexion, idEstilista, idsServicios) {
     for (const idServicio of idsServicios) {
         await conexion.query(
@@ -19,8 +17,6 @@ async function asignarServicios(conexion, idEstilista, idsServicios) {
     }
 }
 
-// Consulta base: la estilista con la lista de servicios que realiza
-// y el promedio de sus calificaciones (de 1 a 5 estrellas)
 const SELECT_ESTILISTAS = `
     SELECT e.id_estilista, e.id_usuario, e.nombres, e.apellidos, e.especialidad, e.estado,
            GROUP_CONCAT(s.nombre ORDER BY s.nombre SEPARATOR ', ') AS servicios,
@@ -38,19 +34,16 @@ async function listarActivas() {
     return filas;
 }
 
-// Todas, incluso las inactivas (para la administradora)
 async function listarTodas() {
     const [filas] = await db.query(`${SELECT_ESTILISTAS} GROUP BY e.id_estilista ORDER BY e.nombres`);
     return filas;
 }
 
-// Perfil de la estilista que tiene esa cuenta de usuario
 async function buscarPorUsuario(idUsuario) {
     const [filas] = await db.query(`${SELECT_ESTILISTAS} WHERE e.id_usuario = ? GROUP BY e.id_estilista`, [idUsuario]);
     return filas[0] || null;
 }
 
-// Datos básicos de una estilista por su id (o null si no existe)
 async function buscarPorId(idEstilista) {
     const [filas] = await db.query(
         "SELECT id_estilista, id_usuario, CONCAT(nombres, ' ', apellidos) AS nombre, estado FROM estilistas WHERE id_estilista = ?",
@@ -59,7 +52,6 @@ async function buscarPorId(idEstilista) {
     return filas[0] || null;
 }
 
-// Estilistas activas que saben hacer un servicio
 async function capacitadasPara(idServicio) {
     const [filas] = await db.query(`
         SELECT e.id_estilista, CONCAT(e.nombres, ' ', e.apellidos) AS nombre
@@ -74,7 +66,6 @@ async function cambiarEstado(idEstilista, estado) {
     return resultado.affectedRows > 0;
 }
 
-// Reemplaza los servicios de la estilista: borra los anteriores y guarda los nuevos
 async function reemplazarServicios(conexion, idEstilista, idsServicios) {
     await conexion.query('DELETE FROM estilista_servicios WHERE id_estilista = ?', [idEstilista]);
     await asignarServicios(conexion, idEstilista, idsServicios);

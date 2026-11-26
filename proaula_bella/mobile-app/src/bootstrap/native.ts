@@ -8,7 +8,7 @@ export async function initializeNative(router: Router) {
   if (!Capacitor.isNativePlatform()) return;
   const updateStatusBar = (path: string) =>
     SystemBars.setStyle({
-      style: SystemBarsStyle.Dark, // texto claro sobre el fondo oscuro de la app
+      style: SystemBarsStyle.Dark,
       bar: SystemBarType.StatusBar,
     });
 

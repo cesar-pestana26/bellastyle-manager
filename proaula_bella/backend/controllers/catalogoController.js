@@ -1,12 +1,8 @@
-// Controlador de catálogos: devuelve listas para mostrar en pantalla
 const servicioModel = require('../models/servicioModel');
 const estilistaModel = require('../models/estilistaModel');
 const clienteModel = require('../models/clienteModel');
 const productoModel = require('../models/productoModel');
 
-// Todas las funciones hacen lo mismo: consultar y devolver la lista.
-// Si la petición trae ?todos=1 se usa la consulta que incluye los inactivos
-// (la usa la administradora); si no, solo los activos.
 function responderLista(consultaActivos, consultaTodos = consultaActivos) {
     return async (req, res) => {
         try {
@@ -19,7 +15,6 @@ function responderLista(consultaActivos, consultaTodos = consultaActivos) {
     };
 }
 
-// GET /api/estilistas/usuario/:idUsuario  (perfil de la estilista que inició sesión)
 async function estilistaPorUsuario(req, res) {
     try {
         const estilista = await estilistaModel.buscarPorUsuario(req.params.idUsuario);
@@ -31,7 +26,6 @@ async function estilistaPorUsuario(req, res) {
     }
 }
 
-// GET /api/clientas/usuario/:idUsuario  (perfil de la clienta que inició sesión)
 async function clientaPorUsuario(req, res) {
     try {
         const clienta = await clienteModel.buscarPorUsuario(req.params.idUsuario);

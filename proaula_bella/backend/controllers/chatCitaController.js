@@ -1,6 +1,3 @@
-// Controlador del chat de una cita: la clienta y su estilista se escriben.
-// Se puede escribir mientras la cita esté Pendiente o Confirmada;
-// cuando se finaliza o se cancela, el chat queda solo para leer.
 const citaModel = require('../models/citaModel');
 const mensajeCitaModel = require('../models/mensajeCitaModel');
 
@@ -16,8 +13,6 @@ function chatAbierto(estado) {
     return estado === 'Pendiente' || estado === 'Confirmada';
 }
 
-// Busca la cita y comprueba que quien pide sea su clienta o su estilista.
-// Si algo falla responde el error y devuelve null.
 async function citaDelParticipante(req, res, rol, idUsuario) {
     if (!ROLES_CHAT.includes(rol) || !idUsuario) {
         res.status(400).json({ success: false, message: 'Faltan los datos de quien escribe.' });
@@ -36,9 +31,6 @@ async function citaDelParticipante(req, res, rol, idUsuario) {
     return cita;
 }
 
-// GET /api/citas/:id/mensajes?rol=Clienta&idUsuario=5&desde=10
-// Devuelve los datos de la cita y los mensajes nuevos. Al abrirlo,
-// los mensajes de la otra persona quedan leídos.
 async function verMensajes(req, res) {
     const { rol, idUsuario } = req.query;
     try {
@@ -60,7 +52,6 @@ async function verMensajes(req, res) {
     } catch (err) { errorServidor(res, err); }
 }
 
-// POST /api/citas/:id/mensajes   Recibe: { rol, idUsuario, texto }
 async function enviar(req, res) {
     const { rol, idUsuario } = req.body;
     const texto = typeof req.body.texto === 'string' ? req.body.texto.trim() : '';

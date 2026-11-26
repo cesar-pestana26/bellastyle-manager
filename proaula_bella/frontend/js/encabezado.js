@@ -1,8 +1,3 @@
-// js/encabezado.js - Encabezado único de las páginas públicas.
-// Cada página pone <header id="encabezado"></header> y este archivo justo debajo.
-// Así todas muestran el mismo menú: Inicio, Servicios, Galería, Tienda, carrito,
-// botón de tema y la sesión (Iniciar sesión / Mi panel). En celular el menú se abre
-// con el botón de tres rayas.
 (function () {
   const destino = document.getElementById('encabezado');
   if (!destino) return;
@@ -78,7 +73,6 @@
     boton.setAttribute('aria-expanded', String(abierto));
   });
 
-  // Número de productos en el carrito (se guarda en el navegador)
   window.actualizarContadorCarrito = function () {
     let total = 0;
     try { (JSON.parse(localStorage.getItem('carritoBellaStyle')) || []).forEach((i) => { total += Number(i.cantidad) || 0; }); } catch (e) { total = 0; }

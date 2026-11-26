@@ -1,5 +1,3 @@
-// js/agendar.js - Agendamiento conectado a MySQL (POST /api/citas y GET /disponibilidad)
-
 let servicioSeleccionado = null;
 let estilistaSeleccionada = { id: 0, nombre: 'Cualquiera Disponible' };
 let horaSeleccionada = null;
@@ -175,7 +173,6 @@ function renderizarTarjetasServicios() {
   if (!contenedor) return;
 
   const filtrados = todosLosServicios.filter(s => {
-    // Los servicios Unisex también sirven para Mujer y para Hombre
     const pasaPub = filtroPublico === 'Todos' || s.publico === filtroPublico || s.publico === 'Unisex';
     const pasaCat = filtroCategoria === 'Todas' || s.categoria === filtroCategoria;
     const pasaTxt = !textoBusqueda ||
@@ -309,7 +306,6 @@ async function actualizarDisponibilidadHorarios() {
     grid.innerHTML = `<p class="col-span-full text-xs text-white/60">Selecciona un servicio y una fecha para consultar las horas disponibles.</p>`;
     return;
   }
-
 
   grid.innerHTML = `<p class="col-span-full text-xs text-white/60">Consultando disponibilidad en el servidor...</p>`;
 
@@ -498,7 +494,6 @@ document.getElementById('btnConfirmarCita')?.addEventListener('click', async () 
       if (!resHttp.ok) resp.success = false;
     }
 
-    // Revisar la respuesta del servidor ANTES de decir "éxito"
     if (!resp || resp.errorRed || !resp.success) {
       const msgError = (resp && (resp.message || resp.mensaje || resp.error)) || 'El servidor no pudo guardar la cita.';
       mostrarAlertaAgendamiento(alerta, msgError, false);

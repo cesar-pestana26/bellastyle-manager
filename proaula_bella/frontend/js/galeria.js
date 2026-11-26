@@ -1,5 +1,3 @@
-// js/galeria.js - Galería con fotos reales (galeria.html):
-// la vitrina de las estilistas y del salón, y las fotos de cada servicio.
 function tarjetaFoto(url, titulo, detalle) {
   return `<button type="button" class="group relative overflow-hidden rounded-2xl border border-white/10 aspect-[4/5] text-left" data-foto="${url}" data-texto="${escapar([titulo, detalle].filter(Boolean).join(' · '))}">
     <img src="${url}" alt="${escapar(titulo || 'Trabajo del salón')}" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">

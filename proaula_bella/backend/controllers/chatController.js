@@ -1,5 +1,3 @@
-// Controlador del chat de la página de inicio.
-// El visitante escribe sin cuenta; la administradora responde desde su panel.
 const crypto = require('crypto');
 const chatModel = require('../models/chatModel');
 const asistente = require('../utils/asistente');
@@ -9,7 +7,6 @@ const { nombreValido, telefonoValido, emailValido } = require('../utils/validato
 const MAX_TEXTO = 500;
 const RE_CODIGO = /^[a-f0-9]{32}$/;
 
-// Revisa el texto de un mensaje. Devuelve el error, o null si está bien.
 function validarTexto(texto) {
     if (typeof texto !== 'string' || texto.trim() === '') return 'Escribe un mensaje.';
     if (texto.trim().length > MAX_TEXTO) return `El mensaje puede tener máximo ${MAX_TEXTO} caracteres.`;
@@ -21,7 +18,6 @@ function errorServidor(res, err) {
     res.status(500).json({ success: false, message: 'No se pudo procesar el mensaje.' });
 }
 
-// Busca la conversación del visitante por su código. Si no existe, responde 404.
 async function conversacionDelVisitante(req, res) {
     const { codigo } = req.params;
     const conversacion = RE_CODIGO.test(codigo) ? await chatModel.buscarPorCodigo(codigo) : null;
@@ -31,17 +27,12 @@ async function conversacionDelVisitante(req, res) {
     return conversacion;
 }
 
-// ---------------------------------------------------------------
-// VISITANTE (página de inicio, sin iniciar sesión)
-// ---------------------------------------------------------------
-
-// POST /api/chat   Recibe: { nombre, contacto (opcional) }
 async function iniciar(req, res) {
     const { nombre, contacto } = req.body;
     if (!nombreValido(nombre) || nombre.trim().length > 60) {
         return res.status(400).json({ success: false, message: 'Escribe tu nombre (solo letras).' });
     }
-    // El contacto es opcional; si lo escribe, debe ser un teléfono o un correo válido
+
     if (contacto && String(contacto).trim() !== '') {
         const texto = String(contacto).trim();
         if (texto.length > 120 || (!telefonoValido(texto) && !emailValido(texto))) {
@@ -49,7 +40,6 @@ async function iniciar(req, res) {
         }
     }
     try {
-        // Código aleatorio que identifica al visitante sin pedirle cuenta
         const codigo = crypto.randomBytes(16).toString('hex');
         const primerNombre = nombre.trim().split(/\s+/)[0];
         const id = await chatModel.crearConversacion({ codigo, nombre: nombre.trim(), contacto: contacto && String(contacto).trim() });
@@ -63,7 +53,6 @@ async function iniciar(req, res) {
     }
 }
 
-// GET /api/chat/:codigo?desde=10   Devuelve los mensajes nuevos (id mayor a "desde")
 async function verMensajes(req, res) {
     try {
         const conversacion = await conversacionDelVisitante(req, res);
@@ -76,8 +65,6 @@ async function verMensajes(req, res) {
     }
 }
 
-// Respuesta automática al visitante. Primero intenta con la IA (Gemini);
-// si no está configurada o falla, usa el asistente de palabras clave.
 async function responderAlVisitante(idConversacion, texto) {
     let respuesta = null;
     if (asistenteIA.activo()) {
@@ -89,10 +76,6 @@ async function responderAlVisitante(idConversacion, texto) {
     if (respuesta) await chatModel.agregarMensaje(idConversacion, 'Asistente', respuesta);
 }
 
-// POST /api/chat/:codigo/mensajes   Recibe: { texto }
-// Guarda el mensaje y responde de inmediato. La respuesta del asistente se
-// genera después (la IA puede tardar unos segundos) y el navegador la recibe
-// en su siguiente revisión de mensajes.
 async function enviarVisitante(req, res) {
     const error = validarTexto(req.body.texto);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -102,7 +85,6 @@ async function enviarVisitante(req, res) {
         const id = conversacion.id_conversacion;
         await chatModel.agregarMensaje(id, 'Visitante', req.body.texto.trim());
 
-        // El asistente solo responde mientras el salón no haya entrado a la conversación
         const asistenteResponde = !(await chatModel.salonYaRespondio(id));
         res.status(201).json({ success: true, data: { asistenteResponde } });
 
@@ -115,11 +97,6 @@ async function enviarVisitante(req, res) {
     }
 }
 
-// ---------------------------------------------------------------
-// ADMINISTRADORA (pestaña Mensajes del panel)
-// ---------------------------------------------------------------
-
-// GET /api/conversaciones
 async function listar(req, res) {
     try {
         res.json({ success: true, data: await chatModel.listarConversaciones() });
@@ -128,7 +105,6 @@ async function listar(req, res) {
     }
 }
 
-// GET /api/conversaciones/:id/mensajes   Al abrirla, los mensajes quedan leídos
 async function abrir(req, res) {
     try {
         const conversacion = await chatModel.buscarPorId(req.params.id);
@@ -141,7 +117,6 @@ async function abrir(req, res) {
     }
 }
 
-// POST /api/conversaciones/:id/responder   Recibe: { texto }
 async function responder(req, res) {
     const error = validarTexto(req.body.texto);
     if (error) return res.status(400).json({ success: false, message: error });
@@ -155,7 +130,6 @@ async function responder(req, res) {
     }
 }
 
-// PUT /api/conversaciones/:id/estado   Recibe: { estado: 'Abierta' | 'Cerrada' }
 async function cambiarEstado(req, res) {
     const { estado } = req.body;
     if (!['Abierta', 'Cerrada'].includes(estado)) {

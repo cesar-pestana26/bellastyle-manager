@@ -15,7 +15,6 @@ const cargando = ref(false);
 const error = ref('');
 const exito = ref('');
 
-// Formularios abiertos (uno a la vez)
 const pagando = ref(0);
 const comprobante = ref('');
 const calificando = ref(0);
@@ -113,14 +112,12 @@ onIonViewWillEnter(cargar);
             </div>
             <p v-if="c.calificacion" class="small" style="margin:6px 0 0;">Tu calificación: {{ '★'.repeat(c.calificacion) }}</p>
 
-            <!-- Acciones de la clienta -->
             <div v-if="esClienta" class="row" style="margin-top:10px;">
               <button v-if="!pagoDe(c.id) && c.estado !== 'Cancelada'" class="button primary" @click="pagando = pagando === c.id ? 0 : c.id; calificando = 0">Pagar</button>
               <button v-if="c.estado === 'Finalizada' && !c.calificacion" class="button primary" @click="calificando = calificando === c.id ? 0 : c.id; pagando = 0">Calificar</button>
               <button v-if="c.estado === 'Pendiente' || c.estado === 'Confirmada'" class="button secondary" :disabled="ocupado" @click="cancelar(c)">Cancelar cita</button>
             </div>
 
-            <!-- Pago: QR Bre-B del salón o pago en el salón -->
             <div v-if="pagando === c.id" style="margin-top:12px;">
               <hr class="sep" />
               <p class="eyebrow">Pagar con Bre-B</p>
@@ -144,7 +141,6 @@ onIonViewWillEnter(cargar);
               <button class="button secondary full" style="margin-top:8px;" :disabled="ocupado" @click="pagarEnSalon(c)">Pagaré en el salón</button>
             </div>
 
-            <!-- Calificación -->
             <div v-if="calificando === c.id" style="margin-top:12px;">
               <hr class="sep" />
               <p class="eyebrow">¿Cómo te fue?</p>

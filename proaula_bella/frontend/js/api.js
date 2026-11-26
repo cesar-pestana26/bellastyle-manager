@@ -1,17 +1,12 @@
-// js/api.js - Cliente API HTTP, Control de Sesión y Formatos Globales
-
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://localhost:3000/api'
   : '/api';
 
-/**
- * Peticiones HTTP unificadas al servidor backend
- */
 async function pedir(endpoint, metodo = 'GET', datos = null) {
-  const url = endpoint.startsWith('http') 
-    ? endpoint 
+  const url = endpoint.startsWith('http')
+    ? endpoint
     : `${API_BASE}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-  
+
   const opciones = {
     method: metodo,
     headers: {
@@ -34,7 +29,6 @@ async function pedir(endpoint, metodo = 'GET', datos = null) {
     const resultado = await respuesta.json().catch(() => ({}));
 
     if (!respuesta.ok) {
-      // 401 = el token no existe o venció: se cierra la sesión y se vuelve al login
       if (respuesta.status === 401 && token && !/index\.html|recuperar\.html|register\.html/.test(location.pathname)) {
         localStorage.removeItem('usuarioLogueado');
         localStorage.removeItem('token');
@@ -56,7 +50,6 @@ async function pedir(endpoint, metodo = 'GET', datos = null) {
   }
 }
 
-// Muestra un mensaje en una caja de alerta (recuperar contraseña, chat del visitante)
 function mostrarAlerta(caja, mensaje, tipo = 'error') {
   if (!caja) return;
   caja.textContent = mensaje || '';
@@ -70,7 +63,6 @@ function ocultarAlerta(caja) {
   caja.classList.remove('block');
 }
 
-// Formateadores globales
 function pesos(valor) {
   const num = Number(valor) || 0;
   return '$' + num.toLocaleString('es-CO');
@@ -85,7 +77,6 @@ function escapar(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Control de Sesión en el Navegador
 function obtenerUsuarioActual() {
   try {
     return JSON.parse(localStorage.getItem('usuarioLogueado')) || null;
@@ -103,8 +94,6 @@ function guardarSesion(usuario, token = null) {
   }
 }
 
-// Cierra la sesión y lleva a "Iniciar sesión" con la pestaña del rol que tenía,
-// para poder entrar otra vez o escoger otro rol (Clienta, Estilista o Administradora).
 function cerrarSesion() {
   let rol = '';
   try { rol = String((JSON.parse(localStorage.getItem('usuarioLogueado')) || {}).rol || '').toLowerCase(); } catch (e) { rol = ''; }

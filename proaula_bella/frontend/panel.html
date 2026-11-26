@@ -40,7 +40,7 @@
 
   <header class="sticky top-0 z-50 border-b border-white/10 bg-[#07060b]/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
-      
+
       <div class="flex min-w-0 items-center gap-2 sm:gap-3">
         <a href="welcome.html" class="flex items-center gap-2">
           <img src="img/logo.webp" alt="Logo" class="h-9 w-9 rounded-full object-cover shadow-md shadow-pink-500/20">
@@ -81,8 +81,7 @@
   <div id="aviso" class="fixed top-20 right-6 z-50 transition-all duration-300 opacity-0 -translate-y-4 px-4 py-3 rounded-xl bg-pink-500 text-white font-semibold text-xs shadow-2xl"></div>
 
   <main class="max-w-7xl mx-auto px-6 py-8 flex-1 w-full space-y-8">
-    
-    <!-- Portada de Perfil con Foto -->
+
     <section class="tarjeta p-6 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="relative shrink-0">
@@ -104,10 +103,9 @@
       </div>
     </section>
 
-    <!-- VISTA CLIENTA -->
     <div id="vistaClienta" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         <div class="tarjeta p-6 space-y-4">
           <div class="flex items-center justify-between border-b border-white/10 pb-3">
             <h3 class="font-serif font-bold text-base text-pink-300">Mis Datos Personales</h3>
@@ -140,7 +138,6 @@
 
       </div>
 
-      <!-- Mis pedidos de la tienda -->
       <div class="tarjeta p-6 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
           <h3 class="font-serif font-bold text-lg text-white">Mis pedidos de la tienda</h3>
@@ -149,7 +146,6 @@
         <div id="misPedidos" class="space-y-2"><p class="text-xs text-white/60">Cargando...</p></div>
       </div>
 
-      <!-- Nuestras Estilistas + Vitrina de Trabajos -->
       <div class="tarjeta p-6 space-y-4">
         <div class="border-b border-white/10 pb-3">
           <h3 class="font-serif font-bold text-lg text-white">Nuestras Estilistas y Vitrina de Trabajos</h3>
@@ -159,7 +155,6 @@
       </div>
     </div>
 
-    <!-- VISTA ESTILISTA -->
     <div id="vistaEstilista" class="space-y-6 hidden">
       <div id="metricasEstilista" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
 
@@ -227,7 +222,6 @@
 
   </main>
 
-  <!-- Ventana general de edición -->
   <dialog id="ventana" class="max-w-lg w-full rounded-2xl bg-[#120f1d] p-6 text-white border border-white/20 backdrop:bg-black/80 shadow-2xl">
     <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
       <h3 id="tituloVentana" class="font-serif font-bold text-lg text-pink-300">Detalle</h3>
@@ -242,7 +236,6 @@
     </form>
   </dialog>
 
-  <!-- Ventana de Chat de la Cita (Clienta <-> Estilista) -->
   <dialog id="ventanaChat" class="max-w-lg w-full rounded-2xl bg-[#120f1d] p-5 text-white border border-white/20 backdrop:bg-black/80 shadow-2xl">
     <div class="flex justify-between items-start gap-3 border-b border-white/10 pb-3">
       <div>
@@ -262,7 +255,6 @@
     </form>
   </dialog>
 
-  <!-- Visor de fotos en grande -->
   <dialog id="visorFoto" class="max-w-3xl w-full rounded-2xl bg-[#120f1d] p-4 text-white border border-white/20 backdrop:bg-black/85 shadow-2xl">
     <div class="space-y-3">
       <img id="visorImagen" src="" alt="" class="max-h-[75vh] w-full rounded-xl object-contain mx-auto">

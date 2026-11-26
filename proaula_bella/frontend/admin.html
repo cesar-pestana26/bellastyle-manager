@@ -23,7 +23,7 @@
         }
         const r = String(u.rol || '').toLowerCase();
         const esAdmin = r === 'admin' || r === 'administradora' || r.includes('admin');
-        
+
         if (!esAdmin) {
           window.location.replace('panel.html');
         }
@@ -106,7 +106,6 @@
         </div>
       </div>
 
-      <!-- PESTAÑA 1: CITAS -->
       <section id="secCitasAdmin" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
           <div>
@@ -150,9 +149,7 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 2: PAGOS EN MYSQL -->
       <section id="secPagosAdmin" class="space-y-4 hidden">
-        <!-- Datos de cobro Bre-B: el QR y la llave que ven las clientas al pagar -->
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
           <div class="grid gap-5 md:grid-cols-[11rem_1fr] md:items-start">
             <div class="text-center">
@@ -194,7 +191,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA: PEDIDOS DE LA TIENDA (carrito de las clientas) -->
       <section id="secPedidosAdmin" class="space-y-4 hidden">
         <p class="text-xs text-white/70">Pedidos que hicieron las clientas desde la tienda. Se pagan y recogen en el salón. Al cancelar uno, las unidades vuelven al stock.</p>
         <div class="overflow-x-auto">
@@ -215,7 +211,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 3: BANDEJA DE MENSAJES (CHAT DE BELLA CON VISITANTES) -->
       <section id="secMensajesAdmin" class="space-y-4 hidden">
         <p class="text-xs text-white/70">Bandeja de atención personalizada: lee y responde los chats iniciados por visitantes desde la página de inicio cuando Bella deriva a una asesora.</p>
 
@@ -242,7 +237,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 4: GANANCIAS -->
       <section id="secGananciasAdmin" class="space-y-4 hidden">
         <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
           Las ganancias brutas corresponden a citas <strong>Finalizadas</strong> en MySQL (60% Estilista / 40% Salón).
@@ -263,7 +257,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 5: SERVICIOS Y FOTOS -->
       <section id="secServiciosAdmin" class="space-y-4 hidden">
         <div class="flex justify-between items-center">
           <p class="text-xs text-white/70">Ajusta tarifas, administra las fotos de cada servicio o registra nuevos servicios.</p>
@@ -285,7 +278,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 6: PRODUCTOS Y FOTOS -->
       <section id="secProductosAdmin" class="space-y-4 hidden">
         <div class="flex justify-between items-center">
           <p class="text-xs text-white/70">Gestiona el inventario de productos de la tienda y sus fotografías.</p>
@@ -306,7 +298,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 7: EQUIPO, HORARIOS Y CALIFICACIONES -->
       <section id="secEquipoAdmin" class="space-y-4 hidden">
         <div>
           <p class="text-xs text-white/70">Estilistas activas en el salón, horarios de trabajo, ausencias y calificaciones recibidas.</p>
@@ -326,7 +317,6 @@
         </div>
       </section>
 
-      <!-- PESTAÑA 8: VITRINA DEL SALÓN -->
       <section id="secVitrinaAdmin" class="space-y-4 hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -354,7 +344,6 @@
     </form>
   </dialog>
 
-  <!-- Visor de fotos en grande -->
   <dialog id="visorFotoAdmin" class="max-w-3xl w-full rounded-2xl bg-[#120f1d] p-4 text-white border border-white/20 backdrop:bg-black/85 shadow-2xl">
     <div class="space-y-3">
       <img id="visorImagenAdmin" src="" alt="" class="max-h-[75vh] w-full rounded-xl object-contain mx-auto">

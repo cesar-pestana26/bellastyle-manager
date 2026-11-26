@@ -12,20 +12,17 @@ interface Respuesta<T> {
   data: T;
 }
 
-// Servicio de aplicación: los casos de uso de BellaStyle Mobile.
-// Usa las MISMAS rutas de la API que la página web (backend Node.js + Express + MySQL).
 export class BellaApplicationService {
   constructor(
     private readonly http: HttpClient,
     private readonly sessions: SessionStore,
-    private readonly origen: string   // '' en el navegador, 'https://bellastyle.onrender.com' en el celular
+    private readonly origen: string
   ) {}
 
   apiBaseUrl(): string {
     return this.http.getBaseUrl();
   }
 
-  // Las fotos vienen como rutas relativas (/api/fotos/3); en el celular se completan con el servidor
   imagen(ruta: string): string {
     return `${this.origen}${ruta}`;
   }
@@ -42,8 +39,6 @@ export class BellaApplicationService {
     this.sessions.clear();
   }
 
-  // ---------- Cuenta ----------
-  // POST /api/login -> { token, user }
   async login(params: { username: string; password: string; rol: PortalRol }): Promise<BellaSession> {
     const res = await this.http.request<{ token: string; user: Omit<BellaSession, 'token'>; message?: string }>(
       '/login', 'POST', params, false);
@@ -53,19 +48,16 @@ export class BellaApplicationService {
     return sesion;
   }
 
-  // POST /api/register (solo clientas desde la app)
   async registrarClienta(params: { nombre: string; username: string; password: string; telefono: string; email: string }): Promise<string> {
     const res = await this.http.request<Respuesta<never>>('/register', 'POST', { ...params, rol: 'cliente' }, false);
     return res.message || 'Cuenta creada.';
   }
 
-  // PUT /api/mi-cuenta/password
   async cambiarPassword(actual: string, nueva: string): Promise<string> {
     const res = await this.http.request<Respuesta<never>>('/mi-cuenta/password', 'PUT', { actual, nueva });
     return res.message || 'Contraseña actualizada.';
   }
 
-  // ---------- Catálogo (público) ----------
   async listarServicios(): Promise<ServicioBella[]> {
     return (await this.http.request<Respuesta<ServicioBella[]>>('/servicios', 'GET', undefined, false)).data || [];
   }
@@ -82,13 +74,10 @@ export class BellaApplicationService {
     return (await this.http.request<Respuesta<ProductoBella[]>>('/productos', 'GET', undefined, false)).data || [];
   }
 
-  // GET /api/vitrina: fotos de trabajos reales del salón
   async listarVitrina(): Promise<FotoVitrina[]> {
     return (await this.http.request<Respuesta<FotoVitrina[]>>('/vitrina', 'GET', undefined, false)).data || [];
   }
 
-  // ---------- Agenda ----------
-  // GET /api/disponibilidad: horas libres reales (cada 30 min) según estilistas, citas y horario del salón
   async horasLibres(idServicio: number, fecha: string, idEstilista?: number): Promise<string[]> {
     const q = new URLSearchParams({ idServicio: String(idServicio), fecha });
     if (idEstilista) q.set('idEstilista', String(idEstilista));
@@ -98,7 +87,6 @@ export class BellaApplicationService {
     return res.data?.horas || [];
   }
 
-  // POST /api/citas (idEstilista vacío = "Cualquiera disponible")
   async crearCita(params: { idServicio: number; fecha: string; hora: string; idEstilista?: number; observaciones?: string }): Promise<string> {
     const sesion = this.currentSession();
     if (!sesion) throw new DomainError('Inicia sesión para agendar tu cita.');
@@ -106,7 +94,6 @@ export class BellaApplicationService {
     return res.message || 'Cita agendada.';
   }
 
-  // GET /api/citas: el servidor filtra por el token (cada quien ve solo las suyas)
   async listarCitas(): Promise<CitaBella[]> {
     return (await this.http.request<Respuesta<CitaBella[]>>('/citas')).data || [];
   }
@@ -116,13 +103,11 @@ export class BellaApplicationService {
     return res.message || 'Cita cancelada.';
   }
 
-  // POST /api/citas/:id/calificacion
   async calificarCita(idCita: number, estrellas: number, comentario: string): Promise<string> {
     const res = await this.http.request<Respuesta<never>>(`/citas/${idCita}/calificacion`, 'POST', { estrellas, comentario });
     return res.message || '¡Gracias por tu calificación!';
   }
 
-  // ---------- Pagos (Bre-B con QR o en el salón) ----------
   async listarPagos(): Promise<PagoBella[]> {
     return (await this.http.request<Respuesta<PagoBella[]>>('/pagos')).data || [];
   }
@@ -131,13 +116,11 @@ export class BellaApplicationService {
     return (await this.http.request<Respuesta<DatosCobroSalon | null>>('/pago-salon', 'GET', undefined, false)).data;
   }
 
-  // POST /api/pagos: el monto lo toma el servidor de la cita (nunca lo envía la app)
   async pagarCita(idCita: number, metodo: 'Bre-B' | 'Efectivo / Salón', comprobante?: string): Promise<string> {
     const res = await this.http.request<Respuesta<PagoBella>>('/pagos', 'POST', { idCita, metodo, comprobante });
     return res.message || 'Pago registrado.';
   }
 
-  // ---------- Tienda ----------
   obtenerCarrito(): ItemCarritoBella[] {
     return this.sessions.getCart();
   }
@@ -172,7 +155,6 @@ export class BellaApplicationService {
     this.guardarCarrito([]);
   }
 
-  // POST /api/pedidos: el servidor relee precios y stock en una transacción
   async hacerPedido(): Promise<string> {
     const items = this.obtenerCarrito();
     if (items.length === 0) throw new DomainError('Tu carrito está vacío.');

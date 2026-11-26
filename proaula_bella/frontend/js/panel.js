@@ -1,4 +1,3 @@
-
 let usuarioSesion = null;
 let rolApiActual = 'Clienta';
 let citasUsuario = [];
@@ -89,10 +88,6 @@ function configurarHeader(rolNorm) {
   }
 }
 
-// ---------------------------------------------------------------
-// FOTO DE PERFIL (/api/usuarios/:id/foto)
-// ---------------------------------------------------------------
-
 function fotoDe(idUsuario) {
   return `/api/usuarios/${idUsuario}/foto?v=${versionFoto}`;
 }
@@ -168,10 +163,6 @@ function comprimirImagenWebp(archivo, maxLado = 1200) {
   });
 }
 
-// ---------------------------------------------------------------
-// CARGA DE CITAS Y PAGOS DESDE MYSQL
-// ---------------------------------------------------------------
-
 function normalizarCitaServidor(c) {
   return {
     id: c.id_cita ?? c.id,
@@ -231,10 +222,6 @@ function botonChatCita(idCita, sinLeer = 0) {
     : '';
   return `<button type="button" onclick="abrirChatCita(${idCita})" class="px-2 py-1 bg-white/10 text-white border border-white/15 rounded text-[11px] font-semibold hover:bg-white/20">Chat${badge}</button>`;
 }
-
-// ---------------------------------------------------------------
-// VISTA CLIENTA (Datos, Citas, Pagos MySQL, Chat, Reprogramar, Calificar, PDF, Vitrina)
-// ---------------------------------------------------------------
 
 async function iniciarVistaClienta() {
   const vClienta = document.getElementById('vistaClienta');
@@ -311,7 +298,6 @@ function renderizarTablaCitasClienta() {
         const textoPago = { 'Pagado': 'Pagado ✓', 'Por verificar': 'Pago por verificar', 'Pendiente en Salón': 'Pago en salón' }[pagoExistente.estado] || pagoExistente.estado;
         acciones += `<button type="button" onclick="verComprobantePago(${c.id})" class="px-2 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-[11px] font-semibold hover:bg-purple-500/30">${textoPago}</button> `;
       } else {
-        // Sin pago, o el salón rechazó el comprobante: puede volver a pagar
         acciones += `<button type="button" onclick="iniciarPagoCitaClienta(${c.id})" class="px-2.5 py-1 bg-pink-500 text-white rounded text-[11px] font-bold hover:bg-pink-600">Pagar</button> `;
       }
     }
@@ -577,10 +563,6 @@ async function cargarEstilistasClienta() {
   });
 }
 
-// ---------------------------------------------------------------
-// CHAT DE LA CITA (CLIENTA <-> ESTILISTA)
-// ---------------------------------------------------------------
-
 const chatCita = { id: null, ultimo: 0, temporizador: null };
 
 function inicializarChatCitaEventos() {
@@ -680,7 +662,7 @@ async function cargarMensajesCita() {
     caja.innerHTML = `<p class="text-center text-xs text-white/50 py-8">Todavía no hay mensajes en esta cita. Escribe el primero abajo.</p>`;
   } else if (mensajes.length > 0) {
     if (chatCita.ultimo === 0) caja.innerHTML = '';
-    // Solo mensajes más nuevos que el último dibujado (evita duplicados si dos consultas se cruzan)
+
     mensajes.filter((m) => m.id > chatCita.ultimo).forEach((m) => {
       dibujarMensajeCita(m);
       chatCita.ultimo = m.id;
@@ -693,10 +675,6 @@ async function cargarMensajesCita() {
   cerrado.classList.toggle('hidden', cita.abierto);
   cerrado.textContent = `La cita quedó ${cita.estado.toLowerCase()}: el chat es solo de lectura.`;
 }
-
-// ---------------------------------------------------------------
-// VISTA ESTILISTA (Agenda, Chat, Horario/Ausencias, Notas, Historial, Calificaciones, Vitrina)
-// ---------------------------------------------------------------
 
 async function iniciarVistaEstilista() {
   const vClienta = document.getElementById('vistaClienta');
@@ -765,10 +743,6 @@ async function cargarMiPerfilEstilista() {
   }
 }
 
-// ---------------------------------------------------------------
-// HORARIO Y AUSENCIAS REALES EN MYSQL (/estilistas/:id/horario y /ausencias)
-// ---------------------------------------------------------------
-
 function generarOpcionesHora(valorSeleccionado, minMinutos, maxMinutos) {
   const selNorm = String(valorSeleccionado || '08:00').slice(0, 5);
   const opciones = [];
@@ -811,7 +785,6 @@ async function editarHorarioEstilista(idEstilista) {
   const datos = resp && resp.data;
   if (!datos) return mostrarToast('No se pudo cargar el horario.');
 
-  // Domingo al final; ese día el salón cierra a las 15:00
   const filas = [1, 2, 3, 4, 5, 6, 0].map((dia) => {
     const h = (datos.horario || []).find((x) => Number(x.dia_semana) === dia);
     const cierre = dia === 0 ? 15 * 60 : 19 * 60;
@@ -1061,10 +1034,6 @@ window.editarNotasServicio = function(idCita) {
   );
 };
 
-// ---------------------------------------------------------------
-// VITRINA DE TRABAJOS (/vitrina)
-// ---------------------------------------------------------------
-
 function verFotoGrande(url, texto) {
   const visor = document.getElementById('visorFoto');
   if (!visor) return;
@@ -1180,10 +1149,6 @@ function modalServiciosEstilista() {
   );
 }
 
-// ---------------------------------------------------------------
-// UTILIDADES DE VENTANA Y FORMATO
-// ---------------------------------------------------------------
-
 let alGuardarVentana = null;
 
 function abrirVentana(titulo, html, alGuardar) {
@@ -1253,5 +1218,5 @@ function escapar(str) {
 }
 
 window.cerrarSesionPanel = function() {
-  cerrarSesion();   // api.js: vuelve a "Iniciar sesión" con la pestaña del rol
+  cerrarSesion();
 };

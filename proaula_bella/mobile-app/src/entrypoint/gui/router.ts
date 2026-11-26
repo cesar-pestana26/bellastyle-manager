@@ -2,8 +2,6 @@ import { createRouter, createWebHistory } from '@ionic/vue-router';
 import type { RouteLocationNormalized } from 'vue-router';
 import type { BellaApplicationService } from '../../application/services/BellaApplicationService';
 
-// Pantallas de la app. Igual que la web: inicio, servicios y tienda se ven sin cuenta;
-// agendar, comprar, mis citas y la cuenta piden iniciar sesión.
 const WelcomeView = () => import('./views/WelcomeView.vue');
 const AuthView = () => import('./views/AuthView.vue');
 const AgendarView = () => import('./views/AgendarView.vue');

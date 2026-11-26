@@ -1,5 +1,3 @@
-// js/cobroSalon.js - Datos de cobro Bre-B del salón (panel de la administradora, pestaña Pagos).
-// Carga la llave, el titular y el QR; al guardar, envía la imagen como PNG (los QR deben verse nítidos).
 async function cargarCobroSalon() {
   const r = await pedir('/pago-salon');
   const d = r && r.success ? r.data : null;
@@ -17,7 +15,6 @@ function mostrarQr(url) {
   document.getElementById('sinQrSalon').classList.add('hidden');
 }
 
-// Reduce la imagen a máximo 800 px y la pasa a PNG
 function qrComoPng(archivo) {
   return new Promise((resolve, reject) => {
     const lector = new FileReader();
@@ -46,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formPagoSalon');
   if (!form) return;
   cargarCobroSalon();
-  // Vista previa: apenas se elige la imagen se muestra, antes de guardar
+
   document.getElementById('archivoQrSalon').addEventListener('change', (e) => {
     const archivo = e.target.files[0];
     if (!archivo) return;

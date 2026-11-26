@@ -1,10 +1,3 @@
-// Chat de la página de inicio (welcome.html) y del inicio de sesión (index.html).
-// El visitante escribe sin crear cuenta. El código de su conversación se guarda
-// en el navegador (localStorage) para que, si vuelve, siga viendo sus mensajes.
-// Cada pocos segundos se pregunta al servidor si hay mensajes nuevos (polling).
-
-// 1. Se dibuja la burbuja y la ventana del chat al final de la página.
-//    Así el mismo archivo sirve para cualquier página que lo incluya.
 document.body.insertAdjacentHTML('beforeend', `
   <div class="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
     <!-- Ventana del chat -->
@@ -86,12 +79,12 @@ document.body.insertAdjacentHTML('beforeend', `
 
 const chat = {
     codigo: localStorage.getItem('bellaChat'),
-    ultimoId: 0,          // id del último mensaje mostrado
-    sinLeer: 0,           // respuestas que llegaron con el chat cerrado
+    ultimoId: 0,
+    sinLeer: 0,
     abierto: false,
     temporizador: null,
-    esperando: null,      // temporizador mientras se espera la respuesta del asistente
-    preguntaPendiente: '' // pregunta elegida en la invitación antes de escribir el nombre
+    esperando: null,
+    preguntaPendiente: ''
 };
 const tituloOriginal = document.title;
 
@@ -99,8 +92,6 @@ const burbuja = document.getElementById('chatBurbuja');
 const ventanaChat = document.getElementById('chatVentana');
 const listaMensajes = document.getElementById('chatMensajes');
 const contador = document.getElementById('chatContador');
-
-// --- Mostrar mensajes ---
 
 function dibujarMensaje(m) {
     const propio = m.autor === 'Visitante';
@@ -117,7 +108,6 @@ function dibujarMensaje(m) {
         </div>`);
 }
 
-// Indicador "Bella está escribiendo…": se muestra hasta que llega la respuesta (máximo 25 s)
 function mostrarEscribiendo(visible) {
     const aviso = document.getElementById('chatEscribiendo');
     aviso.classList.toggle('hidden', !visible);
@@ -133,11 +123,6 @@ function actualizarContador() {
     document.title = chat.sinLeer > 0 ? `(${chat.sinLeer}) Nuevo mensaje · BellaStyle` : tituloOriginal;
 }
 
-// --- Pedir mensajes nuevos al servidor ---
-
-// Si el servidor tarda más de lo que dura el intervalo, dos consultas podían traer
-// el mismo mensaje y mostrarlo dos veces. Por eso: una consulta a la vez y nunca
-// se dibuja un mensaje con id menor o igual al último mostrado.
 async function buscarMensajes() {
     if (!chat.codigo || chat.consultando) return;
     chat.consultando = true;
@@ -148,17 +133,16 @@ async function buscarMensajes() {
         chat.consultando = false;
     }
     if (!respuesta.success) {
-        // La conversación ya no existe (por ejemplo, se reinstaló la base de datos)
         if (respuesta.message === 'La conversación no existe.') reiniciarChat();
         return;
     }
     const nuevos = respuesta.data.mensajes.filter((m) => m.id > chat.ultimoId);
-    const primeraCarga = chat.ultimoId === 0;   // al abrir la página no se cuentan como nuevos
-    // Llegó una respuesta: se quita el indicador "escribiendo"
+    const primeraCarga = chat.ultimoId === 0;
+
     if (chat.esperando && nuevos.some((m) => m.autor !== 'Visitante')) mostrarEscribiendo(false);
     nuevos.forEach((m) => {
         dibujarMensaje(m);
-        // Notificación: respuestas que llegan con el chat cerrado o la pestaña oculta
+
         if (m.autor !== 'Visitante' && !primeraCarga && (!chat.abierto || document.hidden)) chat.sinLeer++;
         chat.ultimoId = m.id;
     });
@@ -168,14 +152,11 @@ async function buscarMensajes() {
     }
 }
 
-// Esperando respuesta: revisa cada segundo. Abierto: cada 3. Cerrado: cada 10 (solo para el contador).
 function programarRevision() {
     clearInterval(chat.temporizador);
     if (!chat.codigo) return;
     chat.temporizador = setInterval(buscarMensajes, chat.esperando ? 1000 : chat.abierto ? 3000 : 10000);
 }
-
-// --- Pantallas del chat: datos del visitante o conversación ---
 
 function mostrarConversacion(visible) {
     document.getElementById('chatDatos').classList.toggle('hidden', visible);
@@ -189,7 +170,7 @@ function reiniciarChat() {
     chat.ultimoId = 0;
     listaMensajes.innerHTML = '';
     mostrarEscribiendo(false);
-    // El nombre ya escrito se deja puesto para empezar otra conversación rápido
+
     document.getElementById('chatNombre').value = localStorage.getItem('bellaChatNombre') || '';
     mostrarConversacion(false);
     programarRevision();
@@ -208,8 +189,6 @@ function abrirChat(abrir) {
     programarRevision();
 }
 
-// Al cerrar el chat, la conversación termina: al abrirlo de nuevo aparece limpio
-// para hacer otras preguntas. (La administradora sigue viendo la conversación en su panel.)
 function cerrarChat() {
     abrirChat(false);
     if (chat.codigo) reiniciarChat();
@@ -219,7 +198,6 @@ burbuja.addEventListener('click', () => (chat.abierto ? cerrarChat() : abrirChat
 document.getElementById('chatCerrar').addEventListener('click', cerrarChat);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && chat.abierto) { chat.sinLeer = 0; actualizarContador(); } });
 
-// Paso 1: el visitante escribe su nombre (y si quiere, teléfono o correo)
 document.getElementById('chatDatos').addEventListener('submit', async (e) => {
     e.preventDefault();
     const alerta = document.getElementById('chatAlerta');
@@ -236,7 +214,7 @@ document.getElementById('chatDatos').addEventListener('submit', async (e) => {
     await buscarMensajes();
     programarRevision();
     document.getElementById('chatTexto').focus();
-    // Si eligió una pregunta en la invitación, se envía sola
+
     if (chat.preguntaPendiente) enviarPregunta(chat.preguntaPendiente);
 });
 
@@ -246,7 +224,6 @@ function enviarPregunta(texto) {
     document.getElementById('chatFormMensaje').requestSubmit();
 }
 
-// Paso 2: enviar mensajes
 document.getElementById('chatFormMensaje').addEventListener('submit', async (e) => {
     e.preventDefault();
     const campoTexto = document.getElementById('chatTexto');
@@ -266,10 +243,6 @@ document.getElementById('chatFormMensaje').addEventListener('submit', async (e) 
     }
 });
 
-// --- Invitación automática: a los 10 segundos de entrar, Bella saluda ---
-// Primero sale un saludo pequeño (carita + mensaje corto). Al tocarlo se muestran
-// las opciones rápidas. Sale una sola vez por visita (sessionStorage) y no aparece
-// si el chat ya está abierto.
 const invitacion = document.getElementById('chatInvitacion');
 const saludo = document.getElementById('chatSaludo');
 
@@ -281,7 +254,7 @@ function ocultarSaludo() {
 function ocultarInvitacion() {
     ocultarSaludo();
     invitacion.classList.add('hidden');
-    try { sessionStorage.setItem('bellaInvitacion', 'vista'); } catch (e) { /* sin guardado */ }
+    try { sessionStorage.setItem('bellaInvitacion', 'vista'); } catch (e) {  }
 }
 
 function yaSeMostroInvitacion() {
@@ -306,7 +279,7 @@ invitacion.querySelectorAll('[data-pregunta]').forEach((boton) => boton.addEvent
     abrirChat(true);
     const pregunta = boton.dataset.pregunta;
     if (!pregunta) return;
-    // Con conversación abierta se envía de una; si no, después de escribir el nombre
+
     if (chat.codigo) enviarPregunta(pregunta);
     else {
         chat.preguntaPendiente = pregunta;
@@ -314,7 +287,6 @@ invitacion.querySelectorAll('[data-pregunta]').forEach((boton) => boton.addEvent
     }
 }));
 
-// Al cargar la página: si el visitante ya tenía conversación, se recupera
 if (chat.codigo) {
     mostrarConversacion(true);
     buscarMensajes();
