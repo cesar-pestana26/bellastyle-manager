@@ -65,6 +65,7 @@
     <div id="menuMovil" class="lg:hidden hidden border-t border-white/10 bg-[#07060b]/95 px-4 pb-5 pt-3">
       <nav class="space-y-1" aria-label="Menú del celular">${enlaces.map(linkMovil).join('')}</nav>
       <div class="mt-4 grid gap-2">
+        <a href="descargas/BellaStyle.apk" download="BellaStyle.apk" class="block rounded-xl border border-pink-400/40 bg-pink-500/10 px-4 py-3 text-center text-sm font-semibold text-pink-200">Descargar app Android (APK)</a>
         <button type="button" class="btn-toggle-tema flex justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white items-center gap-2"></button>
         ${sesionMovil}
       </div>

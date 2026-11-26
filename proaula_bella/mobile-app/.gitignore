@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+.idea/
+cambios_web.zip
+src/entrypoint/gui/views/HomeView.vue

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BellaStyle</string>
+    <string name="title_activity_main">BellaStyle</string>
+    <string name="package_name">co.edu.unicolombo.bellastyle</string>
+    <string name="custom_url_scheme">co.edu.unicolombo.bellastyle</string>
+</resources>

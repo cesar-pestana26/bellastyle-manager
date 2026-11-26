@@ -24,6 +24,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   const mismoSitio = url.origin === self.location.origin;
   if (mismoSitio && url.pathname.startsWith('/api/')) return;      // datos: siempre en vivo
+  if (mismoSitio && url.pathname.startsWith('/descargas/')) return; // el APK se descarga directo, sin guardarlo en caché
 
   if (req.mode === 'navigate') {
     e.respondWith(
