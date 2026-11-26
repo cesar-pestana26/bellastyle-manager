@@ -37,6 +37,12 @@ module.exports = {
         modelo: process.env.GEMINI_MODELO || 'gemini-flash-lite-latest'
     },
 
+    cloudinary: {
+        nombre: process.env.CLOUDINARY_CLOUD_NAME || '',
+        clave: process.env.CLOUDINARY_API_KEY || '',
+        secreto: process.env.CLOUDINARY_API_SECRET || ''
+    },
+
     salon: {
         direccion: process.env.SALON_DIRECCION || '',
         telefono: process.env.SALON_TELEFONO || '',

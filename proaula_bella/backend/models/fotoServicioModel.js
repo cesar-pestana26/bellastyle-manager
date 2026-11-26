@@ -15,15 +15,16 @@ async function contar(idServicio) {
     return filas[0].total;
 }
 
-async function crear(idServicio, tipo, datos) {
+async function crear(idServicio, foto) {
     const [resultado] = await db.query(
-        'INSERT INTO fotos_servicio (id_servicio, tipo, datos) VALUES (?, ?, ?)', [idServicio, tipo, datos]
+        'INSERT INTO fotos_servicio (id_servicio, tipo, datos, url, public_id) VALUES (?, ?, ?, ?, ?)',
+        [idServicio, foto.tipo, foto.datos, foto.url, foto.publicId]
     );
     return resultado.insertId;
 }
 
 async function buscar(idFoto) {
-    const [filas] = await db.query('SELECT tipo, datos FROM fotos_servicio WHERE id_foto = ?', [idFoto]);
+    const [filas] = await db.query('SELECT tipo, datos, url, public_id FROM fotos_servicio WHERE id_foto = ?', [idFoto]);
     return filas[0] || null;
 }
 

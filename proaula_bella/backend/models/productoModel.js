@@ -31,16 +31,21 @@ async function cambiarEstado(idProducto, estado) {
     return resultado.affectedRows > 0;
 }
 
-async function guardarFoto(idProducto, tipo, datos) {
+async function existe(idProducto) {
+    const [filas] = await db.query('SELECT id_producto FROM productos WHERE id_producto = ?', [idProducto]);
+    return filas.length > 0;
+}
+
+async function guardarFoto(idProducto, foto) {
     const [resultado] = await db.query(
-        'REPLACE INTO fotos_producto (id_producto, tipo, datos) SELECT id_producto, ?, ? FROM productos WHERE id_producto = ?',
-        [tipo, datos, idProducto]
+        'REPLACE INTO fotos_producto (id_producto, tipo, datos, url, public_id) SELECT id_producto, ?, ?, ?, ? FROM productos WHERE id_producto = ?',
+        [foto.tipo, foto.datos, foto.url, foto.publicId, idProducto]
     );
     return resultado.affectedRows > 0;
 }
 
 async function buscarFoto(idProducto) {
-    const [filas] = await db.query('SELECT tipo, datos FROM fotos_producto WHERE id_producto = ?', [idProducto]);
+    const [filas] = await db.query('SELECT tipo, datos, url, public_id FROM fotos_producto WHERE id_producto = ?', [idProducto]);
     return filas[0] || null;
 }
 
@@ -48,4 +53,4 @@ async function quitarFoto(idProducto) {
     await db.query('DELETE FROM fotos_producto WHERE id_producto = ?', [idProducto]);
 }
 
-module.exports = { listarActivos, listarTodos, crear, actualizar, cambiarEstado, guardarFoto, buscarFoto, quitarFoto };
+module.exports = { listarActivos, listarTodos, crear, actualizar, cambiarEstado, existe, guardarFoto, buscarFoto, quitarFoto };

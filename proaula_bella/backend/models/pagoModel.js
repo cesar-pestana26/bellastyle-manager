@@ -81,20 +81,25 @@ async function actualizarEstado(idPago, estado, metodo = null) {
 
 async function datosSalon() {
     const [filas] = await db.query(
-        "SELECT llave, titular, qr_tipo IS NOT NULL AS tiene_qr, UNIX_TIMESTAMP(actualizado) AS version FROM pago_salon WHERE id = 1");
+        "SELECT llave, titular, qr_tipo IS NOT NULL AS tiene_qr, qr_public_id, UNIX_TIMESTAMP(actualizado) AS version FROM pago_salon WHERE id = 1");
     return filas[0] || null;
 }
 
 async function qrSalon() {
-    const [filas] = await db.query('SELECT qr_tipo, qr_datos FROM pago_salon WHERE id = 1 AND qr_datos IS NOT NULL');
+    const [filas] = await db.query('SELECT qr_tipo, qr_datos, qr_url FROM pago_salon WHERE id = 1 AND (qr_datos IS NOT NULL OR qr_url IS NOT NULL)');
     return filas[0] || null;
 }
 
-async function guardarDatosSalon({ llave, titular, qrTipo, qrDatos }) {
-    await db.query(`INSERT INTO pago_salon (id, llave, titular, qr_tipo, qr_datos) VALUES (1, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE llave = VALUES(llave), titular = VALUES(titular),
-            qr_tipo = COALESCE(VALUES(qr_tipo), qr_tipo), qr_datos = COALESCE(VALUES(qr_datos), qr_datos)`,
-        [llave, titular, qrTipo || null, qrDatos || null]);
+async function guardarDatosSalon({ llave, titular, qr }) {
+    if (!qr) {
+        await db.query(`INSERT INTO pago_salon (id, llave, titular) VALUES (1, ?, ?)
+            ON DUPLICATE KEY UPDATE llave = VALUES(llave), titular = VALUES(titular)`, [llave, titular]);
+        return;
+    }
+    await db.query(`INSERT INTO pago_salon (id, llave, titular, qr_tipo, qr_datos, qr_url, qr_public_id) VALUES (1, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE llave = VALUES(llave), titular = VALUES(titular), qr_tipo = VALUES(qr_tipo),
+            qr_datos = VALUES(qr_datos), qr_url = VALUES(qr_url), qr_public_id = VALUES(qr_public_id)`,
+        [llave, titular, qr.tipo, qr.datos, qr.url, qr.publicId]);
 }
 
 module.exports = { datosSalon, qrSalon, guardarDatosSalon, buscarPorCita, listar, crear, actualizarEstado };

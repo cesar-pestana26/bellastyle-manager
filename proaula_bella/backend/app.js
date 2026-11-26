@@ -4,6 +4,7 @@ const config = require('./config/config');
 const db = require('./config/db');
 const rutas = require('./routes/rutas');
 const actualizarBD = require('./actualizar_bd');
+const migrarImagenes = require('./migrar_imagenes');
 
 const app = express();
 
@@ -42,6 +43,7 @@ db.query('SELECT 1')
         app.listen(config.puerto, () => {
             console.log('Conectado a MySQL');
             console.log(`Servidor en http://localhost:${config.puerto}`);
+            migrarImagenes(db).catch((err) => console.error('No se pudieron pasar las imágenes a Cloudinary:', err.message));
         });
     })
     .catch((err) => {

@@ -124,8 +124,21 @@ const COLUMNAS = [
 
     ['servicios', 'publico', "ENUM('Mujer','Hombre','Unisex') NOT NULL DEFAULT 'Unisex'"],
 
-    ['pagos', 'comprobante', 'VARCHAR(40) NULL']
+    ['pagos', 'comprobante', 'VARCHAR(40) NULL'],
+
+    ['fotos_servicio', 'url', 'VARCHAR(500) NULL'],
+    ['fotos_servicio', 'public_id', 'VARCHAR(200) NULL'],
+    ['fotos_perfil', 'url', 'VARCHAR(500) NULL'],
+    ['fotos_perfil', 'public_id', 'VARCHAR(200) NULL'],
+    ['vitrina', 'url', 'VARCHAR(500) NULL'],
+    ['vitrina', 'public_id', 'VARCHAR(200) NULL'],
+    ['fotos_producto', 'url', 'VARCHAR(500) NULL'],
+    ['fotos_producto', 'public_id', 'VARCHAR(200) NULL'],
+    ['pago_salon', 'qr_url', 'VARCHAR(500) NULL'],
+    ['pago_salon', 'qr_public_id', 'VARCHAR(200) NULL']
 ];
+
+const IMAGEN_OPCIONAL = ['fotos_servicio', 'fotos_perfil', 'vitrina', 'fotos_producto'];
 
 const ENUMS = [
     ['pagos', 'metodo', "ENUM('Bre-B','Nequi','Tarjeta','PSE','Efectivo / Salón') NOT NULL DEFAULT 'Efectivo / Salón'", 'Bre-B'],
@@ -260,6 +273,12 @@ async function actualizar() {
         }
     }
     if (creadas.includes('servicios.publico')) await datosPublico(conexion);
+    for (const tabla of IMAGEN_OPCIONAL) {
+        const [col] = await conexion.query(`SHOW COLUMNS FROM ${tabla} LIKE 'datos'`);
+        if (col.length && col[0].Null === 'NO') {
+            await conexion.query(`ALTER TABLE ${tabla} MODIFY datos MEDIUMBLOB NULL`);
+        }
+    }
     for (const [tabla, columna, definicion, valorNuevo] of ENUMS) {
         const [col] = await conexion.query(`SHOW COLUMNS FROM ${tabla} LIKE ?`, [columna]);
         if (col.length && !String(col[0].Type).includes(`'${valorNuevo}'`)) {

@@ -2,6 +2,7 @@ const db = require('../config/db');
 const pagoModel = require('../models/pagoModel');
 
 const { leerImagen, enviarImagen } = require('../utils/imagenes');
+const { guardarImagen, borrarDeNube } = require('../utils/nube');
 
 const METODOS_VALIDOS = ['Bre-B', 'Efectivo / Salón', 'Nequi', 'Tarjeta', 'PSE'];
 const ESTADOS_VALIDOS = ['Pagado', 'Por verificar', 'Pendiente en Salón', 'Rechazado', 'Reembolsado'];
@@ -146,7 +147,7 @@ async function qrSalon(req, res) {
     try {
         const qr = await pagoModel.qrSalon();
         if (!qr) return res.status(404).json({ success: false, message: 'El salón no ha subido su QR.' });
-        enviarImagen(res, qr.qr_tipo, qr.qr_datos);
+        enviarImagen(res, qr.qr_tipo, qr.qr_datos, qr.qr_url);
     } catch (error) {
         console.error('Error al enviar el QR:', error);
         res.status(500).json({ success: false, message: 'No se pudo cargar el QR.' });
@@ -168,7 +169,9 @@ async function guardarSalon(req, res) {
         if (!imagen.tipo && !(actual && actual.tiene_qr) && !llave) {
             return res.status(400).json({ success: false, message: 'Sube la imagen del QR (o escribe la llave Bre-B).' });
         }
-        await pagoModel.guardarDatosSalon({ llave, titular, qrTipo: imagen.tipo, qrDatos: imagen.buffer });
+        const qr = imagen.tipo ? await guardarImagen(imagen, 'qr-salon') : null;
+        await pagoModel.guardarDatosSalon({ llave, titular, qr });
+        if (qr && actual) await borrarDeNube(actual.qr_public_id);
         res.json({ success: true, message: 'Datos de cobro Bre-B guardados.' });
     } catch (error) {
         console.error('Error al guardar datos de cobro:', error);

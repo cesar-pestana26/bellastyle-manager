@@ -134,6 +134,8 @@ CREATE TABLE pago_salon (
     titular     VARCHAR(100),
     qr_tipo     VARCHAR(20),
     qr_datos    MEDIUMBLOB,
+    qr_url      VARCHAR(500),
+    qr_public_id VARCHAR(200),
     actualizado TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
@@ -221,7 +223,9 @@ CREATE TABLE fotos_servicio (
     id_foto     INT AUTO_INCREMENT PRIMARY KEY,
     id_servicio INT NOT NULL,
     tipo        VARCHAR(20) NOT NULL,
-    datos       MEDIUMBLOB NOT NULL,
+    datos       MEDIUMBLOB NULL,
+    url         VARCHAR(500) NULL,
+    public_id   VARCHAR(200) NULL,
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_fotos_servicio FOREIGN KEY (id_servicio) REFERENCES servicios(id_servicio) ON DELETE CASCADE
 );
@@ -229,14 +233,18 @@ CREATE TABLE fotos_servicio (
 CREATE TABLE fotos_producto (
     id_producto INT PRIMARY KEY,
     tipo        VARCHAR(20) NOT NULL,
-    datos       MEDIUMBLOB NOT NULL,
+    datos       MEDIUMBLOB NULL,
+    url         VARCHAR(500) NULL,
+    public_id   VARCHAR(200) NULL,
     CONSTRAINT fk_fotos_producto FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
 );
 
 CREATE TABLE fotos_perfil (
     id_usuario    INT PRIMARY KEY,
     tipo          VARCHAR(20) NOT NULL,
-    datos         MEDIUMBLOB NOT NULL,
+    datos         MEDIUMBLOB NULL,
+    url           VARCHAR(500) NULL,
+    public_id     VARCHAR(200) NULL,
     actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_fotos_perfil_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
@@ -245,7 +253,9 @@ CREATE TABLE vitrina (
     id_foto     INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario  INT NOT NULL,
     tipo        VARCHAR(20) NOT NULL,
-    datos       MEDIUMBLOB NOT NULL,
+    datos       MEDIUMBLOB NULL,
+    url         VARCHAR(500) NULL,
+    public_id   VARCHAR(200) NULL,
     descripcion VARCHAR(120),
     creado_en   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_vitrina_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE

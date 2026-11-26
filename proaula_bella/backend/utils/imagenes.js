@@ -17,7 +17,11 @@ function leerImagen(texto) {
     return { tipo, buffer };
 }
 
-function enviarImagen(res, tipo, datos) {
+function enviarImagen(res, tipo, datos, url) {
+    if (url) {
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.redirect(302, url);
+    }
     res.set('Content-Type', tipo);
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(datos);

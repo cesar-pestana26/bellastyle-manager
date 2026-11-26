@@ -7,12 +7,13 @@ async function buscarUsuario(idUsuario) {
     return filas[0] || null;
 }
 
-async function guardarFotoPerfil(idUsuario, tipo, datos) {
-    await db.query('REPLACE INTO fotos_perfil (id_usuario, tipo, datos) VALUES (?, ?, ?)', [idUsuario, tipo, datos]);
+async function guardarFotoPerfil(idUsuario, foto) {
+    await db.query('REPLACE INTO fotos_perfil (id_usuario, tipo, datos, url, public_id) VALUES (?, ?, ?, ?, ?)',
+        [idUsuario, foto.tipo, foto.datos, foto.url, foto.publicId]);
 }
 
 async function buscarFotoPerfil(idUsuario) {
-    const [filas] = await db.query('SELECT tipo, datos FROM fotos_perfil WHERE id_usuario = ?', [idUsuario]);
+    const [filas] = await db.query('SELECT tipo, datos, url, public_id FROM fotos_perfil WHERE id_usuario = ?', [idUsuario]);
     return filas[0] || null;
 }
 
@@ -35,16 +36,16 @@ async function contarVitrina(idUsuario) {
     return filas[0].total;
 }
 
-async function agregarVitrina(idUsuario, tipo, datos, descripcion) {
+async function agregarVitrina(idUsuario, foto, descripcion) {
     const [resultado] = await db.query(
-        'INSERT INTO vitrina (id_usuario, tipo, datos, descripcion) VALUES (?, ?, ?, ?)',
-        [idUsuario, tipo, datos, descripcion || null]
+        'INSERT INTO vitrina (id_usuario, tipo, datos, url, public_id, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
+        [idUsuario, foto.tipo, foto.datos, foto.url, foto.publicId, descripcion || null]
     );
     return resultado.insertId;
 }
 
 async function buscarFotoVitrina(idFoto) {
-    const [filas] = await db.query('SELECT id_usuario, tipo, datos FROM vitrina WHERE id_foto = ?', [idFoto]);
+    const [filas] = await db.query('SELECT id_usuario, tipo, datos, url, public_id FROM vitrina WHERE id_foto = ?', [idFoto]);
     return filas[0] || null;
 }
 
