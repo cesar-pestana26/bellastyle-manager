@@ -1,5 +1,3 @@
-// Controlador de citas: listar, horas libres, crear (con asignación automática),
-// reprogramar y cambiar estado
 const db = require('../config/db');
 const citaModel = require('../models/citaModel');
 const clienteModel = require('../models/clienteModel');
@@ -13,9 +11,6 @@ const {
 
 const ESTADOS = ['Pendiente', 'Confirmada', 'Finalizada', 'Cancelada'];
 
-// Carga de una sola vez lo que se necesita para saber si una estilista
-// puede atender un día: su horario, si está ausente y las citas que ya tiene.
-// excluirId: al reprogramar, la propia cita no se cuenta.
 async function agendaDelDia(idEstilista, fecha, excluirId = 0) {
     const horario = await horarioModel.horarioDelDia(idEstilista, diaDeLaSemana(fecha));
     const ausente = await horarioModel.ausenteEn(idEstilista, fecha);
@@ -27,9 +22,6 @@ async function agendaDelDia(idEstilista, fecha, excluirId = 0) {
     };
 }
 
-// ¿Puede la estilista atender entre inicio y fin?
-// Devuelve null si puede, o el motivo por el que no:
-// 'ausente', 'no_trabaja', 'fuera_de_horario' u 'ocupada'.
 function motivoNoDisponible(agenda, inicio, fin) {
     if (agenda.ausente) return 'ausente';
     if (!agenda.horario) return 'no_trabaja';
@@ -47,7 +39,6 @@ const MENSAJES_NO_DISPONIBLE = {
     ocupada: 'La estilista ya tiene una cita en ese horario.'
 };
 
-// Revisa si la clienta ya tiene otra cita que se cruce con ese horario
 async function clientaTieneCruce(idClienta, fecha, inicio, fin, excluirId = 0) {
     const citas = await citaModel.ocupadasClientaDelDia(idClienta, fecha, excluirId);
     return citas.some((c) => {
@@ -56,7 +47,6 @@ async function clientaTieneCruce(idClienta, fecha, inicio, fin, excluirId = 0) {
     });
 }
 
-// Reglas de fecha y hora. Devuelve el mensaje de error, o null si todo está bien.
 function validarFechaHora(fecha, hora) {
     if (!horaValida(hora)) {
         return 'La hora no tiene un formato válido.';
@@ -71,13 +61,10 @@ function validarFechaHora(fecha, hora) {
     return null;
 }
 
-// La cita completa debe caber en el horario del salón de ese día
-// (8:00 a 19:00; los domingos solo hasta las 15:00)
 function fueraDeHorario(inicio, fin, fecha) {
     return inicio < APERTURA || fin > cierreDelDia(diaDeLaSemana(fecha));
 }
 
-// GET /api/citas?rol=Clienta&idUsuario=3
 async function listar(req, res) {
     const { rol, idUsuario } = req.query;
     try {
@@ -96,10 +83,6 @@ async function listar(req, res) {
     }
 }
 
-// GET /api/disponibilidad?idServicio=1&fecha=2026-11-03&idEstilista=2&excluirCita=5
-// Devuelve las horas (cada 30 minutos) en que se puede agendar ese servicio ese día.
-// Con idEstilista: las horas libres de esa estilista.
-// Sin idEstilista: las horas en que al menos una estilista que sabe el servicio está libre.
 async function disponibilidad(req, res) {
     const { idServicio, fecha, idEstilista } = req.query;
     const excluirCita = Number(req.query.excluirCita) || 0;
@@ -126,7 +109,6 @@ async function disponibilidad(req, res) {
             agendas.push(await agendaDelDia(e.id_estilista, fecha, excluirCita));
         }
 
-        // Si la pide una clienta, tampoco se ofrecen las horas en que ella ya tiene otra cita
         let ocupadasClienta = [];
         if (req.query.idUsuario) {
             const clienta = await clienteModel.buscarPorUsuario(req.query.idUsuario);
@@ -139,7 +121,7 @@ async function disponibilidad(req, res) {
         const horas = [];
         const cierre = cierreDelDia(diaDeLaSemana(fecha));
         for (let inicio = APERTURA; inicio + servicio.duracion_min <= cierre; inicio += INTERVALO) {
-            if (fecha === ahora.fecha && inicio <= ahora.minutos) continue;   // hoy: solo horas que no han pasado
+            if (fecha === ahora.fecha && inicio <= ahora.minutos) continue;
             const fin = inicio + servicio.duracion_min;
             if (ocupadasClienta.some((o) => seCruzan(inicio, fin, o.inicio, o.fin))) continue;
             if (agendas.some((a) => motivoNoDisponible(a, inicio, fin) === null)) {
@@ -153,8 +135,6 @@ async function disponibilidad(req, res) {
     }
 }
 
-// POST /api/citas
-// Recibe: { idUsuario, idServicio, fecha, hora, idEstilista (opcional), observaciones }
 async function crear(req, res) {
     const { idUsuario, idServicio, fecha, hora, idEstilista, observaciones } = req.body;
 
@@ -166,10 +146,6 @@ async function crear(req, res) {
         return res.status(400).json({ success: false, message: errorFecha });
     }
 
-    // Todo se hace dentro de una TRANSACCIÓN que bloquea (SELECT ... FOR UPDATE) a la clienta
-    // y a las estilistas posibles. Si dos personas piden la misma hora al mismo tiempo,
-    // la segunda espera a que la primera termine y luego ve la hora ya ocupada:
-    // así nunca quedan dos citas cruzadas (condición de carrera).
     const conexion = await db.getConnection();
     try {
         await conexion.beginTransaction();
@@ -183,7 +159,6 @@ async function crear(req, res) {
         const posibles = idEstilista ? [Number(idEstilista)]
             : (await estilistaModel.capacitadasPara(idServicio)).map((e) => e.id_estilista);
         if (posibles.length > 0) {
-            // Se bloquean en orden (ORDER BY) para que dos transacciones no se esperen entre sí (deadlock)
             await conexion.query('SELECT id_estilista FROM estilistas WHERE id_estilista IN (?) ORDER BY id_estilista FOR UPDATE', [posibles]);
         }
 
@@ -193,7 +168,6 @@ async function crear(req, res) {
             return res.status(404).json({ success: false, message: 'El servicio no existe.' });
         }
 
-        // Regla de horario: la cita completa debe caber en el horario de ese día
         const inicio = aMinutos(hora);
         const fin = inicio + servicio.duracion_min;
         if (fueraDeHorario(inicio, fin, fecha)) {
@@ -204,7 +178,6 @@ async function crear(req, res) {
             });
         }
 
-        // La clienta no puede tener dos citas que se crucen
         if (await clientaTieneCruce(clienta.id_clienta, fecha, inicio, fin)) {
             await conexion.rollback();
             return res.status(409).json({ success: false, message: 'Ya tienes otra cita en ese horario.' });
@@ -213,7 +186,6 @@ async function crear(req, res) {
         let elegida = null;
 
         if (idEstilista) {
-            // La clienta escogió estilista: se revisa su horario, ausencias y citas
             const agenda = await agendaDelDia(idEstilista, fecha);
             const motivo = motivoNoDisponible(agenda, inicio, fin);
             if (motivo) {
@@ -223,8 +195,6 @@ async function crear(req, res) {
             const estilista = await estilistaModel.buscarPorId(idEstilista);
             elegida = { id_estilista: Number(idEstilista), nombre: estilista ? estilista.nombre : null };
         } else {
-            // Asignación automática: de las estilistas que saben hacer el servicio
-            // y pueden atender a esa hora, se escoge la que tenga menos citas ese día.
             const candidatas = await estilistaModel.capacitadasPara(idServicio);
             let menorCarga = Infinity;
             for (const estilista of candidatas) {
@@ -264,14 +234,12 @@ async function crear(req, res) {
     }
 }
 
-// PUT /api/citas/:id/estado
-// Recibe: { estado }
 async function cambiarEstado(req, res) {
     const { estado } = req.body;
     if (!ESTADOS.includes(estado)) {
         return res.status(400).json({ success: false, message: 'Estado no válido.' });
     }
-    // La clienta solo puede cancelar; confirmar o finalizar es tarea del salón
+
     if (req.usuario && req.usuario.rol === 'Clienta' && estado !== 'Cancelada') {
         return res.status(403).json({ success: false, message: 'Solo puedes cancelar tu cita.' });
     }
@@ -287,8 +255,6 @@ async function cambiarEstado(req, res) {
     }
 }
 
-// PUT /api/citas/:id/reprogramar
-// Recibe: { fecha, hora }. Se mantiene la misma estilista y el mismo servicio.
 async function reprogramar(req, res) {
     const { fecha, hora } = req.body;
 
@@ -305,7 +271,7 @@ async function reprogramar(req, res) {
         if (cita.estado !== 'Pendiente' && cita.estado !== 'Confirmada') {
             return res.status(400).json({ success: false, message: 'Solo se pueden reprogramar citas pendientes o confirmadas.' });
         }
-        // Regla del salón: cada cita se puede reprogramar una sola vez
+
         if (cita.reprogramaciones >= 1) {
             return res.status(400).json({ success: false, message: 'Esta cita ya fue reprogramada una vez. Si no puedes asistir, cancélala y agenda una nueva.' });
         }
@@ -336,8 +302,6 @@ async function reprogramar(req, res) {
     }
 }
 
-// PUT /api/citas/:id/notas   Recibe: { notas }
-// La estilista anota lo que hizo (productos, tono, técnica) para el historial de la clienta.
 async function guardarNotas(req, res) {
     const notas = typeof req.body.notas === 'string' ? req.body.notas.trim() : '';
     if (notas.length > 500) {
@@ -353,7 +317,6 @@ async function guardarNotas(req, res) {
     }
 }
 
-// GET /api/clientas/:id/historial   Servicios que se le han hecho a la clienta
 async function historialClienta(req, res) {
     try {
         const clienta = await clienteModel.buscarPorId(req.params.id);

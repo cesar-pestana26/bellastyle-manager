@@ -1,12 +1,3 @@
-// Seguridad de la API: sesión con token JWT, permisos por rol y "dueño del recurso".
-//
-// Cómo funciona:
-// 1. Al iniciar sesión, el servidor firma un token con { id, rol } (authController.login).
-// 2. El navegador lo guarda y lo manda en cada petición: "Authorization: Bearer <token>".
-// 3. requiereSesion revisa la firma y la fecha de vencimiento. Si alguien cambia
-//    el id o el rol dentro del token, la firma ya no coincide y se rechaza (401).
-// 4. Quién hace la petición SIEMPRE sale del token, nunca de lo que mande el navegador
-//    (así se evita el ataque IDOR: cambiar el idUsuario para ver datos de otra persona).
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const config = require('../config/config');
@@ -17,8 +8,6 @@ function crearToken(usuario) {
     return jwt.sign({ id: usuario.id_usuario, rol: usuario.rol }, config.jwt.secreto, { expiresIn: config.jwt.duracion });
 }
 
-// El token llega en el encabezado Authorization. Los enlaces de PDF no pueden
-// mandar encabezados, por eso también se acepta ?token= en la dirección.
 function leerToken(req) {
     const encabezado = req.headers.authorization || '';
     if (encabezado.startsWith('Bearer ')) return encabezado.slice(7);
@@ -36,8 +25,7 @@ function requiereSesion(req, res, next) {
     } catch (err) {
         return res.status(401).json({ success: false, message: 'Tu sesión expiró. Inicia sesión de nuevo.' });
     }
-    // Anti-IDOR: se reemplaza lo que haya mandado el navegador por los datos del token.
-    // Los controladores leen rol e idUsuario de aquí, así que ya no se pueden falsificar.
+
     req.body = req.body || {};
     req.body.idUsuario = req.usuario.id;
     req.body.rol = req.usuario.rol;
@@ -46,7 +34,6 @@ function requiereSesion(req, res, next) {
     next();
 }
 
-// Solo deja pasar a los roles indicados. Ej: soloRoles('Administradora')
 function soloRoles(...roles) {
     return (req, res, next) => {
         if (!roles.includes(req.usuario.rol)) {
@@ -60,8 +47,6 @@ function sinPermiso(res, mensaje) {
     return res.status(403).json({ success: false, message: mensaje || 'No tienes permiso para hacer esto.' });
 }
 
-// La cita debe ser de quien pide: su clienta, su estilista o la administradora.
-// leerId dice de dónde sale el número de la cita (la URL o el cuerpo).
 function duenoDeCita(leerId = (req) => req.params.id) {
     return async (req, res, next) => {
         if (req.usuario.rol === ADMIN) return next();
@@ -80,7 +65,6 @@ function duenoDeCita(leerId = (req) => req.params.id) {
     };
 }
 
-// La cuenta de la URL debe ser la propia (o la administradora). Ej: /usuarios/5/foto
 function mismaCuenta(param = 'id') {
     return (req, res, next) => {
         if (req.usuario.rol === ADMIN || Number(req.params[param]) === req.usuario.id) return next();
@@ -88,7 +72,6 @@ function mismaCuenta(param = 'id') {
     };
 }
 
-// La estilista de la URL debe ser la que inició sesión (o la administradora)
 async function mismaEstilista(req, res, next) {
     if (req.usuario.rol === ADMIN) return next();
     try {
@@ -98,7 +81,6 @@ async function mismaEstilista(req, res, next) {
     } catch (err) { next(err); }
 }
 
-// La ausencia que se borra debe ser de la estilista que inició sesión
 async function duenaDeAusencia(req, res, next) {
     if (req.usuario.rol === ADMIN) return next();
     try {
@@ -110,8 +92,6 @@ async function duenaDeAusencia(req, res, next) {
     } catch (err) { next(err); }
 }
 
-// La clienta de la URL debe ser la que inició sesión. La estilista y la administradora
-// pueden ver el historial (lo necesitan para atenderla), pero solo ella edita sus datos.
 function mismaClienta({ permitirPersonal = false } = {}) {
     return async (req, res, next) => {
         if (req.usuario.rol === ADMIN || (permitirPersonal && req.usuario.rol === 'Estilista')) return next();
@@ -123,16 +103,10 @@ function mismaClienta({ permitirPersonal = false } = {}) {
     };
 }
 
-// ---------------------------------------------------------------
-// Límite de intentos: máximo 3 fallos seguidos; luego 3 minutos de bloqueo.
-// Se usa en el login y en recuperar contraseña (contra ataques de fuerza bruta).
-// Se guarda en memoria del servidor: clave = "login:usuario" o "recuperar:usuario".
-// ---------------------------------------------------------------
 const MAX_INTENTOS = 3;
 const BLOQUEO_MS = 3 * 60 * 1000;
 const intentos = new Map();
 
-// Si la cuenta está bloqueada devuelve los minutos que faltan; si no, 0.
 function minutosBloqueado(clave) {
     const registro = intentos.get(clave);
     if (!registro || !registro.hasta) return 0;
@@ -141,7 +115,6 @@ function minutosBloqueado(clave) {
     return Math.ceil(falta / 60000);
 }
 
-// Suma un fallo. Devuelve cuántos intentos le quedan (0 = quedó bloqueada).
 function registrarFallo(clave) {
     const registro = intentos.get(clave) || { fallos: 0, hasta: 0 };
     registro.fallos += 1;

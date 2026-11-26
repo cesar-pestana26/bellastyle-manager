@@ -1,4 +1,3 @@
-// Controlador de autenticación: login, registro y recuperar contraseña
 const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 const config = require('../config/config');
@@ -9,7 +8,6 @@ const horarioModel = require('../models/horarioModel');
 const { crearToken, minutosBloqueado, registrarFallo, limpiarIntentos } = require('../middleware/seguridad');
 const { nombreValido, usuarioValido, passwordValida, telefonoValido, emailValido, separarNombre } = require('../utils/validators');
 
-// Nombre del rol en el frontend -> nombre del rol en la base de datos
 const ROLES = {
     cliente: 'Clienta',
     estilista: 'Estilista',
@@ -22,8 +20,6 @@ const FOTOS = {
     Administradora: 'img/rol_admin.svg'
 };
 
-// POST /api/login
-// Recibe: { username, password, rol }
 async function login(req, res) {
     const { username, password, rol } = req.body;
 
@@ -31,7 +27,6 @@ async function login(req, res) {
         return res.status(400).json({ success: false, message: 'Escribe tu usuario y contraseña.' });
     }
 
-    // Máximo 3 intentos fallidos; después la cuenta queda bloqueada 3 minutos
     const clave = 'login:' + String(username).trim().toLowerCase();
     const espera = minutosBloqueado(clave);
     if (espera > 0) {
@@ -41,7 +36,6 @@ async function login(req, res) {
     try {
         const usuario = await usuarioModel.buscarPorUsername(username.trim().toLowerCase());
 
-        // Se usa el mismo mensaje para no revelar si el usuario existe
         if (!usuario || !bcrypt.compareSync(password, usuario.password)) {
             const quedan = registrarFallo(clave);
             const message = quedan > 0
@@ -51,12 +45,10 @@ async function login(req, res) {
         }
         limpiarIntentos(clave);
 
-        // Una clienta no puede entrar por el portal de administradora, etc.
         if (rol && ROLES[rol] !== usuario.rol) {
             return res.status(403).json({ success: false, message: 'Esta cuenta no pertenece a este portal.' });
         }
 
-        // Token de la sesión: el navegador lo manda en cada petición (vence en 8 horas)
         return res.json({
             success: true,
             token: crearToken(usuario),
@@ -74,8 +66,6 @@ async function login(req, res) {
     }
 }
 
-// POST /api/register
-// Recibe: { rol, nombre, username, password, telefono, email, servicios, codigoAdmin }
 async function registrar(req, res) {
     const { rol, nombre, password, telefono, email, codigoAdmin } = req.body;
     const profesion = typeof req.body.profesion === 'string' ? req.body.profesion.trim().slice(0, 80) : '';
@@ -83,7 +73,6 @@ async function registrar(req, res) {
     const servicios = Array.isArray(req.body.servicios) ? req.body.servicios : [];
     const rolBD = ROLES[rol];
 
-    // 1. Validaciones
     if (!rolBD) {
         return res.status(400).json({ success: false, message: 'Rol no válido.' });
     }
@@ -96,8 +85,7 @@ async function registrar(req, res) {
     if (!passwordValida(password)) {
         return res.status(400).json({ success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
     }
-    // Se necesita al menos el teléfono o el correo: con ellos se recupera la contraseña.
-    // Si se escriben, deben tener formato válido.
+
     if (!telefono && !email) {
         return res.status(400).json({ success: false, message: 'Escribe tu teléfono o tu correo: los necesitarás para recuperar la contraseña.' });
     }
@@ -114,7 +102,6 @@ async function registrar(req, res) {
         return res.status(400).json({ success: false, message: 'Selecciona al menos un servicio que sepas realizar.' });
     }
 
-    // 2. El usuario no puede estar repetido
     let existe;
     try {
         existe = await usuarioModel.buscarPorUsername(username);
@@ -126,7 +113,6 @@ async function registrar(req, res) {
         return res.status(409).json({ success: false, message: 'Ese nombre de usuario ya está en uso.' });
     }
 
-    // 3. Se guarda todo en una transacción: si algo falla, no queda nada a medias
     const conexion = await db.getConnection();
     try {
         await conexion.beginTransaction();
@@ -152,7 +138,7 @@ async function registrar(req, res) {
                 idUsuario, nombres, apellidos, especialidad: 'General'
             });
             await estilistaModel.asignarServicios(conexion, idEstilista, servicios);
-            // Horario inicial: lunes a sábado de 8:00 a 19:00 y domingo hasta las 15:00 (luego ella lo puede cambiar)
+
             await horarioModel.crearPorDefecto(conexion, idEstilista);
         }
 
@@ -167,11 +153,6 @@ async function registrar(req, res) {
     }
 }
 
-// POST /api/recuperar-password
-// Recibe: { username, contacto, nuevaPassword }
-// Para cambiar la contraseña hay que demostrar que la cuenta es tuya: el teléfono o el correo
-// que escribas debe ser el mismo que registraste. Máximo 3 intentos y luego 3 minutos de bloqueo.
-// (En un sistema real se enviaría un código por SMS o correo; aquí se compara con el registrado.)
 async function recuperarPassword(req, res) {
     const { username, nuevaPassword } = req.body;
     const contacto = typeof req.body.contacto === 'string' ? req.body.contacto.trim().toLowerCase() : '';
@@ -190,7 +171,6 @@ async function recuperarPassword(req, res) {
         const usuario = await usuarioModel.buscarPorUsername(username.trim().toLowerCase());
         const contactos = usuario ? await usuarioModel.contactosRegistrados(usuario.id_usuario) : [];
 
-        // Mismo mensaje si el usuario no existe o el dato no coincide: así no se revela qué cuentas existen
         if (!contactos.includes(contacto)) {
             const quedan = registrarFallo(clave);
             const message = quedan > 0
@@ -200,7 +180,7 @@ async function recuperarPassword(req, res) {
         }
 
         limpiarIntentos(clave);
-        // Ya demostró que la cuenta es suya: se quita también el bloqueo del inicio de sesión
+
         limpiarIntentos('login:' + username.trim().toLowerCase());
         await usuarioModel.actualizarPassword(usuario.username, bcrypt.hashSync(nuevaPassword, 10));
         return res.json({ success: true, message: 'Contraseña actualizada. Ya puedes iniciar sesión.' });
@@ -210,8 +190,6 @@ async function recuperarPassword(req, res) {
     }
 }
 
-// Cambiar la contraseña con la sesión iniciada (cualquier rol).
-// Pide la contraseña actual; opcionalmente guarda un teléfono para poder recuperarla luego.
 async function cambiarPassword(req, res) {
     const { actual, nueva } = req.body;
     const telefono = typeof req.body.telefono === 'string' ? req.body.telefono.trim() : '';
@@ -236,7 +214,7 @@ async function cambiarPassword(req, res) {
         if (!usuario) return res.status(404).json({ success: false, message: 'La cuenta no existe.' });
         if (!bcrypt.compareSync(actual, usuario.password)) {
             const quedan = registrarFallo(clave);
-            // 400 y no 401: un 401 haría que el navegador cierre la sesión
+
             return res.status(400).json({ success: false, message: quedan > 0
                 ? `La contraseña actual no es correcta. Te quedan ${quedan} intento(s).`
                 : 'La contraseña actual no es correcta. Por seguridad, espera 3 minutos para volver a intentarlo.' });

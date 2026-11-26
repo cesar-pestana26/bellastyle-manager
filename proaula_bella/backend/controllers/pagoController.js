@@ -1,11 +1,8 @@
-// Controlador del módulo de pagos (/api/pagos)
 const db = require('../config/db');
 const pagoModel = require('../models/pagoModel');
 
 const { leerImagen, enviarImagen } = require('../utils/imagenes');
 
-// Bre-B: la clienta escanea el QR del salón, paga desde su banco y escribe el número
-// del comprobante. El pago queda "Por verificar" hasta que la administradora lo confirma.
 const METODOS_VALIDOS = ['Bre-B', 'Efectivo / Salón', 'Nequi', 'Tarjeta', 'PSE'];
 const ESTADOS_VALIDOS = ['Pagado', 'Por verificar', 'Pendiente en Salón', 'Rechazado', 'Reembolsado'];
 
@@ -112,7 +109,6 @@ async function cambiarEstado(req, res) {
             return res.status(400).json({ success: false, message: 'Estado de pago no válido.' });
         }
 
-        // Al cobrar en el salón la administradora indica si fue en efectivo o con el QR de Bre-B
         let metodo = null;
         if (req.body.metodo !== undefined) {
             metodo = String(req.body.metodo).trim();
@@ -133,7 +129,6 @@ async function cambiarEstado(req, res) {
     }
 }
 
-// GET /api/pago-salon  -> llave, titular y si hay QR (público: lo ve la clienta al pagar)
 async function datosSalon(req, res) {
     try {
         const d = await pagoModel.datosSalon();
@@ -147,7 +142,6 @@ async function datosSalon(req, res) {
     }
 }
 
-// GET /api/pago-salon/qr  -> la imagen del QR
 async function qrSalon(req, res) {
     try {
         const qr = await pagoModel.qrSalon();
@@ -159,8 +153,6 @@ async function qrSalon(req, res) {
     }
 }
 
-// PUT /api/pago-salon   Recibe: { llave?, titular?, imagen? }  (solo administradora)
-// La llave y el titular son opcionales: basta con el QR (o con la llave si no hay QR).
 async function guardarSalon(req, res) {
     const llave = String(req.body.llave || '').trim() || null;
     const titular = String(req.body.titular || '').trim() || null;
