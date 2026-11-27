@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, onIonViewWillEnter } from '@ionic/vue';
 import { useApplication, errorMessage, pesos, hoyColombia } from '../context';
 import type { ServicioBella, EstilistaBella, FotoServicio } from '../../../domain/model/BellaModels';
+import CarruselFotos from '../componentes/CarruselFotos.vue';
 
 const app = useApplication();
 const router = useRouter();
@@ -32,9 +33,8 @@ const servicio = computed(() => servicios.value.find((s) => s.id_servicio === id
 const estilistasDelServicio = computed(() =>
   estilistas.value.filter((e) => String(e.ids_servicios || '').split(',').map(Number).includes(idServicio.value)));
 
-function fotoDe(id: number): string | null {
-  const f = fotos.value.find((x) => x.id_servicio === id);
-  return f ? app.imagen(f.url) : null;
+function fotosDe(id: number): string[] {
+  return fotos.value.filter((x) => x.id_servicio === id).map((f) => app.imagen(f.url));
 }
 
 async function cargar() {
@@ -130,7 +130,7 @@ onIonViewWillEnter(cargar);
 
         <div class="card-grid">
           <article v-for="s in serviciosFiltrados" :key="s.id_servicio" class="panel" style="margin:0;">
-            <img v-if="fotoDe(s.id_servicio)" class="foto" :src="fotoDe(s.id_servicio)!" :alt="s.nombre" loading="lazy" />
+            <CarruselFotos v-if="fotosDe(s.id_servicio).length" :fotos="fotosDe(s.id_servicio)" :nombre="s.nombre" />
             <div v-else class="foto sin-foto">✂</div>
             <div class="row between">
               <h3>{{ s.nombre }}</h3>
